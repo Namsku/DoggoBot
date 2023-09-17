@@ -45,6 +45,9 @@ class Bot(commands.Bot):
             initial_channels=[self.channel_id],
         )
 
+        self.active = False
+        self.initialized = False
+
         self.bot_name = channel.bot_name
 
         self.client_id = (
@@ -81,6 +84,7 @@ class Bot(commands.Bot):
             self.logger.debug("Bots fetched.")
             await self.user.update_user_database(self.channel_members)
             self.logger.debug("Users updated.")
+            self.initialized = True
 
     async def __aclose__(self) -> None:
         await self.connection_channel.close()
@@ -120,6 +124,7 @@ class Bot(commands.Bot):
         -------
         None
         """
+        self.active = True
         self.logger.info(f"Ready | {self.nick}")
 
     async def event_message(self, message: Message) -> None:

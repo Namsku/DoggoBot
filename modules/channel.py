@@ -1,5 +1,6 @@
 import aiosqlite
 import asyncio
+import os
 from dataclasses import dataclass
 
 from modules.logger import Logger
@@ -9,6 +10,7 @@ logger = Logger(__name__)
 
 @dataclass
 class Channel:
+    id: int
     bot_name: str
     streamer_channel: str
     prefix: str
@@ -19,10 +21,13 @@ class Channel:
 
 class ChannelCog:
     def __init__(self, connection: aiosqlite.Connection) -> None:
-        if asyncio.create_task(self.is_table_empty()):
+        self.connection = connection
+
+    async def __ainit__(self) -> None:
+        if not await self.is_table_configured():
             channel = self.get_default_config()
         else:
-            channel = self.get_last_channel()
+            channel = await self.get_last_channel()
 
         self.bot_name = channel.bot_name
         self.streamer_channel = channel.streamer_channel
@@ -31,10 +36,15 @@ class ChannelCog:
         self.income = channel.income
         self.timeout = channel.timeout
 
-        if asyncio.create_task(self.is_table_empty()):
-            asyncio.create_task(self.add_channel())
+        if not await self.is_table_configured():
+            await self.add_channel()
 
-        self.connection = connection
+    def __str__(self) -> str:
+        """
+        Returns the string representation of the channel object.
+        """
+
+        return f"Channel(bot_name={self.bot_name}, streamer_channel={self.streamer_channel}, prefix={self.prefix}, coin_name={self.coin_name}, income={self.income}, timeout={self.timeout})"
 
     def set(self, channel: Channel) -> None:
         """
@@ -57,6 +67,59 @@ class ChannelCog:
         self.income = channel.income
         self.timeout = channel.timeout
 
+    def set_channel(self, config: dict) -> None:
+        """
+        Sets the channel content.
+
+        Parameters
+        ----------
+        config : dict
+            The channel config.
+
+        Returns
+        -------
+        None
+        """
+
+        self.bot_name = config["bot_name"]
+        self.streamer_channel = config["streamer_channel"]
+        self.prefix = config["prefix"]
+        self.coin_name = config["coin_name"]
+        self.income = config["default_income"]
+        self.timeout = config["default_timeout"]
+
+        self.update_channel()
+
+    def set_env(self, config: dict) -> None:
+        """
+        Sets the environment variables.
+
+        Parameters
+        ----------
+        config : dict
+            The environment variables.
+
+        Returns
+        -------
+        None
+        """
+
+        # Create .env file at the root of the project
+        # and add the following variables:
+        # TWITCH_SECRET_TOKEN=your_secret_token
+        # TWITCH_CLIENT_TOKEN=your_client_token
+
+        try:
+            # file is created at the root of the project
+            with open(".env", "w") as file:
+                file.write(f"TWITCH_SECRET_TOKEN={config['secret_token']}\n")
+                file.write(f"TWITCH_CLIENT_TOKEN={config['client_token']}\n")
+        except Exception as e:
+            logger.error(f"Error while writing the .env file: {e}")
+            exit(1)
+
+        logger.debug("Environment variables updated successfully.")
+
     def get_default_config(self) -> Channel:
         """
         Gets the default config values.
@@ -72,8 +135,9 @@ class ChannelCog:
         """
 
         return Channel(
-            "doggobot",
-            input("Enter the streamer channel: "),
+            1,
+            "your_amazing_bot_name",
+            "your_amazing_streamer_channel_name",
             "!",
             "DoggoCoin(s)",
             10000,
@@ -84,6 +148,7 @@ class ChannelCog:
         await self.connection.execute(
             """
             CREATE TABLE IF NOT EXISTS channel (
+                id INTEGER PRIMARY KEY,
                 bot_name TEXT,
                 streamer_channel TEXT,
                 prefix TEXT,
@@ -96,9 +161,9 @@ class ChannelCog:
 
         await self.connection.commit()
 
-    async def is_table_empty(self) -> bool:
+    async def is_table_configured(self) -> bool:
         """
-        Checks if the table is empty.
+        Checks if the table is having one row.
 
         Parameters
         ----------
@@ -106,18 +171,21 @@ class ChannelCog:
 
         Returns
         -------
-        result : bool
-            True if the table is empty, False otherwise.
+        bool
+            True if the table is having one row, False otherwise.
         """
 
         async with self.connection.execute(
             """
-            SELECT * FROM channel
+            SELECT COUNT(*) FROM channel
         """
         ) as cursor:
             result = await cursor.fetchone()
 
-        return result is None
+        if result[0] == 1:
+            return True
+
+        return False
 
     async def update_channel(self):
         await self.connection.execute(
@@ -177,9 +245,10 @@ class ChannelCog:
     async def add_channel(self):
         await self.connection.execute(
             """
-            INSERT INTO channel (streamer_channel, prefix, coin_name, income, timeout) VALUES (?, ?, ?, ?, ?)
+            INSERT INTO channel (bot_name, streamer_channel, prefix, coin_name, income, timeout) VALUES (?, ?, ?, ?, ?, ?)
         """,
             (
+                self.bot_name,
                 self.streamer_channel,
                 self.prefix,
                 self.coin_name,
@@ -190,3 +259,31 @@ class ChannelCog:
 
         await self.connection.commit()
         logger.debug("Channel added successfully.")
+
+    async def get_env(self):
+        """
+        Gets the environment variables.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        cfg : dict
+            The environment variables.
+        """
+
+        cfg = {}
+
+        if os.getenv("TWITCH_SECRET_TOKEN"):
+            cfg["TWITCH_SECRET_TOKEN"] = os.getenv("TWITCH_SECRET_TOKEN")
+        else:
+            cfg["TWITCH_SECRET_TOKEN"] = ""
+
+        if os.getenv("TWITCH_CLIENT_TOKEN"):
+            cfg["TWITCH_CLIENT_TOKEN"] = os.getenv("TWITCH_CLIENT_TOKEN")
+        else:
+            cfg["TWITCH_CLIENT_TOKEN"] = ""
+
+        return cfg
