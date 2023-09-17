@@ -1,0 +1,75 @@
+  <body class="bg-body-tertiary">
+    
+<div class="container">
+  <main>
+    <div class="py-5 text-center">
+      <img class="d-block mx-auto mb-4" src="/docs/5.3/assets/brand/bootstrap-logo.svg" alt="" width="72" height="57">
+      <h2>Settings</h2>
+    </div>
+
+      <div class="col-md-7 col-lg-8">
+        <h4 class="mb-3">Config File</h4>
+        <form novalidate method="post">
+          <div class="row g-3">
+            <div class="col-12">
+              <label for="bot_name" class="form-label">Bot Name</label>
+              <input type="text" class="form-control" id="bot_name" name="bot_name" value="{{ message['bot_name'] }}" placeholder="" required>
+              <div class="invalid-feedback">
+                Please enter your shipping address.
+              </div>
+            </div>
+
+            <div class="col-12">
+                <label for="streamer_channel" class="form-label">Steamer Channel</label>
+                <input type="text" class="form-control" id="streamer_channel" name="streamer_channel" value="{{ message['streamer_channel'] }}" placeholder="" required>
+                <div class="invalid-feedback">
+                  Please enter your shipping address.
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="col-12">
+                <label for="prefix" class="form-label">Prefix</label>
+                <input type="text" class="form-control" id="prefix" name="prefix" value="{{ message['prefix'] }}"  placeholder="" required>
+                <div class="invalid-feedback">
+                  Please enter your shipping address.
+                </div>
+              </div>
+
+              <div class="col-12">
+                <label for="coin_name" class="form-label">Coin Name</label>
+                <input type="text" class="form-control" id="coin_name" name="coin_name" value="{{ message['coin_name'] }}" placeholder="" required>
+                <div class="invalid-feedback">
+                  Please enter your shipping address.
+                </div>
+              </div>
+
+              <hr class="my-4">
+
+              <div class="col-12">
+                <label for="default_income" class="form-label">Default Income</label>
+                <input type="text" class="form-control" id="default_income" name="default_income" value="{{ message['default_income'] }}"  placeholder="" required>
+                <div class="invalid-feedback">
+                  Please enter your shipping address.
+                </div>
+              </div>
+
+              <div class="col-12">
+                <label for="default_timeout" class="form-label">Default Timeout</label>
+                <input type="text" class="form-control" id="default_timeout" name="default_timeout" value="{{ message['default_timeout'] }}"  placeholder="" required>
+                <div class="invalid-feedback">
+                  Please enter your shipping address.
+                </div>
+              </div>
+
+          <hr class="my-4">
+
+          <button class="w-100 btn btn-primary btn-lg" type="submit">Save</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+</div>
+</html>

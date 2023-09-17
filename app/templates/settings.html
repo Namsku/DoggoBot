@@ -1,0 +1,15 @@
+{% block header %}
+    {% include "header.html" %}
+{% endblock %}
+
+<body>
+    <main class="d-flex flex-nowrap">
+        {% block sidebar %}
+            {% include "sidebar.html" %}
+        {% endblock %}
+
+        {% block content %}
+            {% include "content_settings.html" %}
+        {% endblock %}
+    </main>
+</body>

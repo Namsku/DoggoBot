@@ -1,0 +1,89 @@
+<div class="container-fluid">
+
+    <!-- Divider -->
+    <hr class="sidebar-divider my-0">
+
+    <!-- Page Heading -->
+    <div class="p-2 text-black">
+        <h1 class="h3">Dashboard</h1>
+    </div>
+
+    <!-- Content Row -->
+    <div class="row">
+
+        <!-- Follower Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs text-primary font-weight-bold mb-1">
+                                Followers</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"> {{ message['followers_count'] }} </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-comments fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subscriber Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-secondary  mb-1">
+                                Subscribers
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">???</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-comments fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Top Chatter -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger  mb-1">
+                                Top Chatter</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><a href=/user/{{ message['top_chatter'] }}>{{ message['top_chatter'] }}</a></a></div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-comments fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Top Chatter -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success  mb-1">
+                                Top Command</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">???</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-comments fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
