@@ -1,11 +1,11 @@
 from modules.bot import Bot
-from modules.config import Config
 
 from fastapi import FastAPI, APIRouter, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
 from json import dumps
+
 
 class Server(Bot):
     def __init__(self, bot: Bot, app: FastAPI):
@@ -17,10 +17,10 @@ class Server(Bot):
 
         self.router.add_api_route("/", self.home, methods=["GET"])
         self.router.add_api_route("/chat", self.chat, methods=["GET"])
-        
+
         self.router.add_api_route("/curse", self.curse, methods=["GET"])
         self.router.add_api_route("/games", self.games, methods=["GET"])
-        
+
         self.router.add_api_route("/mods", self.mods, methods=["GET"])
         self.router.add_api_route("/overlay", self.overlay, methods=["GET"])
         self.router.add_api_route("/rpg", self.rpg, methods=["GET"])
@@ -28,41 +28,63 @@ class Server(Bot):
         self.router.add_api_route("/sfx", self.sfx, methods=["GET"])
 
         self.router.add_api_route("/user/{name}", self.user, methods=["GET"])
-        
+
         self.app.include_router(self.router)
 
     async def home(self, request: Request):
-        message = {
-            'followers_count': len(self.bot.channel_members),
-            'top_chatter' : await self.bot.get_top_chatter(),
-        }
-        return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
-    
+        if self.bot.channel_members:
+            message = {
+                "bot_is_configured": True,
+                "followers_count": len(self.bot.channel_members),
+                "top_chatter": await self.bot.get_top_chatter(),
+            }
+        else:
+            message = {
+                "bot_is_configured": False,
+                "followers_count": "X",
+                "top_chatter": "No one",
+            }
+
+        return self.templates.TemplateResponse(
+            "index.html", {"request": request, "message": message}
+        )
+
     async def chat(self, request: Request):
-        return self.templates.TemplateResponse("index.html", {"request": request, "bot": self.bot})
+        return self.templates.TemplateResponse(
+            "index.html", {"request": request, "bot": self.bot}
+        )
 
     async def sfx(self, request: Request):
-        return self.templates.TemplateResponse("index.html", {"request": request, "bot": self.bot})
+        return self.templates.TemplateResponse(
+            "index.html", {"request": request, "bot": self.bot}
+        )
 
     async def curse(self, request: Request):
-        return self.templates.TemplateResponse("index.html", {"request": request, "bot": self.bot})
+        return self.templates.TemplateResponse(
+            "index.html", {"request": request, "bot": self.bot}
+        )
 
     async def overlay(self, request: Request):
-        return self.templates.TemplateResponse("overlay.html", {"request": request, "message": self.bot})
+        return self.templates.TemplateResponse(
+            "overlay.html", {"request": request, "message": self.bot}
+        )
 
     async def rpg(self, request: Request):
-        return self.templates.TemplateResponse("index.html", {"request": request, "bot": self.bot})
-    
+        return self.templates.TemplateResponse(
+            "index.html", {"request": request, "bot": self.bot}
+        )
+
     async def mods(self, request: Request):
-        return self.templates.TemplateResponse("index.html", {"request": request, "bot": self.bot})
-    
+        return self.templates.TemplateResponse(
+            "index.html", {"request": request, "bot": self.bot}
+        )
+
     async def games(self, request: Request):
-        return self.templates.TemplateResponse("index.html", {"request": request, "bot": self.bot})
+        return self.templates.TemplateResponse(
+            "index.html", {"request": request, "bot": self.bot}
+        )
 
     async def settings(self, request: Request):
-        config = Config()
-        message = Config().content
-        
         if request.method == "POST":
             form = await request.form()
 
@@ -78,17 +100,24 @@ class Server(Bot):
             config.save_config(cfg)
             message = config.content
 
-            return self.templates.TemplateResponse("settings.html", {"request": request, "message": message})
+            return self.templates.TemplateResponse(
+                "settings.html", {"request": request, "message": message}
+            )
         elif request.method == "GET":
+            return self.templates.TemplateResponse(
+                "settings.html", {"request": request, "message": message}
+            )
 
-            return self.templates.TemplateResponse("settings.html", {"request": request, "message": message})
-    
     async def overlay(self, request: Request):
-        return self.templates.TemplateResponse("index.html", {"request": request, "bot": self.bot})
-    
+        return self.templates.TemplateResponse(
+            "index.html", {"request": request, "bot": self.bot}
+        )
+
     async def user(self, request: Request, name: str):
         message = {
-            'user': await self.bot.user.get_user(name),
-            'avatar': await self.bot.user.get_user_avatar(name)
+            "user": await self.bot.user.get_user(name),
+            "avatar": await self.bot.user.get_user_avatar(name),
         }
-        return self.templates.TemplateResponse("user.html", {"request": request, "message": message})
+        return self.templates.TemplateResponse(
+            "user.html", {"request": request, "message": message}
+        )
