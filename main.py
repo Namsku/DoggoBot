@@ -69,38 +69,22 @@ async def create_bot(channel: ChannelCog) -> Bot:
     return bot
 
 
-def security_check():
-    """
-    Checks if the script is running with admin privileges.
+def check_admin():
+    """Check if the script is running as root or administrator on any operating system.
 
-    Parameters
-    ----------
-    None
-
-    Returns
-    -------
-    None
+    Returns:
+        True if the script is running as root or administrator, False otherwise.
     """
 
-    # if script is running as admin quit with error (all operating systems)
-    if os.getuid() == 0:
-        logger.error("Do not run this script as root!")
-        exit(1)
-
-    # if script is running with admin privileges quit with error (Windows)
-    if os.name == "nt" and os.getenv("USERNAME") == "Administrator":
-        logger.error("Do not run this script as Administrator!")
-        exit(1)
-
-    # if script is running with admin privileges quit with error (macOS)
-    if os.name == "posix" and os.getuid() == 0:
-        logger.error("Do not run this script as root!")
-        exit(1)
-
-    # if script is running with admin privileges quit with error (Linux)
-    if os.name == "posix" and os.getenv("SUDO_USER") == "root":
-        logger.error("Do not run this script as root!")
-        exit(1)
+    if os.name == "nt" and os.getenv("USERNAME") in ["Administrator", "SYSTEM"]:
+        # On Windows, the "SYSTEM" user is also an administrator.
+        return True
+    elif os.name == "posix" and (
+        os.getuid() == 0 or os.getenv("SUDO_USER") or os.getenv("USER") == "root"
+    ):
+        return True
+    else:
+        return False
 
 
 async def main() -> None:
@@ -143,6 +127,10 @@ if __name__ == "__main__":
     -------
     None
     """
+
+    if check_admin():
+        logger.error("Please do not run the bot as root or administrator.")
+        exit(1)
 
     try:
         asyncio.run(main())

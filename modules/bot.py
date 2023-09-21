@@ -2,6 +2,7 @@ from modules.logger import Logger
 from modules.user import UserCog
 from modules.sfx import SFXCog
 from modules.channel import ChannelCog
+from modules.message import MessageCog
 
 import aiosqlite
 
@@ -63,6 +64,9 @@ class Bot(commands.Bot):
 
     async def __ainit__(self, channel: ChannelCog) -> None:
         self.connection_channel = channel.connection
+        self.connection_message = await aiosqlite.connect(
+            "data/database/message.sqlite"
+        )
         self.connection_user = await aiosqlite.connect("data/database/user.sqlite")
         self.connection_sfx = await aiosqlite.connect("data/database/sfx.sqlite")
         self.logger.debug("Database connection established.")
@@ -70,6 +74,7 @@ class Bot(commands.Bot):
         self.channel = channel
         self.sfx = SFXCog(self.connection_sfx)
         self.user = UserCog(self.channel, self.connection_user)
+        self.message = MessageCog(self.connection_message)
         self.logger.debug("Cogs initialized.")
 
         await self.channel.create_table()
@@ -80,10 +85,16 @@ class Bot(commands.Bot):
         if os.getenv("TWITCH_SECRET_TOKEN") and os.getenv("TWITCH_CLIENT_TOKEN"):
             await self.get_channel_members()
             self.logger.debug("Channel members fetched.")
+
             await self.user.get_bots()
             self.logger.debug("Bots fetched.")
+
+            # await self.get_channel_mods()
+            # self.logger.debug("Mods fetched.")
+
             await self.user.update_user_database(self.channel_members)
             self.logger.debug("Users updated.")
+
             self.initialized = True
 
     async def __aclose__(self) -> None:
@@ -140,6 +151,8 @@ class Bot(commands.Bot):
         -------
         None
         """
+        await self.message.add_message(message)
+
         name = message.author.name.lower() if message.author else self.bot_name.lower()
         if not await self.user.get_user(name):
             await self.user.add_user(name)
@@ -218,11 +231,28 @@ class Bot(commands.Bot):
         user : twitchio.User
             The user object.
 
-        Returns4
+        Returns
         -------
         None
         """
         self.logger.info(f"{user.name} left")
+
+    async def get_channel_mods(self) -> None:
+        """
+        Gets the channel mods.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+
+        self.user.mods = [
+            mod.name.lower() for mod in await client.fetch_moderators(self.bot.token)
+        ]
 
     async def get_channel_members(self) -> None:
         """
@@ -314,6 +344,54 @@ class Bot(commands.Bot):
             f" 📢 Please give a look to our Doggo >>> {user} <<<, "
             f"Take a look at his twitch channel (twitch.tv/{str.lower(user)})"
         )
+
+    @commands.command(name="topchatter")
+    async def topchatter(self, ctx: commands.Context) -> None:
+        """
+        Gets the top chatter.
+
+        Parameters
+        ----------
+        ctx : twitchio.Context
+            The context object.
+
+        Returns
+        -------
+        None
+        """
+
+        if len(ctx.message.content.split()) != 1:
+            await ctx.send(f"Usage: !topchatter")
+            return
+
+        user = await self.user.get_top_chatter()
+
+        if user:
+            await ctx.send(f"The top chatter is {user}")
+        else:
+            await ctx.send(f"No top chatter found.")
+
+    @commands.command(name="clip")
+    async def clip(self, ctx: commands.Context) -> None:
+        """
+        Creates a clip.
+
+        Parameters
+        ----------
+        ctx : twitchio.Context
+            The context object.
+
+        Returns
+        -------
+        None
+        """
+
+        if len(ctx.message.content.split()) != 1:
+            await ctx.send(f"Usage: !clip")
+            return
+
+        await ctx.send(f"Creating clip...")
+        await ctx.channel.create_clip()
 
     @commands.command(name="followage")
     async def followage(self, ctx: commands.Context) -> None:

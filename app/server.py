@@ -21,6 +21,13 @@ class Server(Bot):
         self.router.add_api_route("/curse", self.curse, methods=["GET"])
         self.router.add_api_route("/games", self.games, methods=["GET"])
 
+        self.router.add_api_route(
+            "/api/chatters_stats", self.get_top_chatter, methods=["GET"]
+        )
+        self.router.add_api_route(
+            "/api/users_stats", self.get_users_stats, methods=["GET"]
+        )
+
         self.router.add_api_route("/mods", self.mods, methods=["GET"])
         self.router.add_api_route("/overlay", self.overlay, methods=["GET"])
         self.router.add_api_route("/rpg", self.rpg, methods=["GET"])
@@ -36,6 +43,12 @@ class Server(Bot):
 
         if request.method == "POST":
             try:
+                self.bot.super().__init__(
+                    token=self.token,
+                    prefix=self.prefix,
+                    initial_channels=[self.channel_id],
+                )
+
                 await self.bot.__ainit__(self.bot.channel)
             except Exception as e:
                 self.bot.logger.error(f"Error while initializing bot: {e}")
@@ -46,7 +59,8 @@ class Server(Bot):
                 {
                     "bot_is_active": True,
                     "bot_is_configured": True,
-                    "followers_count": len(self.bot.channel_members),
+                    "followers_count": len(await self.bot.user.get_followers()),
+                    "subscriber_count": len(await self.bot.user.get_subscribers()),
                     "top_chatter": await self.bot.get_top_chatter(),
                 }
             )
@@ -63,8 +77,10 @@ class Server(Bot):
         )
 
     async def chat(self, request: Request):
+        message = {}
+
         return self.templates.TemplateResponse(
-            "index.html", {"request": request, "bot": self.bot}
+            "chat.html", {"request": request, "message": message}
         )
 
     async def sfx(self, request: Request):
@@ -119,17 +135,18 @@ class Server(Bot):
 
             self.bot.token = (bot_env["TWITCH_CLIENT_TOKEN"],)
             self.bot.prefix = (self.bot.channel.prefix,)
-            self.bot.initial_channels = ([self.channel.streamer_channel],)
+            self.bot.initial_channels = ([self.bot.channel.streamer_channel],)
 
             message = {
-                "secret_token": bot_env["TWTICH_SECRET_TOKEN"],
+                "status": "success",
+                "secret_token": bot_env["TWITCH_SECRET_TOKEN"],
                 "client_token": bot_env["TWITCH_CLIENT_TOKEN"],
-                "bot_name": channel.bot_name,
-                "streamer_channel": channel.streamer_channel,
-                "prefix": channel.prefix,
-                "coin_name": channel.coin_name,
-                "default_income": channel.income,
-                "default_timeout": channel.timeout,
+                "bot_name": self.bot.channel.bot_name,
+                "streamer_channel": self.bot.channel.streamer_channel,
+                "prefix": self.bot.channel.prefix,
+                "coin_name": self.bot.channel.coin_name,
+                "default_income": self.bot.channel.income,
+                "default_timeout": self.bot.channel.timeout,
             }
 
             return self.templates.TemplateResponse(
@@ -140,6 +157,7 @@ class Server(Bot):
             bot_env = await self.bot.channel.get_env()
 
             message = {
+                "status": "none",
                 "secret_token": bot_env["TWITCH_SECRET_TOKEN"],
                 "client_token": bot_env["TWITCH_CLIENT_TOKEN"],
                 "bot_name": channel.bot_name,
@@ -154,11 +172,6 @@ class Server(Bot):
                 "settings.html", {"request": request, "message": message}
             )
 
-    async def overlay(self, request: Request):
-        return self.templates.TemplateResponse(
-            "index.html", {"request": request, "bot": self.bot}
-        )
-
     async def user(self, request: Request, name: str):
         message = {
             "user": await self.bot.user.get_user(name),
@@ -166,4 +179,32 @@ class Server(Bot):
         }
         return self.templates.TemplateResponse(
             "user.html", {"request": request, "message": message}
+        )
+
+    async def get_top_chatter(self):
+        chatters = await self.bot.user.get_top5_chatters()
+        return dumps(chatters, indent=None)
+
+    def sort_dict_by_descending_values(self, dict1):
+        temp = sorted(dict1.items(), key=lambda x: x[1], reverse=True)
+        res = {k: v for k, v in temp}
+        return res
+
+    # Get the number of followers, subscribers, bots, and user without any of those roles
+    async def get_users_stats(self):
+        followers = await self.bot.user.get_followers()
+        subscribers = await self.bot.user.get_subscribers()
+        bots = await self.bot.user.get_user_bots()
+        users = await self.bot.user.get_users_with_no_roles()
+
+        results = {
+            "followers": len(followers),
+            "subscribers": len(subscribers),
+            "bots": len(bots),
+            "no roles": len(users),
+        }
+
+        return dumps(
+            self.sort_dict_by_descending_values(results),
+            indent=None,
         )

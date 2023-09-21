@@ -1,0 +1,59 @@
+<div class="container">
+        <div class="row">
+            <div class="col-12 mt-4">
+                <div class="card">
+                    <div class="card-header">IRC Chat</div>
+                    <div class="card-body chatbox" id="chatbox">
+                        <!-- Chat messages will appear here -->
+                    </div>
+                    <div class="card-footer">
+                        <div class="input-group">
+                            <input type="text" id="messageInput" class="form-control" placeholder="Enter your message">
+                                <button class="btn btn-primary xs" id="sendMessageBtn">Send</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+        // Function to send a message
+        function sendMessage() {
+            var message = $('#messageInput').val();
+            if (message.trim() !== '') {
+              $('#chatbox').append(`
+                  <div class="row">
+                      <div class="col-12">
+                          <div class="message-box">
+                              <div class="message-box-content">
+                                  <p class="card-text">${message}</p>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              `);
+
+
+
+                $('#messageInput').val('');
+                // Scroll to the bottom of the chatbox
+                $('#chatbox').scrollTop($('#chatbox')[0].scrollHeight);
+            }
+        }
+
+        // Send message when the "Send" button is clicked
+        $('#sendMessageBtn').click(function() {
+            sendMessage();
+        });
+
+        // Send message when Enter key is pressed
+        $('#messageInput').keypress(function(event) {
+            if (event.which === 13) {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>

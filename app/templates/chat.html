@@ -1,0 +1,15 @@
+{% block header %}
+    {% include "header.html" %}
+{% endblock %}
+
+<body class="bg-body-tertiary">
+    <main class="d-flex">
+        {% block sidebar %}
+            {% include "sidebar.html" %}
+        {% endblock %}
+
+        {% block content %}
+            {% include "content_chat.html" %}
+        {% endblock %}
+    </main>
+</body>

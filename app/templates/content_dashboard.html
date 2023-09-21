@@ -1,118 +1,153 @@
 <div class="container scrollable-container">
-    <!-- Divider -->
-    <hr class="sidebar-divider my-0">
-
-    {% if message['error'] is defined %}
-        <div class="alert alert-danger mb-4 mt-4" role="alert" >
-            {{ message['error'] }}
+  <!-- Divider -->
+  <hr class="sidebar-divider my-0"> {% if message['error'] is defined %} <div class="alert alert-danger mb-4 mt-4" role="alert">
+    {{ message['error'] }}
+  </div> {% endif %}
+  <!-- A stylish and aesthetic Page Heading with Dashbard as title with some marge from the top -->
+  <div class="d-sm-flex align-items-center justify-content-between mb-4 mt-4">
+    <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
+  </div>
+  <hr class="my-4">
+  <!-- Content Row -->
+  <div class="row">
+    <!-- Bot is not configured - So Alert card in red --> {% if message['bot_is_active'] == False %} <div class="col-xl-12 col-md-12 mb-4">
+      <div class="card border-left-warning shadow h-100 py-2">
+        <div class="card-body text-center">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2"> {% if message['bot_is_active'] == False %} <h1 class="h3 mb-0 font-weight-bold text-gray-800">Your bot is not active!</h1>
+              <br>
+              <form novalidate method="post">
+                <a href="/settings" class="w-2 btn btn-primary btn-lg">Configure</a>
+                <button class="w-1 btn btn-warning btn-lg" type="submit">Activate</button>
+              </form> {% endif %}
+            </div>
+          </div>
         </div>
-    {% endif %}
-
-    <!-- A stylish and aesthetic Page Heading with Dashbard as title with some marge from the top -->
-    <div class="d-sm-flex align-items-center justify-content-between mb-4 mt-4">
-        <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
+      </div>
+    </div> {% else %}
+    <!-- Follower Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-warning shadow h-100">
+        <div class="card-header">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-people-fill" viewBox="0 0 16 16">
+            <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7Zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm-5.784 6A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h4.216ZM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
+          </svg> Followers
+        </div>
+        <div class="card-body">
+          <div class="row no-gutters">
+            <div class="col mr-2">
+              <div class="h5 mb-0 font-weight-bold text-gray-800"> {{ message['followers_count'] }} </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-comments fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-
-    <!-- Content Row -->
-    <div class="row">
-
-        <!-- Bot is not configured - So Alert card in red -->
-        {% if message['bot_is_active'] == False %}
-        <div class="col-xl-12 col-md-12 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body text-center">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            {% if message['bot_is_active'] == False %}
-                                <h1 class="h3 mb-0 font-weight-bold text-gray-800">Your bot is not active!</h1>
-                                <br>
-                                <form novalidate method="post">
-                                    <a href="/settings" class="w-2 btn btn-primary btn-lg">Configure</a>
-                                    <button class="w-1 btn btn-warning btn-lg" type="submit">Activate</button>
-                                </form>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <!-- Subscriber Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-warning shadow h-100">
+        <div class="card-header">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-heart-fill" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z" />
+          </svg> Subscribers
         </div>
-        {% else %}
-<!-- Follower Card -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs text-primary font-weight-bold mb-1">
-                                Followers</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800"> {{ message['followers_count'] }} </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-comments fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ message['subscriber_count'] }}</div>
             </div>
-        </div>
-
-        <!-- Subscriber Card -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-secondary  mb-1">
-                                Subscribers
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">???</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-comments fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
+            <div class="col-auto">
+              <i class="fas fa-comments fa-2x text-gray-300"></i>
             </div>
+          </div>
         </div>
-
-
-        <!-- Top Chatter -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-danger  mb-1">
-                                Top Chatter</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800"><a href=/user/{{ message['top_chatter'] }}>{{ message['top_chatter'] }}</a></a></div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-comments fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-
-        <!-- Top Chatter -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success  mb-1">
-                                Top Command</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">???</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-comments fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        
+      </div>
     </div>
+    <!-- Top Chatter -->
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-warning shadow h-100">
+        <div class="card-header">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chat-dots-fill" viewBox="0 0 16 16">
+            <path d="M16 8c0 3.866-3.582 7-8 7a9.06 9.06 0 0 1-2.347-.306c-.584.296-1.925.864-4.181 1.234-.2.032-.352-.176-.273-.362.354-.836.674-1.95.77-2.966C.744 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7zM5 8a1 1 0 1 0-2 0 1 1 0 0 0 2 0zm4 0a1 1 0 1 0-2 0 1 1 0 0 0 2 0zm3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" />
+          </svg> Most Active User
+        </div>
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                <a href=/user/{{ message['top_chatter'] }}>{{ message['top_chatter'] }}</a>
+                </a>
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-comments fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Top Chatter -->
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-warning shadow h-100 ">
+        <div class="card-header">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-terminal-fill" viewBox="0 0 16 16">
+            <path d="M0 3a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3zm9.5 5.5h-3a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1zm-6.354-.354a.5.5 0 1 0 .708.708l2-2a.5.5 0 0 0 0-.708l-2-2a.5.5 0 1 0-.708.708L4.793 6.5 3.146 8.146z" />
+          </svg> Most Popular Command
+        </div>
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="h5 mb-0 font-weight-bold text-gray-800">-</div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-comments fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <hr class="my-4">
+    <div class="container">
+      <div class="row">
+        <div class="col">
+          <div class="card">
+            <div class="card-header">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chat-square-quote-fill" viewBox="0 0 16 16">
+                <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.5a1 1 0 0 0-.8.4l-1.9 2.533a1 1 0 0 1-1.6 0L5.3 12.4a1 1 0 0 0-.8-.4H2a2 2 0 0 1-2-2V2zm7.194 2.766a1.688 1.688 0 0 0-.227-.272 1.467 1.467 0 0 0-.469-.324l-.008-.004A1.785 1.785 0 0 0 5.734 4C4.776 4 4 4.746 4 5.667c0 .92.776 1.666 1.734 1.666.343 0 .662-.095.931-.26-.137.389-.39.804-.81 1.22a.405.405 0 0 0 .011.59c.173.16.447.155.614-.01 1.334-1.329 1.37-2.758.941-3.706a2.461 2.461 0 0 0-.227-.4zM11 7.073c-.136.389-.39.804-.81 1.22a.405.405 0 0 0 .012.59c.172.16.446.155.613-.01 1.334-1.329 1.37-2.758.942-3.706a2.466 2.466 0 0 0-.228-.4 1.686 1.686 0 0 0-.227-.273 1.466 1.466 0 0 0-.469-.324l-.008-.004A1.785 1.785 0 0 0 10.07 4c-.957 0-1.734.746-1.734 1.667 0 .92.777 1.666 1.734 1.666.343 0 .662-.095.931-.26z" />
+              </svg> Top 5 Chatters
+            </div>
+            <div class="card-body">
+              <div class="pie-chart-container">
+                <canvas id="chatters-histogram"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="card">
+            <div class="card-header">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-twitch" viewBox="0 0 16 16">
+                <path d="M3.857 0 1 2.857v10.286h3.429V16l2.857-2.857H9.57L14.714 8V0H3.857zm9.714 7.429-2.285 2.285H9l-2 2v-2H4.429V1.143h9.142v6.286z" />
+                <path d="M11.857 3.143h-1.143V6.57h1.143V3.143zm-3.143 0H7.571V6.57h1.143V3.143z" />
+              </svg> User Ratio
+            </div>
+            <div class="card-body">
+              <div class="pie-chart-container">
+                <canvas id="user-chart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      window.onload = async function() {
+        await top_chatters_stats()
+        await user_stats_pie()
+        await user_stats_stack()
+      };
+    </script> {% endif %}
+  </div>
 </div>

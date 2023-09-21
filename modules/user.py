@@ -1,10 +1,10 @@
-
 from modules.logger import Logger
 from modules.channel import ChannelCog
 
 import aiohttp
 import aiosqlite
 from dataclasses import dataclass
+
 
 @dataclass
 class User:
@@ -18,6 +18,7 @@ class User:
     bot: bool
     follower: bool
     subscriber: bool
+    mod: bool
 
     # Game/SFX settings
     gamble_lock: str
@@ -31,25 +32,47 @@ class User:
     warning: int
 
 
-class UserCog():
+class UserCog:
     def __init__(self, channel: ChannelCog, connection: aiosqlite.Connection):
-        self.bots = None
+        self.bots = []
+        self.mods = []
         self.connection = connection
         self.channel = channel
         self.logger = Logger(__name__)
 
-    async def get_bots(self) -> None:
-        '''
-        Gets a list of all bots from TwitchInsights.
-        
+    async def get_mods_from_channel(self) -> None:
+        """
+        Gets a list of all mods from the channel.
+
         Parameters
         ----------
         None
-        
+
         Returns
         -------
         None
-        '''
+        """
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                f"https://tmi.twitch.tv/group/user/{self.channel.streamer_channel}/chatters"
+            ) as response:
+                json_file = await response.json()
+
+        if json_file:
+            self.mods = json_file["chatters"]["moderators"]
+
+    async def get_bots(self) -> None:
+        """
+        Gets a list of all bots from TwitchInsights.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 "https://api.twitchinsights.net/v1/bots/all"
@@ -58,22 +81,22 @@ class UserCog():
 
         if json_file:
             self.bots = [x[0] for x in json_file["bots"]]
-    
+
     async def is_bot(self, username: str) -> bool:
-        '''
+        """
         Checks if a user is a bot.
-        
+
         Parameters
         ----------
-        
+
         username : str
             The username to check.
-            
+
         Returns
         -------
             bool
                 True if the user is a bot, False otherwise.
-        '''
+        """
         if self.bots is None:
             await self.get_bots()
 
@@ -81,19 +104,19 @@ class UserCog():
             return True
         else:
             return False
-        
+
     async def create_table(self):
-        '''
+        """
         Creates a table in the database.
-        
+
         Parameters
         ----------
         None
-        
+
         Returns
         -------
         None
-        '''
+        """
         await self.connection.execute(
             """
             CREATE TABLE IF NOT EXISTS users (
@@ -104,6 +127,7 @@ class UserCog():
                 bot INTEGER,
                 follower INTEGER,
                 subscriber INTEGER,
+                mod INTEGER,
                 gamble_lock TEXT,
                 roll_lock TEXT,
                 rpg_lock TEXT,
@@ -158,6 +182,19 @@ class UserCog():
 
         return [User(*user) for user in result]
 
+    async def get_users_with_no_roles(self) -> list[User]:
+        async with self.connection.execute(
+            """
+            SELECT * FROM users WHERE bot = 0 AND follower = 0 AND subscriber = 0 AND mod = 0
+        """
+        ) as cursor:
+            result = await cursor.fetchall()
+
+        if result is None:
+            return None
+
+        return [User(*user) for user in result]
+
     async def get_all_usernames(self) -> list[str]:
         async with self.connection.execute(
             """
@@ -170,6 +207,19 @@ class UserCog():
             return None
 
         return [user[0] for user in result]
+
+    async def get_user_bots(self) -> list[User]:
+        async with self.connection.execute(
+            """
+            SELECT * FROM users WHERE bot = 1
+        """
+        ) as cursor:
+            result = await cursor.fetchall()
+
+        if result is None:
+            return None
+
+        return [User(*user) for user in result]
 
     async def get_followers(self) -> list[User]:
         async with self.connection.execute(
@@ -193,7 +243,7 @@ class UserCog():
             result = await cursor.fetchall()
 
         if result is None:
-            return None
+            return 0
 
         return [User(*user) for user in result]
 
@@ -261,6 +311,7 @@ class UserCog():
                 bot, 
                 follower, 
                 subscriber, 
+                mod,
                 gamble_lock, 
                 roll_lock, 
                 rpg_lock, 
@@ -273,6 +324,7 @@ class UserCog():
                 ?, 
                 ?, 
                 0,
+                0, 
                 0, 
                 0, 
                 0, 
@@ -300,7 +352,55 @@ class UserCog():
             (username,),
         )
         await self.connection.commit()
-    
+
+    async def update_user(self, user: User) -> None:
+        await self.connection.execute(
+            """
+            UPDATE users SET 
+                income = ?, 
+                message_count = ?,
+                bot = ?, 
+                follower = ?, 
+                subscriber = ?, 
+                mod = ?,
+                gamble_lock = ?, 
+                roll_lock = ?, 
+                rpg_lock = ?, 
+                sfx_lock = ?, 
+                slots_lock = ?, 
+                ban_time = ?, 
+                warning = ?
+            WHERE username = ?
+        """,
+            (
+                user.income,
+                user.message_count,
+                user.bot,
+                user.follower,
+                user.subscriber,
+                user.mod,
+                user.gamble_lock,
+                user.roll_lock,
+                user.rpg_lock,
+                user.sfx_lock,
+                user.slots_lock,
+                user.ban_time,
+                user.warning,
+                user.username,
+            ),
+        )
+        await self.connection.commit()
+
+    async def update_user_mod(self, username: str, mod: bool) -> None:
+        await self.connection.execute(
+            """
+            UPDATE users SET mod = ? WHERE username = ?
+        """,
+            (mod, username),
+        )
+        await self.connection.commit()
+        self.logger.debug(f"Updated {username} to mod: {mod}")
+
     async def update_user_income(self, username: str, income: int) -> None:
         await self.connection.execute(
             """
@@ -318,7 +418,8 @@ class UserCog():
             (bot, username),
         )
         await self.connection.commit()
-    
+        self.logger.debug(f"Updated {username} to bot: {bot}")
+
     async def update_user_follower(self, username: str, follower: bool) -> None:
         await self.connection.execute(
             """
@@ -326,8 +427,10 @@ class UserCog():
         """,
             (follower, username),
         )
+
         await self.connection.commit()
-    
+        self.logger.debug(f"Updated {username} to follower: {follower}")
+
     async def update_user_subscriber(self, username: str, subscriber: bool) -> None:
         await self.connection.execute(
             """
@@ -336,7 +439,7 @@ class UserCog():
             (subscriber, username),
         )
         await self.connection.commit()
-    
+
     async def update_user_gamble_lock(self, username: str, gamble_lock: str) -> None:
         await self.connection.execute(
             """
@@ -345,7 +448,7 @@ class UserCog():
             (gamble_lock, username),
         )
         await self.connection.commit()
-    
+
     async def update_user_roll_lock(self, username: str, roll_lock: str) -> None:
         await self.connection.execute(
             """
@@ -354,7 +457,7 @@ class UserCog():
             (roll_lock, username),
         )
         await self.connection.commit()
-    
+
     async def update_user_rpg_lock(self, username: str, rpg_lock: str) -> None:
         await self.connection.execute(
             """
@@ -363,7 +466,7 @@ class UserCog():
             (rpg_lock, username),
         )
         await self.connection.commit()
-    
+
     async def update_user_sfx_lock(self, username: str, sfx_lock: str) -> None:
         await self.connection.execute(
             """
@@ -372,7 +475,7 @@ class UserCog():
             (sfx_lock, username),
         )
         await self.connection.commit()
-    
+
     async def update_user_slots_lock(self, username: str, slots_lock: str) -> None:
         await self.connection.execute(
             """
@@ -381,7 +484,7 @@ class UserCog():
             (slots_lock, username),
         )
         await self.connection.commit()
-    
+
     async def update_user_ban_time(self, username: str, ban_time: str) -> None:
         await self.connection.execute(
             """
@@ -390,7 +493,7 @@ class UserCog():
             (ban_time, username),
         )
         await self.connection.commit()
-    
+
     async def update_user_warning(self, username: str, warning: int) -> None:
         await self.connection.execute(
             """
@@ -401,18 +504,18 @@ class UserCog():
         await self.connection.commit()
 
     async def update_user_database(self, channel_members: list[str]) -> None:
-        '''
+        """
         Updates the user database.
-        
+
         Parameters
         ----------
         channel_members : list[str]
             A list of all users in the channel.
-            
+
         Returns
         -------
         None
-        '''
+        """
         usernames = await self.get_all_usernames()
 
         for username in channel_members:
@@ -424,21 +527,27 @@ class UserCog():
         for username in usernames:
             if username not in channel_members:
                 await self.update_user_follower(username, False)
-                
+
+            if username in self.bots:
+                await self.update_user_bot(username, True)
+
+            if username in self.mods:
+                await self.update_user_mod(username, True)
+
     async def get_followage(self, username: str) -> str:
-        '''
+        """
         Gets the followage of a user.
-        
+
         Parameters
         ----------
         username : str
             The username to check.
-            
+
         Returns
         -------
         str
             The followage of the user.
-        '''
+        """
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 f"https://beta.decapi.me/twitch/followage/{self.channel.streamer_channel}/{username}"
@@ -446,45 +555,45 @@ class UserCog():
                 followage = await response.text()
 
         return followage
-    
+
     async def get_top_chatter(self) -> str:
-        '''
+        """
         Gets the top chatter.
-        
+
         Parameters
         ----------
         None
-        
+
         Returns
         -------
         str
             The top chatter.
-        '''
+        """
         async with self.connection.execute(
             """
             SELECT username FROM users ORDER BY message_count DESC LIMIT 1
             """
-                ) as cursor:
+        ) as cursor:
             result = await cursor.fetchone()
 
             if result is None:
                 return None
-            
+
             return result[0]
 
-    async def increment_user_message_count(self, username: str) -> None:  
-        '''
+    async def increment_user_message_count(self, username: str) -> None:
+        """
         Increments the message count of a user.
-        
+
         Parameters
         ----------
         username : str
             The username to increment.
-            
+
         Returns
         -------
         None
-        '''
+        """
         user = await self.get_user(username)
         await self.connection.execute(
             """
@@ -494,20 +603,74 @@ class UserCog():
         )
         await self.connection.commit()
 
+    # get top5 chatters with numbers of messages (dict)
+    async def get_top5_chatters(self) -> dict[str, int]:
+        """
+        Gets the top 5 chatters.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        dict[str, int]
+            The top 5 chatters.
+        """
+        async with self.connection.execute(
+            """
+            SELECT username, message_count FROM users ORDER BY message_count DESC LIMIT 5
+            """
+        ) as cursor:
+            result = await cursor.fetchall()
+
+            if result is None:
+                return None
+
+            return {x[0]: x[1] for x in result}
+
+        return None
+
+    # Get in dict[str,int] format the number of user without any roles, the followers, the subscribers, the bots
+    async def get_users_stats(self) -> dict[str, int]:
+        """
+        Gets the number of followers, subscribers, bots, and user without any of those roles.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        dict[str, int]
+            The number of followers, subscribers, bots, and user without any of those roles.
+        """
+        followers = await self.get_followers()
+        subscribers = await self.get_subscribers()
+        bots = await self.get_bots()
+        users = await self.get_all_users()
+
+        return {
+            "followers": len(followers),
+            "subscribers": len(subscribers),
+            "bots": len(bots),
+            "users": len(users),
+        }
+
     async def get_user_avatar(self, username: str) -> str:
-        '''
+        """
         Gets the avatar of a user.
-        
+
         Parameters
         ----------
         username : str
             The username to check.
-            
+
         Returns
         -------
         str
             The avatar of the user.
-        '''
+        """
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 f"https://decapi.me/twitch/avatar/{username}"

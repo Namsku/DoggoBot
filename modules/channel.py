@@ -29,6 +29,7 @@ class ChannelCog:
         else:
             channel = await self.get_last_channel()
 
+        self.id = channel.id
         self.bot_name = channel.bot_name
         self.streamer_channel = channel.streamer_channel
         self.prefix = channel.prefix
@@ -60,6 +61,7 @@ class ChannelCog:
         None
         """
 
+        self.id = channel.id
         self.bot_name = channel.bot_name
         self.streamer_channel = channel.streamer_channel
         self.prefix = channel.prefix
@@ -67,7 +69,7 @@ class ChannelCog:
         self.income = channel.income
         self.timeout = channel.timeout
 
-    def set_channel(self, config: dict) -> None:
+    async def set_channel(self, config: dict) -> None:
         """
         Sets the channel content.
 
@@ -81,6 +83,8 @@ class ChannelCog:
         None
         """
 
+        print(config)
+
         self.bot_name = config["bot_name"]
         self.streamer_channel = config["streamer_channel"]
         self.prefix = config["prefix"]
@@ -88,7 +92,7 @@ class ChannelCog:
         self.income = config["default_income"]
         self.timeout = config["default_timeout"]
 
-        self.update_channel()
+        await self.update_channel()
 
     def set_env(self, config: dict) -> None:
         """
@@ -103,11 +107,6 @@ class ChannelCog:
         -------
         None
         """
-
-        # Create .env file at the root of the project
-        # and add the following variables:
-        # TWITCH_SECRET_TOKEN=your_secret_token
-        # TWITCH_CLIENT_TOKEN=your_client_token
 
         try:
             # file is created at the root of the project
@@ -190,7 +189,7 @@ class ChannelCog:
     async def update_channel(self):
         await self.connection.execute(
             """
-            UPDATE channel bot_name = ?, streamer_channel = ?, prefix = ?, coin_name = ?, income = ?, timeout = ? WHERE id = ?
+            UPDATE channel SET bot_name = ?, streamer_channel = ?, prefix = ?, coin_name = ?, income = ?, timeout = ? WHERE id = ?
         """,
             (
                 self.bot_name,
@@ -199,6 +198,7 @@ class ChannelCog:
                 self.coin_name,
                 self.income,
                 self.timeout,
+                self.id,
             ),
         )
 
