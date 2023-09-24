@@ -22,6 +22,13 @@
     <script src="{{ url_for('static', path='js/charts.js') }}"></script>
 
     <style>
+      .sidebar.main {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        height: 100vh;
+      }
+
       .chatbox {
             height: 300px;
             overflow-y: scroll;
@@ -102,6 +109,6 @@
 
     
     <!-- Custom styles for this template -->
-    <link href="{{ url_for('static', path='css/sidebars.css') }}" rel="stylesheet">
+    
   </head>
   

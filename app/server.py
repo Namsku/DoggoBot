@@ -17,7 +17,7 @@ class Server(Bot):
 
         self.router.add_api_route("/", self.home, methods=["GET", "POST"])
         self.router.add_api_route("/chat", self.chat, methods=["GET"])
-
+        self.router.add_api_route("/commands", self.commands, methods=["GET"])
         self.router.add_api_route("/curse", self.curse, methods=["GET"])
         self.router.add_api_route("/games", self.games, methods=["GET"])
 
@@ -82,35 +82,48 @@ class Server(Bot):
         return self.templates.TemplateResponse(
             "chat.html", {"request": request, "message": message}
         )
+    
+    async def commands(self, request: Request):
+        message = await self.bot.get_commands()
+
+        return self.templates.TemplateResponse(
+            "commands.html", {"request": request, "message": message}
+        )
 
     async def sfx(self, request: Request):
+        message = {}
         return self.templates.TemplateResponse(
-            "index.html", {"request": request, "bot": self.bot}
+            "sfx.html", {"request": request, "message": message}
         )
 
     async def curse(self, request: Request):
+        message = {}
         return self.templates.TemplateResponse(
-            "index.html", {"request": request, "bot": self.bot}
+            "index.html", {"request": request, "message": message}
         )
 
     async def overlay(self, request: Request):
+        message = {}
         return self.templates.TemplateResponse(
-            "overlay.html", {"request": request, "message": self.bot}
+            "overlay.html", {"request": request, "message": message}
         )
 
     async def rpg(self, request: Request):
+        message = {}
         return self.templates.TemplateResponse(
-            "index.html", {"request": request, "bot": self.bot}
+            "rpg.html", {"request": request, "message": message}
         )
 
     async def mods(self, request: Request):
+        message = {}
         return self.templates.TemplateResponse(
-            "index.html", {"request": request, "bot": self.bot}
+            "mods.html", {"request": request, "message": message}
         )
 
     async def games(self, request: Request):
+        message = {}
         return self.templates.TemplateResponse(
-            "index.html", {"request": request, "bot": self.bot}
+            "games.html", {"request": request, "message": message}
         )
 
     async def settings(self, request: Request):

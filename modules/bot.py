@@ -109,7 +109,6 @@ class Bot(commands.Bot):
         Parameters
         ----------
         channel : Channel
-            c
 
         Returns
         -------
@@ -371,6 +370,102 @@ class Bot(commands.Bot):
         else:
             await ctx.send(f"No top chatter found.")
 
+    @commands.command(name="mods")
+    async def info_mods(self, ctx: commands.Context):
+        '''
+        Mods of the channel
+        
+        Parameters
+        ----------
+        ctx : twitchio.Context
+            The context object.
+        
+        Returns
+        -------
+        None
+        '''
+        await ctx.send("📢 If you search a list of good mods/tools for RE, everything is on my discord (!socials for more info)")
+
+    @commands.command(name="balance")
+    async def balance(self, ctx: commands.Context) -> None:
+        """
+        Gets the balance of a user.
+
+        Parameters
+        ----------
+        ctx : twitchio.Context
+            The context object.
+
+        Returns
+        -------
+        None
+        """
+
+        if len(ctx.message.content.split()) != 1:
+            await ctx.send(f"Usage: !balance")
+            return
+
+        user = ctx.author.name.lower()
+
+        if user not in self.channel_members:
+            await ctx.send(f"{user} is not following the channel.")
+            return
+
+        await ctx.send(
+            f"{user} has {await self.user.get_balance(user)} {self.coin_name}"
+        )
+
+    @commands.command(name="schedule")
+    async def schedule(self, ctx: commands.Context):
+        '''
+        Schedule of the streamer
+        
+        Parameters
+        ----------
+        ctx : twitchio.Context
+            The context object.
+            
+        Returns
+        -------
+        None
+        '''
+        
+        await ctx.send("📆 I am currently an irregular streamer due to some errands 🤗")
+
+    @commands.command(name="help")
+    async def help(self, ctx: commands.Context):
+        '''
+        Help command
+        
+        Parameters
+        ----------
+        ctx : twitchio.Context
+            The context object.
+        
+        Returns
+        -------
+        None
+        '''
+        
+        await ctx.send("📢 available commands: !about !followage !followdate !gamble !help !income !mods !rpg !schedule !sfx !slots !so !socials !roll")
+
+    @commands.command(name="sfx")
+    async def sound_effects(self, ctx: commands.Context):
+        '''
+        Sound effects command
+        
+        Parameters
+        ----------
+        ctx : twitchio.Context
+            The context object.
+        
+        Returns
+        -------
+        None
+        '''
+
+        await ctx.send("📢 The full list is on my discord (!socials for more info)")
+
     @commands.command(name="clip")
     async def clip(self, ctx: commands.Context) -> None:
         """
@@ -392,6 +487,54 @@ class Bot(commands.Bot):
 
         await ctx.send(f"Creating clip...")
         await ctx.channel.create_clip()
+
+    @commands.command(name="followdate")
+    async def followdate(self, ctx: commands.Context) -> None:
+        """
+        Gets the followdate of a user.
+
+        Parameters
+        ----------
+        ctx : twitchio.Context
+            The context object.
+
+        Returns
+        -------
+        None
+        """
+
+        if len(ctx.message.content.split()) != 1:
+            await ctx.send(f"Usage: !followdate")
+            return
+
+        user = ctx.author.name.lower()
+
+        if user not in self.channel_members:
+            await ctx.send(f"{user} is not following the channel.")
+            return
+
+        await ctx.send(
+            f"{user} has been following the channel since {await self.user.get_followdate(user)}"
+        )
+    
+    @commands.command(name="about")
+    async def about_bot(self, ctx: commands.Context):
+        """
+        About the bot.
+
+        Parameters
+        ----------
+        ctx : twitchio.Context
+            The context object. 
+        
+        Returns
+        -------
+        None
+        """
+
+        link = "discord.gg/SjGyhS9T"
+        await ctx.send(f"DoggoBot has been created by Namsku - If you want more info ping him on his Discord ({link})")
+
 
     @commands.command(name="followage")
     async def followage(self, ctx: commands.Context) -> None:
@@ -421,3 +564,62 @@ class Bot(commands.Bot):
         await ctx.send(
             f"{user} has been following the channel for {await self.user.get_followage(user)}"
         )
+    
+    @commands.command(name="watchtime")
+    async def watchtime(self, ctx: commands.Context) -> None:
+        """
+        Gets the watchtime of a user.
+
+        Parameters
+        ----------
+        ctx : twitchio.Context
+            The context object.
+        
+        Returns
+        -------
+        None
+        """
+
+        if len(ctx.message.content.split()) != 1:
+            await ctx.send(f"Usage: !watchtime")
+            return
+        
+        user = ctx.author.name.lower()
+        
+        if user not in self.channel_members:
+            await ctx.send(f"{user} is not following the channel.")
+            return
+        
+        await ctx.send(
+            f"{user} has been watching the channel for {await self.user.get_watchtime(user)}"
+        )
+
+    # get all commands names
+    async def get_commands(self) -> [str]:
+        """
+        Gets all commands names.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        [str]
+            The commands names.
+        """
+        ccc = []
+
+        for command in self.commands:
+            ccc.append({
+                "name": command.name,
+                "description": "",
+                "cost": 0,
+                "used": 0,
+                "status": "active"
+            })
+        
+        return self.commands
+
+
+        

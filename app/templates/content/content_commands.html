@@ -1,0 +1,34 @@
+<div class="container">
+  <!-- Generate code in static HTML for all the commands with @commands from modules/bot.py -->
+
+  <div class="row">
+    <div class="col-12">
+      <h1>Commands</h1>
+      <p>Here is a list of all the commands that are available to use with the bot.</p>
+    </div>
+
+    <div class="col-12">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th scope="col">Command</th>
+            <th scope="col">Description</th>
+            <th scope="col">Usage</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% msg in message %}
+          <tr>
+            <td>{{ msg.key }}</td>
+            <td>{{ msg.description }}</td>
+            <td>{{ msg.usage }}</td>
+            <td>{{ msg.status }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+
+      
+</div>
