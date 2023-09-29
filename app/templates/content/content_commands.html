@@ -2,9 +2,13 @@
   <!-- Generate code in static HTML for all the commands with @commands from modules/bot.py -->
 
   <div class="row">
-    <div class="col-12">
+    <div class="col-12 mt-4">
       <h1>Commands</h1>
       <p>Here is a list of all the commands that are available to use with the bot.</p>
+    </div>
+
+    <div class="col-12 mt-4">
+      <h3>Created by DoggoBot</h1>
     </div>
 
     <div class="col-12">
@@ -13,22 +17,60 @@
           <tr>
             <th scope="col">Command</th>
             <th scope="col">Description</th>
-            <th scope="col">Usage</th>
+            <th scope="col">Used</th>
+            <th scope="col">Cost</th>
+            <th scope="col">Aliases</th>
+            <th scope="col">Category</th>
             <th scope="col">Status</th>
           </tr>
         </thead>
         <tbody>
-          {% msg in message %}
+          {% for msg in message['based'] %}
           <tr>
-            <td>{{ msg.key }}</td>
-            <td>{{ msg.description }}</td>
-            <td>{{ msg.usage }}</td>
-            <td>{{ msg.status }}</td>
+            <td>{{ msg['name'] }}</td>
+            <td>{{ msg['description'] }}</td>
+            <td>{{ msg['cost'] }}</td>
+            <td>{{ msg['used'] }}</td>
+            <td>{{ msg['aliases'] }}</td>
+            <td>{{ msg['category'] }}</td>
+            <td>{{ msg['status'] }}</td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
+    </div>
 
+    <div class="col-12 mt-4">
+      <h3>Created by user</h1>
+    </div>
 
-      
+    <div class="col-12">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th scope="col">Command</th>
+            <th scope="col">Description</th>
+            <th scope="col">Used</th>
+            <th scope="col">Cost</th>
+            <th scope="col">Aliases</th>
+            <th scope="col">Category</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for msg in message['dynamic'] %}
+          <tr>
+            <td>{{ msg['name'] }}</td>
+            <td>{{ msg['description'] }}</td>
+            <td>{{ msg['cost'] }}</td>
+            <td>{{ msg['used'] }}</td>
+            <td>{{ msg['aliases'] }}</td>
+            <td>{{ msg['category'] }}</td>
+            <td>{{ msg['status'] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
 </div>

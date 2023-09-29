@@ -1,4 +1,5 @@
 from modules.bot import Bot
+from modules.cmd import Cmd
 
 from fastapi import FastAPI, APIRouter, Request
 from fastapi.templating import Jinja2Templates
@@ -11,6 +12,7 @@ class Server(Bot):
     def __init__(self, bot: Bot, app: FastAPI):
         self.bot = bot
         self.app = app
+
         self.templates = Jinja2Templates(directory="app/templates")
         self.app.mount("/static", StaticFiles(directory="app/static"), name="static")
         self.router = APIRouter()
@@ -59,8 +61,8 @@ class Server(Bot):
                 {
                     "bot_is_active": True,
                     "bot_is_configured": True,
-                    "followers_count": len(await self.bot.user.get_followers()),
-                    "subscriber_count": len(await self.bot.user.get_subscribers()),
+                    "followers_count": len(await self.bot.usr.get_followers()),
+                    "subscriber_count": len(await self.bot.usr.get_subscribers()),
                     "top_chatter": await self.bot.get_top_chatter(),
                 }
             )
@@ -82,9 +84,21 @@ class Server(Bot):
         return self.templates.TemplateResponse(
             "chat.html", {"request": request, "message": message}
         )
-    
+
     async def commands(self, request: Request):
-        message = await self.bot.get_commands()
+        cmd_list, cdyn_list = [[], []]
+        message = {}
+
+        cmds: Cmd = await self.bot.cmd.get_all_non_dynamic_cmds()
+        for cmd in cmds:
+            cmd_list.append(self.bot.cmd.to_dict(cmd))
+
+        cdyn: Cmd = await self.bot.cmd.get_all_dynamic_cmds()
+        for cmd in cdyn:
+            cdyn_list.append(self.bot.cmd.to_dict(cmd))
+
+        message["based"] = cmd_list
+        message["dynamic"] = cdyn_list
 
         return self.templates.TemplateResponse(
             "commands.html", {"request": request, "message": message}
@@ -187,15 +201,15 @@ class Server(Bot):
 
     async def user(self, request: Request, name: str):
         message = {
-            "user": await self.bot.user.get_user(name),
-            "avatar": await self.bot.user.get_user_avatar(name),
+            "user": await self.bot.usr.get_user(name),
+            "avatar": await self.bot.usr.get_user_avatar(name),
         }
         return self.templates.TemplateResponse(
             "user.html", {"request": request, "message": message}
         )
 
     async def get_top_chatter(self):
-        chatters = await self.bot.user.get_top5_chatters()
+        chatters = await self.bot.usr.get_top5_chatters()
         return dumps(chatters, indent=None)
 
     def sort_dict_by_descending_values(self, dict1):
@@ -205,10 +219,10 @@ class Server(Bot):
 
     # Get the number of followers, subscribers, bots, and user without any of those roles
     async def get_users_stats(self):
-        followers = await self.bot.user.get_followers()
-        subscribers = await self.bot.user.get_subscribers()
-        bots = await self.bot.user.get_user_bots()
-        users = await self.bot.user.get_users_with_no_roles()
+        followers = await self.bot.usr.get_followers()
+        subscribers = await self.bot.usr.get_subscribers()
+        bots = await self.bot.usr.get_user_bots()
+        users = await self.bot.usr.get_users_with_no_roles()
 
         results = {
             "followers": len(followers),

@@ -11,6 +11,8 @@ import asyncio
 import aiosqlite
 import os
 
+import traceback
+
 logger = Logger(__name__)
 
 from hypercorn.config import Config as HyperConfig
@@ -64,7 +66,7 @@ async def create_bot(channel: ChannelCog) -> Bot:
         await bot.__ainit__(channel)
         logger.debug("Bot initialized successfully.")
     except Exception as e:
-        logger.error(f"Error while initializing bot: {e}")
+        logger.error(f"Error while initializing bot: {e} - {traceback.format_exc()}")
 
     return bot
 
