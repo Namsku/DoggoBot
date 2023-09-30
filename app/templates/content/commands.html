@@ -1,0 +1,103 @@
+{% macro generate_badge(value) %}
+  {% if value == 'bot' %} 
+  <span class="badge bg-warning-subtle border border-warning-subtle text-warning-emphasis rounded-pill">bot</span>
+  {% elif value == 'economy' %}
+  <span class="badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill">economy</span>
+  {% elif value == 'stream' %}
+  <span class="badge bg-danger-subtle border border-danger-subtle text-danger-emphasis rounded-pill">stream</span>
+  {% elif value == 'social' %}
+  <span class="badge bg-secondary-subtle border border-secondary-subtle text-secondary-emphasis rounded-pill">social</span>
+  {% elif value == 'games' %}
+  <span class="badge bg-info-subtle border border-info-subtle text-info-emphasis rounded-pill">games</span>
+  {% endif %}
+{% endmacro %}
+
+{% macro generate_switch(value, name) %}
+  {% if value == 1 %} 
+    <div class="form-check form-switch">
+    <input class="form-check-input" type="checkbox" role="switch" id="switch-{{name}}" checked>
+    <label class="form-check-label" for="switch-{{name}}"></label>
+    </div>
+  {% else %}
+    <div class="form-check form-switch">
+    <input class="form-check-input" type="checkbox" role="switch" id="switch-{{name}}">
+    <label class="form-check-label" for="switch-{{name}}"></label>
+    </div>
+  {% endif %}
+{% endmacro %}
+
+<div class="container">
+  <!-- Generate code in static HTML for all the commands with @commands from modules/bot.py -->
+
+  <div class="row">
+    <div class="col-12 mt-4">
+      <h1>Commands</h1>
+      <p>Here is a list of all the commands that are available to use with the bot.</p>
+    </div>
+
+    <div class="col-12 mt-4 mb-4">
+      <h3>Ready to use</h1>
+    </div>
+
+    <div class="col-12">
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th scope="col">Command</th>
+            <th scope="col">Description</th>
+            <th scope="col">Aliases</th>
+            <th scope="col">Category</th>
+            <th scope="col">Used</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody class="table-group-divider">
+          {% for msg in message['based'] %}
+          <tr>
+            <td>{{ message['prefix'] }}{{ msg['name'] }}</td>
+            <td>{{ msg['description'] }}</td>
+            <td>{{ msg['aliases'] }}</td>
+            <td>{{ generate_badge(msg['category']).strip() }}</td>
+            <td>{{ msg['used'] }}</td>
+            <td>{{ generate_switch(msg['status'],msg['name']).strip() }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="col-12 mt-4">
+      <div class="row">
+      <div class="col">
+      <h3>Created by user (Custom commands)</h1>
+      </div>
+      <div class="col  d-flex justify-content-end mb-4">
+        <!-- Make a add command button on the right side of the div class -->
+        <button type="button" class="btn btn-primary" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-square-fill" viewBox="0 0 16 16">
+            <path d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm6.5 4.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3a.5.5 0 0 1 1 0z"></path>
+          </svg>
+            Add command
+        </button>
+        </div>
+        </div>
+    </div>
+
+    <div class="col-12 mb-4">
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th scope="col">Command</th>
+            <th scope="col">Used</th>
+            <th scope="col">Cost</th>
+            <th scope="col">Category</th>
+            <th scope="col">Status</th>
+            <th scope="col">Action</th>
+          </tr>
+        </thead>
+        <tbody class="table-group-divider">
+        </tbody>
+      </table>
+    </div>
+</div>
+</div>

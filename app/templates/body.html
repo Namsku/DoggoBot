@@ -1,0 +1,21 @@
+{% macro generate_path() %}
+  {% if request.url.path == '/' %}
+    dashboard
+  {% elif 'user' in request.url.path %}
+    user
+  {% else %}
+    {{ request.url.path.split('/')[-1] }}
+  {% endif %}
+{% endmacro %}
+
+<body class="bg-body-tertiary">
+    <main class="d-flex">
+        {% block sidebar %}
+            {% include "sidebar.html" %}
+        {% endblock %}
+
+        {% block content %}
+            {% include "content/" + generate_path().strip() + ".html" %}
+        {% endblock %}
+    </main>
+</body>

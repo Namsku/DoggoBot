@@ -1,9 +1,12 @@
 from modules.bot import Bot
 from modules.cmd import Cmd
+from modules.channel import Channel
 
 from fastapi import FastAPI, APIRouter, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+
+from typing import Optional
 
 from json import dumps
 
@@ -82,7 +85,7 @@ class Server(Bot):
         message = {}
 
         return self.templates.TemplateResponse(
-            "chat.html", {"request": request, "message": message}
+            "index.html", {"request": request, "message": message}
         )
 
     async def commands(self, request: Request):
@@ -97,17 +100,19 @@ class Server(Bot):
         for cmd in cdyn:
             cdyn_list.append(self.bot.cmd.to_dict(cmd))
 
+        message["prefix"] = self.bot.channel.prefix
         message["based"] = cmd_list
         message["dynamic"] = cdyn_list
 
         return self.templates.TemplateResponse(
-            "commands.html", {"request": request, "message": message}
+            "index.html", {"request": request, "message": message}
         )
 
     async def sfx(self, request: Request):
         message = {}
+
         return self.templates.TemplateResponse(
-            "sfx.html", {"request": request, "message": message}
+            "index.html", {"request": request, "message": message}
         )
 
     async def curse(self, request: Request):
@@ -118,6 +123,7 @@ class Server(Bot):
 
     async def overlay(self, request: Request):
         message = {}
+
         return self.templates.TemplateResponse(
             "overlay.html", {"request": request, "message": message}
         )
@@ -125,87 +131,87 @@ class Server(Bot):
     async def rpg(self, request: Request):
         message = {}
         return self.templates.TemplateResponse(
-            "rpg.html", {"request": request, "message": message}
+            "index.html", {"request": request, "message": message}
         )
 
     async def mods(self, request: Request):
         message = {}
         return self.templates.TemplateResponse(
-            "mods.html", {"request": request, "message": message}
+            "index.html", {"request": request, "message": message}
         )
 
     async def games(self, request: Request):
         message = {}
         return self.templates.TemplateResponse(
-            "games.html", {"request": request, "message": message}
+            "index.html", {"request": request, "message": message}
         )
 
+    async def save_bot_settings(self, request: Request):
+        """Saves the bot's settings."""
+
+        form = await request.form()
+
+        cfg = {
+            "secret_token": form.get("secret_token"),
+            "client_token": form.get("client_token"),
+            "bot_name": form.get("bot_name"),
+            "streamer_channel": form.get("streamer_channel"),
+            "prefix": form.get("prefix"),
+            "coin_name": form.get("coin_name"),
+            "default_income": int(form.get("default_income")),
+            "default_timeout": int(form.get("default_timeout")),
+        }
+
+        self.bot.channel.set_env(cfg)
+        await self.bot.channel.set_channel(cfg)
+
+    async def get_bot_settings(self, channel: Channel) -> Optional[dict]:
+        """Gets the bot's settings."""
+
+        bot_env = await self.bot.channel.get_env()
+        if bot_env is None:
+            return None
+
+        return {
+            "secret_token": bot_env["TWITCH_SECRET_TOKEN"],
+            "client_token": bot_env["TWITCH_CLIENT_TOKEN"],
+            "bot_name": channel.bot_name,
+            "streamer_channel": channel.streamer_channel,
+            "prefix": channel.prefix,
+            "coin_name": channel.coin_name,
+            "default_income": channel.income,
+            "default_timeout": channel.timeout,
+        }
+
     async def settings(self, request: Request):
+        """Settings page."""
+
+        channel = await self.bot.channel.get_last_channel()
+        bot_settings = await self.get_bot_settings(channel)
+        status = "none"
+
         if request.method == "POST":
-            form = await request.form()
+            await self.save_bot_settings(request)
+            bot_settings = await self.get_bot_settings(channel)
+            status = "success"
 
-            cfg = {
-                "secret_token": form.get("secret_token"),
-                "client_token": form.get("client_token"),
-                "bot_name": form.get("bot_name"),
-                "streamer_channel": form.get("streamer_channel"),
-                "prefix": form.get("prefix"),
-                "coin_name": form.get("coin_name"),
-                "default_income": int(form.get("default_income")),
-                "default_timeout": int(form.get("default_timeout")),
-            }
+        message = {
+            "status": status,
+            **bot_settings,
+        }
 
-            self.bot.channel.set_env(cfg)
-            await self.bot.channel.set_channel(cfg)
-
-            bot_env = await self.bot.channel.get_env()
-
-            self.bot.token = (bot_env["TWITCH_CLIENT_TOKEN"],)
-            self.bot.prefix = (self.bot.channel.prefix,)
-            self.bot.initial_channels = ([self.bot.channel.streamer_channel],)
-
-            message = {
-                "status": "success",
-                "secret_token": bot_env["TWITCH_SECRET_TOKEN"],
-                "client_token": bot_env["TWITCH_CLIENT_TOKEN"],
-                "bot_name": self.bot.channel.bot_name,
-                "streamer_channel": self.bot.channel.streamer_channel,
-                "prefix": self.bot.channel.prefix,
-                "coin_name": self.bot.channel.coin_name,
-                "default_income": self.bot.channel.income,
-                "default_timeout": self.bot.channel.timeout,
-            }
-
-            return self.templates.TemplateResponse(
-                "settings.html", {"request": request, "message": message}
-            )
-        elif request.method == "GET":
-            channel = await self.bot.channel.get_last_channel()
-            bot_env = await self.bot.channel.get_env()
-
-            message = {
-                "status": "none",
-                "secret_token": bot_env["TWITCH_SECRET_TOKEN"],
-                "client_token": bot_env["TWITCH_CLIENT_TOKEN"],
-                "bot_name": channel.bot_name,
-                "streamer_channel": channel.streamer_channel,
-                "prefix": channel.prefix,
-                "coin_name": channel.coin_name,
-                "default_income": channel.income,
-                "default_timeout": channel.timeout,
-            }
-
-            return self.templates.TemplateResponse(
-                "settings.html", {"request": request, "message": message}
-            )
+        return self.templates.TemplateResponse(
+            "index.html", {"request": request, "message": message}
+        )
 
     async def user(self, request: Request, name: str):
         message = {
             "user": await self.bot.usr.get_user(name),
             "avatar": await self.bot.usr.get_user_avatar(name),
         }
+
         return self.templates.TemplateResponse(
-            "user.html", {"request": request, "message": message}
+            "index.html", {"request": request, "message": message}
         )
 
     async def get_top_chatter(self):

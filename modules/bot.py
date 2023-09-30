@@ -480,7 +480,7 @@ class Bot(commands.Bot):
         user = ctx.content.split()[1].lower().replace("@", "")
 
         await ctx.send(
-            f" 📢 Please give a look to our Doggo >>> {user} <<<, "
+            f" 📢 Please give a look to our >>> {user} <<<, "
             f"Take a look at his twitch channel (twitch.tv/{str.lower(user)})"
         )
 
@@ -572,7 +572,7 @@ class Bot(commands.Bot):
         None
         """
 
-        await ctx.send("📆 I am currently an irregular streamer due to some errands 🤗")
+        await ctx.send("WORK IN PROGRESS")
 
     @commands.command(name="help")
     async def help(self, ctx: commands.Context):
@@ -678,7 +678,7 @@ class Bot(commands.Bot):
 
         link = "discord.gg/SjGyhS9T"
         await ctx.send(
-            f"DoggoBot has been created by Namsku - If you want more info ping him on his Discord ({link})"
+            f"DoggoBot has been created by Fumi - If you want more info ping him on his Discord ({link})"
         )
 
     @commands.command(name="followage")
