@@ -33,6 +33,10 @@ class CmdCog:
         self.text = None
         self.logger = Logger(__name__)
 
+    async def __ainit__(self) -> None:
+        if not await self.is_table_configured():
+            await self.fill_default_table()
+
     def __str__(self) -> str:
         """
         Returns the string representation of the cmd object.
@@ -72,45 +76,15 @@ class CmdCog:
         None
         """
 
-    async def create_table(self) -> None:
-        """
-        Creates the table.
-
-        Returns
-        -------
-        None
-        """
-
+        # if table is not empty, quit
+        if not await self.is_table_empty():
+            return
+        
         default_cmds = [
-            (1, "about", "Information about the bot", "", 0, 0, 1, "", "bot", 0, None),
+            ("about", "Information about the bot", "", 0, 0, 1, "", "bot", 0, None),
+            ("balance","Get the current balance of the user","",0,0,1,"","economy",0,None),
+            ("clip","Create a clip of the current streaming actions...","",0,0,1,"","stream",0,None),
             (
-                2,
-                "balance",
-                "Get the current balance of the user",
-                "",
-                0,
-                0,
-                1,
-                "",
-                "economy",
-                0,
-                None,
-            ),
-            (
-                3,
-                "clip",
-                "Create a clip of the current streaming actions...",
-                "",
-                0,
-                0,
-                1,
-                "",
-                "stream",
-                0,
-                None,
-            ),
-            (
-                4,
                 "followage",
                 "Get the timelapse since the user is following you",
                 "",
@@ -123,7 +97,6 @@ class CmdCog:
                 "",
             ),
             (
-                5,
                 "followdate",
                 "Get the date where the user decided to follow you",
                 "",
@@ -136,7 +109,6 @@ class CmdCog:
                 None,
             ),
             (
-                6,
                 "help",
                 "Get the current active commands that the user can execute",
                 "",
@@ -149,7 +121,6 @@ class CmdCog:
                 "",
             ),
             (
-                7,
                 "mods",
                 "Get the mods that you are playing or you played",
                 "",
@@ -161,9 +132,8 @@ class CmdCog:
                 0,
                 None,
             ),
-            (8, "ping", "Simple Ping/Pong request", "", 0, 0, 1, "", "bot", 0, None),
+            ("ping", "Simple Ping/Pong request", "", 0, 0, 1, "", "bot", 0, None),
             (
-                9,
                 "schedule",
                 "Get the current schedule of your stream",
                 "",
@@ -176,7 +146,6 @@ class CmdCog:
                 None,
             ),
             (
-                10,
                 "shoutout",
                 "Give a shoutout to a specific user",
                 "",
@@ -189,7 +158,6 @@ class CmdCog:
                 None,
             ),
             (
-                11,
                 "sfx",
                 "Get the list of SFX commands",
                 "",
@@ -202,7 +170,6 @@ class CmdCog:
                 None,
             ),
             (
-                12,
                 "topchatter",
                 "Get the top chatter of your stream",
                 "",
@@ -215,7 +182,6 @@ class CmdCog:
                 None,
             ),
             (
-                13,
                 "watchtime",
                 "Since how many time are you streaming today",
                 "",
@@ -230,8 +196,19 @@ class CmdCog:
         ]
 
         for entry in default_cmds:
-            cmd = Cmd(entry)
+            cmd = Cmd(*entry)
             await self.add_cmd(cmd)
+
+        self.logger.info("Filled default cmds.")
+
+    async def create_table(self) -> None:
+        """
+        Creates the table.
+
+        Returns
+        -------
+        None
+        """
 
         await self.connection.execute(
             """
@@ -251,6 +228,19 @@ class CmdCog:
             """
         )
         await self.connection.commit()
+
+    async def is_table_empty(self) -> bool:
+        """
+        Checks if the table is empty.
+
+        Returns
+        -------
+        bool
+            True if the table is empty, False otherwise.
+        """
+
+        async with self.connection.execute("SELECT * FROM cmd") as cursor:
+            return not bool(await cursor.fetchone())
 
     async def is_table_configured(self) -> bool:
         """

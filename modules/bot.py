@@ -143,6 +143,7 @@ class Bot(commands.Bot):
         """
         await self.channel.create_table()
         await self.cmd.create_table()
+        await self.cmd.fill_default_table()
         await self.usr.create_table()
         await self.sfx.create_table()
         self.logger.debug("Tables created.")

@@ -1,135 +1,119 @@
+async function send_request(url, options) {
+    const response = await fetch(url, options);
+  
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+  
+    const json = await response.json();
+  
+    return json;
+  }
+
 async function request(url, method = 'GET', data = null) {
     try {
-        const requestOptions = {
-            url: url, // API endpoint URL
-            dataType: 'json', // Expect JSON response
-            contentType: 'application/json', // Request content type for POST requests
-        };
-
-        if (method === 'POST') {
-            requestOptions.method = 'POST';
-            requestOptions.data = JSON.stringify(data); // Request data for POST requests
-        }
-
-        const response = await $.ajax(requestOptions);
-
-        // Return the API response data
-        return response;
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+  
+      const options = {
+        method: method,
+        headers: headers,
+        credentials: 'same-origin'
+      };
+  
+      if (data) {
+        options.body = JSON.stringify(data);
+      }
+  
+      const response = await sendRequest(url, options);
+  
+      return response;
     } catch (error) {
-        // Handle errors here
-        console.error('Error:', error);
-        throw error;
+      console.error('Error:', error);
+      throw error;
     }
 }
 
-async function top_chatters_stats() {
-    var ctx = document.getElementById('chatters-histogram').getContext('2d');
-    _labels = JSON.parse(await request('/api/chatters_stats'));
-    var chart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: Object.keys(_labels),
-            datasets: [{
-                label: 'Users',
-                data: Object.values(_labels),
-                backgroundColor: ['#990011', '#FFA351', '#2BAE66', '#D9E5D6', '#FFC0CB'],
-            }]
-        },
-        options: {
-            title: {
-                display: true,
-                text: 'Top 5 Chatters'
-            },
-            indexAxis: 'y',
-            maintainAspectRatio: false,
-            plugins: {
-                datalabels: {
-                    formatter: function(value, context) {
-                        return value + '%';
-                    }
-                }
-            }
-        }
-    });
-
-    chart.canvas.parentNode.style.height = '250px';
-    chart.canvas.parentNode.style.margin = '0 auto';
-}
-
-async function user_stats_stack() {
-    datasets = []
-    i = 0
-    _labels = JSON.parse(await request('/api/users_stats'));
-    bg_color = ['#990011', '#FFA351', '#2BAE66', '#D9E5D6', '#FFC0CB']
-    for (const key in _labels)   
-        datasets.push({
-            label: key,
-            backgroundColor: bg_color[i],
-            data: _labels[key] // Array of values
-        })
-        i += 1
-
-
-    var data = {
-        labels: Object.keys(_labels),
-        datasets
+async function getChartData(url, chartType, chartOptions) {
+    const labels = Object.keys(await request(url));
+    const data = Object.values(await request(url));
+    const backgroundColor = ['#990011', '#FFA351', '#2BAE66', '#D9E5D6', '#FFC0CB'];
+  
+    const datasets = [{
+      label: chartType === 'bar' ? 'Users' : 'Pie Chart',
+      data: data,
+      backgroundColor: backgroundColor.slice(0, data.length)
+    }];
+  
+    if (chartType === 'bar') {
+      datasets[0].backgroundColor = backgroundColor.slice(0, data.length);
+    }
+  
+    const chartData = {
+      labels: labels,
+      datasets: datasets
     };
-
-    var ctx = document.getElementById('myChart').getContext('2d');
-
-    var myChart = new Chart(ctx, {
-        type: 'bar',
-        data: data,
-        options: {
-            indexAxis: 'y',
-            responsive: false,
-            scales: {
-                x: {
-                    stacked: true,
-                },
-                y: {
-                    stacked: true
-                }
-            }
-        }
-    });
-
-    myChart.canvas.parentNode.style.height = '250px';
-}
-
-async function user_stats_pie() {
-    var ctx = document.getElementById('user-chart').getContext('2d');
-    _labels = JSON.parse(await request('/api/users_stats'));
-    var chart = new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels: Object.keys(_labels),
-            datasets: [{
-                label: 'Pie Chart',
-                data: Object.values(_labels),
-                backgroundColor: ['#990011', '#FFA351', '#2BAE66', '#D9E5D6'],
-            }]
+  
+    const ctx = document.getElementById(chartOptions.canvasId).getContext('2d');
+    const chart = new Chart(ctx, {
+      type: chartType,
+      data: chartData,
+      options: {
+        title: {
+          display: true,
+          text: chartOptions.title
         },
-        options: {
-            title: {
-                display: true,
-                text: 'User Stats'
-            },
-            labelsPosition: 'outside',
-            plugins: {
-                datalabels: {
-                    formatter: function(value, context) {
-                        return value + '%';
-                    }
-                }
-                
+        indexAxis: chartOptions.indexAxis,
+        maintainAspectRatio: false,
+        plugins: {
+          datalabels: {
+            formatter: function(value, context) {
+              return value + '%';
             }
+          }
+        },
+        scales: {
+          x: {
+            stacked: chartOptions.stacked
+          },
+          y: {
+            stacked: chartOptions.stacked
+          }
         }
+      }
     });
-
+  
     chart.canvas.parentNode.style.width = '250px';
     chart.canvas.parentNode.style.height = '250px';
     chart.canvas.parentNode.style.margin = '0 auto';
+}
+  
+async function top_chatters_stats() {
+    await getChartData('/api/chatters_stats', 'bar', {
+      canvasId: 'chatters-histogram',
+      title: 'Top 5 Chatters',
+      indexAxis: 'y',
+      stacked: false
+    });
+}
+  
+async function user_stats_stack() {
+    await getChartData('/api/users_stats', 'bar', {
+      canvasId: 'myChart',
+      title: 'User Stats',
+      indexAxis: 'y',
+      stacked: true
+    });
+}
+  
+async function user_stats_pie() {
+    await getChartData('/api/users_stats', 'pie', {
+      canvasId: 'user-chart',
+      title: 'User Stats',
+      indexAxis: null,
+      stacked: false
+    });
 }
 
 async function send_message(object) {
@@ -137,7 +121,7 @@ async function send_message(object) {
     console.log(response);
 }
 
-async function addClickEventListenersToSwitchButtons(database_name, attribute_name) {
+async function event_listener_switch_butons(database_name, attribute_name) {
     // Get all switch button elements with IDs starting with "switch-"
     const switchButtons = document.querySelectorAll('[id^="switch-"]');
 
@@ -157,4 +141,102 @@ async function addClickEventListenersToSwitchButtons(database_name, attribute_na
         request('/api/update', method='POST', data=object);
     });
   });
+}
+
+async function create_command() {
+    $(document).ready(function() {
+      const popupForm = $("#popup-form");
+      const modalContent = popupForm.find(".modal-content");
+  
+      // Open popup form when open button is clicked
+      $("#open-form-btn").click(function() {
+        popupForm.modal("show");
+      });
+  
+      // Add smooth animation to popup form
+      popupForm.on("show.bs.modal", function() {
+        modalContent.css({
+          "transform": "scale(1)",
+          "opacity": 0
+        }).animate({
+          "transform": "scale(1)",
+          "opacity": 1
+        }, 200);
+      });
+  
+      // Add darker background to popup form
+      popupForm.on("show.bs.modal", function() {
+        $("body").addClass("modal-open");
+        $(".modal-backdrop").addClass("bg-dark");
+      });
+  
+      // Remove darker background from popup form when it is closed
+      popupForm.on("hidden.bs.modal", function() {
+        $("body").removeClass("modal-open");
+        $(".modal-backdrop").removeClass("bg-dark");
+      });
+    });
+  }
+
+
+async function handle_submit_form(form_id, url) {
+    const form = document.getElementById(form_id);
+  
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault(); // Prevent the form from submitting normally
+  
+      // Get the form data
+      const formData = new FormData(form);
+  
+      // Send the form data to the API
+      const response = await fetch(url, {
+        method: 'POST',
+        body: formData
+      });
+  
+      return response.json();
+    });
+}
+
+async function handle_event(form_id=None, name=None) {
+    if (form_id) {
+        await handle_submit_form(form_id, '/api/update');
+    }
+
+      // Send the form data to the API
+      const response = await fetch('/api/update', {
+        method: 'POST',
+        body: formData
+      });
+  
+      return response.json();
+}
+
+async function delete_command(name) {
+      const response = await fetch('/api/update', {
+        method: 'POST',
+        body: formData
+      });
+  
+      return response.json();
+}
+
+async function update_user_command_table() {
+    const user_table = document.getElementById('user-commands');
+    const response = await fetch('/api/commands');
+    const json = await response.json();
+
+    json.forEach((item) => {
+      const row = document.createElement('tr');
+      const nameCell = document.createElement('td');
+      const emailCell = document.createElement('td');
+
+      nameCell.textContent = item.name;
+      emailCell.textContent = item.email;
+
+      row.appendChild(nameCell);
+      row.appendChild(emailCell);
+
+      user_table.appendChild(row);
+    });
 }

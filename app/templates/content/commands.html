@@ -90,7 +90,16 @@
             <th scope="col">Action</th>
           </tr>
         </thead>
-        <tbody class="table-group-divider"></tbody>
+        <tbody id="user-commands" class="table-group-divider"> 
+          {% for msg in message['dynamic'] %} 
+          <tr>
+          <td>{{ message['prefix'] }}{{ msg['name'] }}</td>
+          <td>{{ msg['used'] }}</td>
+          <td>{{ msg['cost'] }}</td>
+          <td>{{ generate_badge(msg['category']).strip() }}</td>
+          <td>{{ generate_switch(msg['status'],msg['name']).strip() }}</td>
+          <td></td>
+        </tr> {% endfor %} </tbody>
       </table>
     </div>
   </div>
@@ -104,7 +113,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <form>
+        <form id="form-command">
           <div class="mb-3">
             <label for="name" class="form-label">Name</label>
             <div class="input-group">
@@ -117,33 +126,33 @@
             </div>
           </div>
           <div class="mb-3">
-            <label for="email" class="form-label">Category</label>
-            <select class="form-select" aria-label="Default select example">
+            <label for="category" class="form-label">Category</label>
+            <select class="form-select" id="category" aria-label="Default select example">
               <option selected>Select category</option>
-              <option value="bot">bot</option>
-              <option value="economy">economy</option>
-              <option value="finance">finance</option>
-              <option value="games">games</option>
-              <option value="social">social</option>
-              <option value="stream">stream</option>
+              <option value="bot">Bot</option>
+              <option value="economy">Economy</option>
+              <option value="finance">Finance</option>
+              <option value="games">Games</option>
+              <option value="social">Social</option>
+              <option value="stream">Stream</option>
             </select>
           </div>
           <div class="mb-3">
-            <label for="email" class="form-label">Cost</label>
+            <label for="cost" class="form-label">Cost</label>
             <div class="input-group">
               <span class="input-group-text">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bank" viewBox="0 0 16 16">
                   <path d="m8 0 6.61 3h.89a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H15v7a.5.5 0 0 1 .485.38l.5 2a.498.498 0 0 1-.485.62H.5a.498.498 0 0 1-.485-.62l.5-2A.501.501 0 0 1 1 13V6H.5a.5.5 0 0 1-.5-.5v-2A.5.5 0 0 1 .5 3h.89L8 0ZM3.777 3h8.447L8 1 3.777 3ZM2 6v7h1V6H2Zm2 0v7h2.5V6H4Zm3.5 0v7h1V6h-1Zm2 0v7H12V6H9.5ZM13 6v7h1V6h-1Zm2-1V4H1v1h14Zm-.39 9H1.39l-.25 1h13.72l-.25-1Z"></path>
                 </svg>
               </span>
-              <input type="email" class="form-control" id="email">
+              <input type="cost" class="form-control" id="cost">
             </div>
           </div>
           <div class="mb-3">
             <label for="message" class="form-label">Message</label>
             <textarea class="form-control" id="message" rows="3"></textarea>
           </div>
-          <button type="submit" class="btn btn-primary">Submit</button>
+          <button type="submit" id="add-command-form" class="btn btn-primary">Submit</button>
         </form>
       </div>
       <div class="modal-footer">
@@ -155,34 +164,7 @@
 </div>
 
 <script>
-  addClickEventListenersToSwitchButtons("cmd", "status")
+  event_listener_switch_butons("cmd", "status");
+  create_command();
 </script>
 
-<script>
-  $(document).ready(function() {
-    // Open popup form when open button is clicked
-    $("#open-form-btn").click(function() {
-      $("#popup-form").modal("show");
-    });
-    // Add smooth animation to popup form
-    $("#popup-form").on("show.bs.modal", function() {
-      $(this).find(".modal-content").css({
-        "transform": "scale(1)",
-        "opacity": 0
-      }).animate({
-        "transform": "scale(1)",
-        "opacity": 1
-      }, 200);
-    });
-    // Add darker background to popup form
-    $("#popup-form").on("show.bs.modal", function() {
-      $("body").addClass("modal-open");
-      $(".modal-backdrop").addClass("bg-dark");
-    });
-    // Remove darker background from popup form when it is closed
-    $("#popup-form").on("hidden.bs.modal", function() {
-      $("body").removeClass("modal-open");
-      $(".modal-backdrop").removeClass("bg-dark");
-    });
-  });
-</script>
