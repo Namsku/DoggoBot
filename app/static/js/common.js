@@ -1,4 +1,4 @@
-async function send_request(url, options) {
+async function fetch_request(url, options) {
     const response = await fetch(url, options);
   
     if (!response.ok) {
@@ -26,7 +26,7 @@ async function request(url, method = 'GET', data = null) {
         options.body = JSON.stringify(data);
       }
   
-      const response = await sendRequest(url, options);
+      const response = await fetch_request(url, options);
   
       return response;
     } catch (error) {
@@ -35,85 +35,73 @@ async function request(url, method = 'GET', data = null) {
     }
 }
 
-async function getChartData(url, chartType, chartOptions) {
-    const labels = Object.keys(await request(url));
-    const data = Object.values(await request(url));
-    const backgroundColor = ['#990011', '#FFA351', '#2BAE66', '#D9E5D6', '#FFC0CB'];
-  
-    const datasets = [{
-      label: chartType === 'bar' ? 'Users' : 'Pie Chart',
-      data: data,
-      backgroundColor: backgroundColor.slice(0, data.length)
-    }];
-  
-    if (chartType === 'bar') {
-      datasets[0].backgroundColor = backgroundColor.slice(0, data.length);
-    }
-  
-    const chartData = {
-      labels: labels,
-      datasets: datasets
-    };
-  
-    const ctx = document.getElementById(chartOptions.canvasId).getContext('2d');
-    const chart = new Chart(ctx, {
-      type: chartType,
-      data: chartData,
-      options: {
-        title: {
-          display: true,
-          text: chartOptions.title
+async function top_chatters_stats() {
+    var ctx = document.getElementById('chatters-histogram').getContext('2d');
+    _labels = JSON.parse(await request('/api/chatters_stats'));
+    var chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(_labels),
+            datasets: [{
+                label: 'Users',
+                data: Object.values(_labels),
+                backgroundColor: ['#990011', '#FFA351', '#2BAE66', '#D9E5D6', '#FFC0CB'],
+            }]
         },
-        indexAxis: chartOptions.indexAxis,
-        maintainAspectRatio: false,
-        plugins: {
-          datalabels: {
-            formatter: function(value, context) {
-              return value + '%';
+        options: {
+            title: {
+                display: true,
+                text: 'Top 5 Chatters'
+            },
+            indexAxis: 'y',
+            maintainAspectRatio: false,
+            plugins: {
+                datalabels: {
+                    formatter: function(value, context) {
+                        return value + '%';
+                    }
+                }
             }
-          }
-        },
-        scales: {
-          x: {
-            stacked: chartOptions.stacked
-          },
-          y: {
-            stacked: chartOptions.stacked
-          }
         }
-      }
     });
-  
-    chart.canvas.parentNode.style.width = '250px';
+
     chart.canvas.parentNode.style.height = '250px';
     chart.canvas.parentNode.style.margin = '0 auto';
 }
-  
-async function top_chatters_stats() {
-    await getChartData('/api/chatters_stats', 'bar', {
-      canvasId: 'chatters-histogram',
-      title: 'Top 5 Chatters',
-      indexAxis: 'y',
-      stacked: false
-    });
-}
-  
-async function user_stats_stack() {
-    await getChartData('/api/users_stats', 'bar', {
-      canvasId: 'myChart',
-      title: 'User Stats',
-      indexAxis: 'y',
-      stacked: true
-    });
-}
-  
+
 async function user_stats_pie() {
-    await getChartData('/api/users_stats', 'pie', {
-      canvasId: 'user-chart',
-      title: 'User Stats',
-      indexAxis: null,
-      stacked: false
+    var ctx = document.getElementById('user-chart').getContext('2d');
+    _labels = JSON.parse(await request('/api/users_stats'));
+    var chart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: Object.keys(_labels),
+            datasets: [{
+                label: 'Pie Chart',
+                data: Object.values(_labels),
+                backgroundColor: ['#990011', '#FFA351', '#2BAE66', '#D9E5D6'],
+            }]
+        },
+        options: {
+            title: {
+                display: true,
+                text: 'User Stats'
+            },
+            labelsPosition: 'outside',
+            plugins: {
+                datalabels: {
+                    formatter: function(value, context) {
+                        return value + '%';
+                    }
+                }
+                
+            }
+        }
     });
+
+    chart.canvas.parentNode.style.width = '250px';
+    chart.canvas.parentNode.style.height = '250px';
+    chart.canvas.parentNode.style.margin = '0 auto';
 }
 
 async function send_message(object) {

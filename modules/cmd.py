@@ -79,11 +79,33 @@ class CmdCog:
         # if table is not empty, quit
         if not await self.is_table_empty():
             return
-        
+
         default_cmds = [
             ("about", "Information about the bot", "", 0, 0, 1, "", "bot", 0, None),
-            ("balance","Get the current balance of the user","",0,0,1,"","economy",0,None),
-            ("clip","Create a clip of the current streaming actions...","",0,0,1,"","stream",0,None),
+            (
+                "balance",
+                "Get the current balance of the user",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "economy",
+                0,
+                None,
+            ),
+            (
+                "clip",
+                "Create a clip of the current streaming actions...",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "stream",
+                0,
+                None,
+            ),
             (
                 "followage",
                 "Get the timelapse since the user is following you",
