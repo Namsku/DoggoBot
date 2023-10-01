@@ -33,6 +33,8 @@ class Server(Bot):
             "/api/users_stats", self.get_users_stats, methods=["GET"]
         )
 
+        self.router.add_api_route("/api/update", self.update_database, methods=["POST"])
+
         self.router.add_api_route("/mods", self.mods, methods=["GET"])
         self.router.add_api_route("/overlay", self.overlay, methods=["GET"])
         self.router.add_api_route("/rpg", self.rpg, methods=["GET"])
@@ -117,6 +119,7 @@ class Server(Bot):
 
     async def curse(self, request: Request):
         message = {}
+
         return self.templates.TemplateResponse(
             "index.html", {"request": request, "message": message}
         )
@@ -241,3 +244,14 @@ class Server(Bot):
             self.sort_dict_by_descending_values(results),
             indent=None,
         )
+
+    async def update_database(self, request: Request):
+        """Updates the database."""
+
+        json = await request.json()
+
+        for key, value in json.items():
+            if key == "cmd":
+                if value["attribute"] == "status":
+                    status = True if value["status"] == 1 else False
+                    await self.bot.cmd.update_status(value["name"], status)

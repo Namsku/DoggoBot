@@ -336,10 +336,15 @@ class CmdCog:
         None
         """
 
+        # Convert the status to an integer
+        status = 1 if status else 0
+
         await self.connection.execute(
             "UPDATE cmd SET status = ? WHERE name = ?", (status, name)
         )
+
         await self.connection.commit()
+        self.logger.info(f"Updated cmd status -> {name} -> {status}.")
 
     async def update_cmd(self, name: str, cmd: Cmd) -> None:
         """

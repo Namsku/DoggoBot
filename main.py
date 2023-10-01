@@ -77,16 +77,13 @@ def check_admin():
     Returns:
         True if the script is running as root or administrator, False otherwise.
     """
-
-    if os.name == "nt" and os.getenv("USERNAME") in ["Administrator", "SYSTEM"]:
+    if os.name == "nt":
         # On Windows, the "SYSTEM" user is also an administrator.
-        return True
-    elif os.name == "posix" and (
-        os.getuid() == 0 or os.getenv("SUDO_USER") or os.getenv("USER") == "root"
-    ):
-        return True
-    else:
-        return False
+        return os.getenv("USERNAME") in ["Administrator", "SYSTEM"]
+    elif os.name == "posix":
+        return os.getuid() == 0 or os.getenv("SUDO_USER") == "root"
+
+    return False
 
 
 async def main() -> None:

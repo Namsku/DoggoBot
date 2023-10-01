@@ -1,10 +1,17 @@
-async function makeApiRequest(url) {
+async function request(url, method = 'GET', data = null) {
     try {
-        const response = await $.ajax({
+        const requestOptions = {
             url: url, // API endpoint URL
-            method: 'GET',
             dataType: 'json', // Expect JSON response
-        });
+            contentType: 'application/json', // Request content type for POST requests
+        };
+
+        if (method === 'POST') {
+            requestOptions.method = 'POST';
+            requestOptions.data = JSON.stringify(data); // Request data for POST requests
+        }
+
+        const response = await $.ajax(requestOptions);
 
         // Return the API response data
         return response;
@@ -17,7 +24,7 @@ async function makeApiRequest(url) {
 
 async function top_chatters_stats() {
     var ctx = document.getElementById('chatters-histogram').getContext('2d');
-    _labels = JSON.parse(await makeApiRequest('/api/chatters_stats'));
+    _labels = JSON.parse(await request('/api/chatters_stats'));
     var chart = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -48,10 +55,11 @@ async function top_chatters_stats() {
     chart.canvas.parentNode.style.height = '250px';
     chart.canvas.parentNode.style.margin = '0 auto';
 }
+
 async function user_stats_stack() {
     datasets = []
     i = 0
-    _labels = JSON.parse(await makeApiRequest('/api/users_stats'));
+    _labels = JSON.parse(await request('/api/users_stats'));
     bg_color = ['#990011', '#FFA351', '#2BAE66', '#D9E5D6', '#FFC0CB']
     for (const key in _labels)   
         datasets.push({
@@ -88,9 +96,10 @@ async function user_stats_stack() {
 
     myChart.canvas.parentNode.style.height = '250px';
 }
+
 async function user_stats_pie() {
     var ctx = document.getElementById('user-chart').getContext('2d');
-    _labels = JSON.parse(await makeApiRequest('/api/users_stats'));
+    _labels = JSON.parse(await request('/api/users_stats'));
     var chart = new Chart(ctx, {
         type: 'pie',
         data: {
@@ -121,4 +130,31 @@ async function user_stats_pie() {
     chart.canvas.parentNode.style.width = '250px';
     chart.canvas.parentNode.style.height = '250px';
     chart.canvas.parentNode.style.margin = '0 auto';
+}
+
+async function send_message(object) {
+    const response = await request('/api/update', 'POST', object);
+    console.log(response);
+}
+
+async function addClickEventListenersToSwitchButtons(database_name, attribute_name) {
+    // Get all switch button elements with IDs starting with "switch-"
+    const switchButtons = document.querySelectorAll('[id^="switch-"]');
+
+    // Add a click event listener to each switch button
+    switchButtons.forEach(switchButton => {
+        switchButton.addEventListener('click', function() {
+        // Get the value of the switch button
+        
+        object = {
+             [database_name] : {
+                'attribute': attribute_name,
+                'name': switchButton.id.split('-')[1],
+                'status': switchButton.checked
+            }            
+        }
+
+        request('/api/update', method='POST', data=object);
+    });
+  });
 }
