@@ -63,6 +63,15 @@ class CmdCog:
         self.aliases = cmd.aliases
         self.category = cmd.category
 
+    async def fill_default_table(self) -> None:
+        """
+        Fills the table with default values.
+
+        Returns
+        -------
+        None
+        """
+
     async def create_table(self) -> None:
         """
         Creates the table.
@@ -71,6 +80,158 @@ class CmdCog:
         -------
         None
         """
+
+        default_cmds = [
+            (1, "about", "Information about the bot", "", 0, 0, 1, "", "bot", 0, None),
+            (
+                2,
+                "balance",
+                "Get the current balance of the user",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "economy",
+                0,
+                None,
+            ),
+            (
+                3,
+                "clip",
+                "Create a clip of the current streaming actions...",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "stream",
+                0,
+                None,
+            ),
+            (
+                4,
+                "followage",
+                "Get the timelapse since the user is following you",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "stream",
+                0,
+                "",
+            ),
+            (
+                5,
+                "followdate",
+                "Get the date where the user decided to follow you",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "stream",
+                0,
+                None,
+            ),
+            (
+                6,
+                "help",
+                "Get the current active commands that the user can execute",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "bot",
+                0,
+                "",
+            ),
+            (
+                7,
+                "mods",
+                "Get the mods that you are playing or you played",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "games",
+                0,
+                None,
+            ),
+            (8, "ping", "Simple Ping/Pong request", "", 0, 0, 1, "", "bot", 0, None),
+            (
+                9,
+                "schedule",
+                "Get the current schedule of your stream",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "stream",
+                0,
+                None,
+            ),
+            (
+                10,
+                "shoutout",
+                "Give a shoutout to a specific user",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "social",
+                0,
+                None,
+            ),
+            (
+                11,
+                "sfx",
+                "Get the list of SFX commands",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "bot",
+                0,
+                None,
+            ),
+            (
+                12,
+                "topchatter",
+                "Get the top chatter of your stream",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "bot",
+                0,
+                None,
+            ),
+            (
+                13,
+                "watchtime",
+                "Since how many time are you streaming today",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "stream",
+                0,
+                None,
+            ),
+        ]
+
+        for entry in default_cmds:
+            cmd = Cmd(entry)
+            await self.add_cmd(cmd)
 
         await self.connection.execute(
             """
