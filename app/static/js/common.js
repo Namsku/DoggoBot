@@ -167,23 +167,27 @@ async function create_command() {
   }
 
 
-async function handle_submit_form(form_id, url) {
-    const form = document.getElementById(form_id);
-  
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault(); // Prevent the form from submitting normally
-  
-      // Get the form data
-      const formData = new FormData(form);
-  
-      // Send the form data to the API
-      const response = await fetch(url, {
-        method: 'POST',
-        body: formData
+async function handle_submit_form() {
+  const form = document.querySelector("#form-command");
+  form.addEventListener("submit", (event) => {
+    // Prevent the default form submission.
+    event.preventDefault();
+
+    // Make the POST request with the form values.
+    const formData = new FormData(form);
+    console.log(form, formData);
+    fetch("/api/update", {
+      method: "POST",
+      body: formData,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data);
+      })
+      .catch((error) => {
+        // Handle the error.
       });
-  
-      return response.json();
-    });
+  });
 }
 
 async function handle_event(form_id=None, name=None) {

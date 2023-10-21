@@ -3,6 +3,8 @@ from modules.logger import Logger
 from dataclasses import dataclass
 import aiosqlite
 
+from typing import Union
+
 
 @dataclass
 class Cmd:
@@ -296,7 +298,7 @@ class CmdCog:
 
         return Cmd(cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], cmd[6], cmd[7], cmd[8])
 
-    async def add_cmd(self, cmd: Cmd) -> None:
+    async def add_cmd(self, cmd: Union[Cmd, dict]) -> None:
         """
         Adds a cmd.
 
@@ -304,6 +306,20 @@ class CmdCog:
         -------
         None
         """
+
+        if isinstance(cmd, dict):
+            cmd = Cmd(
+                name=cmd["name"],
+                description=cmd["description"],
+                usage=0,
+                used=0,
+                cost=cmd["cost"],
+                status=1,
+                aliases=[],
+                category=cmd["category"],
+                dynamic=1,
+                text="",
+            )
 
         # Quit if the name already exists
         if await self.is_cmd_exists(cmd.name):

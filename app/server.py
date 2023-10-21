@@ -255,3 +255,5 @@ class Server(Bot):
                 if value["attribute"] == "status":
                     status = True if value["status"] == 1 else False
                     await self.bot.cmd.update_status(value["name"], status)
+            if key == "user_cmd":
+                await self.bot.cmd.add_cmd(value)
