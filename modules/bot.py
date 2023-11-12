@@ -46,6 +46,7 @@ class Bot(commands.Bot):
         self.initialized = False
 
         self.bot_name = channel.bot_name
+        self.user_bots = None
         self.client_id = self.get_twitch_client_token()
 
         self.channel_members = None
@@ -70,6 +71,7 @@ class Bot(commands.Bot):
         await self._ainit_database_classes(channel)
         await self._ainit_database_tables()
         await self._ainit_env()
+        await self._ainit_user_commands()
 
     async def __aclose__(self) -> None:
         """
@@ -144,9 +146,30 @@ class Bot(commands.Bot):
         await self.channel.create_table()
         await self.cmd.create_table()
         await self.cmd.fill_default_table()
+        await self.msg.create_table()
         await self.usr.create_table()
         await self.sfx.create_table()
         self.logger.debug("Tables created.")
+
+    async def _ainit_user_commands(self) -> None:
+        """
+        Initializes the user commands.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+
+        cmds = await self.cmd.get_user_cmds()
+        for cmd in cmds:
+            if cmd.status:
+                self.add_command(commands.Command(cmd.name, self.template_command))
+
+        self.logger.debug(f"User commands initialized. {len(cmds)}")
 
     async def _get_channel_members(self) -> None:
         """
@@ -290,9 +313,11 @@ class Bot(commands.Bot):
         -------
         None
         """
-        await self.msg.add_message(message)
-
         name = message.author.name.lower() if message.author else self.bot_name.lower()
+
+        if name != self.bot_name.lower():
+            await self.msg.add_message(message, self)
+
         if not await self.usr.get_user(name):
             await self.usr.add_user(name)
             await self.usr.increment_user_message_count(name)
@@ -755,6 +780,21 @@ class Bot(commands.Bot):
             The commands names.
         """
         return await self.cmd.get_all_cmds()
+    
+    async def get_user_commands(self) -> [Cmd]:
+        """
+        Gets all commands names.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        [str]
+            The commands names.
+        """
+        return await self.cmd.get_user_cmds()
 
     async def add_cmd(self, cmd: Cmd) -> None:
         """
@@ -818,7 +858,7 @@ class Bot(commands.Bot):
         None
         """
         await self.cmd.enable_cmd(cmd)
-        await self.add_command(commands.Command(cmd.name, self.template_command))
+        self.add_command(commands.Command(cmd.name, self.template_command))
 
     # create a generic template for adding your own commands
     async def template_command(self, ctx: commands.Context) -> None:
@@ -835,12 +875,12 @@ class Bot(commands.Bot):
         None
         """
 
-        self.logger.debug(ctx.command.name)
+        self.logger.debug(f'User command named "{ctx.command.name}" called')
         cmd: Cmd = await self.cmd.get_cmd(ctx.command.name)
 
         if len(ctx.message.content.split()) != 1:
             await ctx.send(f"Usage: !{cmd.name}")
             return
 
-        content = await cmd.description
+        content = cmd.description
         await ctx.send(f"{content}")

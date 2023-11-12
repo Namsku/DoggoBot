@@ -168,23 +168,38 @@ async function create_command() {
 
 
 async function handle_submit_form() {
-  const form = document.querySelector("#form-command");
-  form.addEventListener("submit", (event) => {
-    // Prevent the default form submission.
+  await document.querySelector('#form-command').addEventListener('submit', function(event) {
     event.preventDefault();
+    
+    var formData = new FormData(event.target);
+    var o_key = '';
+    let object = {};
 
-    // Make the POST request with the form values.
-    const formData = new FormData(form);
-    console.log(form, formData);
+
+    for (let [key, value] of formData.entries()) {
+      if (key != 'update_type') {
+        object[key] = value;
+      } else {
+        o_key = value;
+      }
+    }
+
+    object = {
+      [o_key]: object
+    }
+
+    let json = JSON.stringify(object);
+
     fetch("/api/update", {
       method: "POST",
-      body: formData,
+      body: json,
     })
       .then((response) => response.json())
       .then((data) => {
         console.log(data);
       })
       .catch((error) => {
+        console.log(error)
         // Handle the error.
       });
   });

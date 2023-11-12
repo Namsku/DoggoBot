@@ -315,7 +315,7 @@ class CmdCog:
                 used=0,
                 cost=cmd["cost"],
                 status=1,
-                aliases=[],
+                aliases="",
                 category=cmd["category"],
                 dynamic=1,
                 text="",
@@ -395,6 +395,37 @@ class CmdCog:
             cmd[9],
             cmd[10],
         )
+
+    async def get_user_cmds(self) -> list[Cmd]:
+        '''
+        Gets all dynamic cmds.
+        
+        Returns
+        -------
+        list
+            The cmds.
+        '''
+
+        async with self.connection.execute(
+            "SELECT * FROM cmd WHERE dynamic = ?", (1,)
+        ) as cursor:
+            cmds = await cursor.fetchall()
+
+        return [
+            Cmd(
+                cmd[1],
+                cmd[2],
+                cmd[3],
+                cmd[4],
+                cmd[5],
+                cmd[6],
+                cmd[7],
+                cmd[8],
+                cmd[9],
+                cmd[10],
+            )
+            for cmd in cmds
+        ]
 
     async def get_all_cmds(self) -> list[Cmd]:
         """

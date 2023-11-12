@@ -14,10 +14,35 @@ class SFX:
 
 class SFXCog():
     def __init__(self, connection: aiosqlite.Connection):
+        '''
+        Initializes the SFXCog class.
+        
+        Parameters
+        ----------
+        connection : aiosqlite.Connection
+            The connection to the database.
+        
+        Returns
+        -------
+        None
+        '''
+
         self.connection = connection
         self.source = None
 
     async def create_table(self):
+        '''
+        Creates the table for the database.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        '''
+
         await self.connection.execute(
             """
             CREATE TABLE IF NOT EXISTS sfx (
@@ -96,6 +121,19 @@ class SFXCog():
         await event_player.play(sfx.path, volume=sfx.volume)
 
     async def get_sfx(self, name: str) -> SFX:
+        '''
+        Gets a sound effect from the database.
+        
+        Parameters
+        ----------
+        name : str
+            The name of the sound effect.
+        
+        Returns
+        -------
+        SFX
+        '''
+
         async with self.connection.execute(
             """
             SELECT * FROM sfx WHERE name = ?
@@ -110,6 +148,19 @@ class SFXCog():
         return SFX(*result)
     
     async def get_sfx_by_id(self, id: int) -> SFX:
+        '''
+        Gets a sound effect from the database.
+        
+        Parameters
+        ----------
+        id : int
+            The id of the sound effect.
+        
+        Returns
+        -------
+        SFX
+        '''
+        
         async with self.connection.execute(
             """
             SELECT * FROM sfx WHERE id = ?
@@ -124,6 +175,18 @@ class SFXCog():
         return SFX(*result)
     
     async def get_all_sfx(self) -> list[SFX]:
+        '''
+        Gets all sound effects from the database.
+        
+        Parameters
+        ----------
+        None
+        
+        Returns
+        -------
+        list[SFX]
+        '''
+        
         async with self.connection.execute(
             """
             SELECT * FROM sfx

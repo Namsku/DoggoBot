@@ -87,6 +87,18 @@ def check_admin():
 
 
 async def main() -> None:
+    '''
+    The main entry point for the bot.
+    
+    Parameters
+    ----------
+    None
+    
+    Returns
+    -------
+    None
+    '''
+    
     load_dotenv()
 
     channel = await create_channel()

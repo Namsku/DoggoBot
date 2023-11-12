@@ -46,8 +46,22 @@ class Server(Bot):
         self.app.include_router(self.router)
 
     async def home(self, request: Request):
+        '''
+        Returns the home page.
+        
+        Parameters
+        ----------
+        None
+        
+        Returns
+        -------
+        message : dict
+            A dictionary containing the bot's status.
+        '''
+
         message = {}
 
+        # if requests is a POST request, initialize the bot
         if request.method == "POST":
             try:
                 self.bot.super().__init__(
@@ -61,6 +75,7 @@ class Server(Bot):
                 self.bot.logger.error(f"Error while initializing bot: {e}")
                 message = {"error": str(e)}
 
+        # if the bot is active, return the bot's status
         if self.bot.active:
             message.update(
                 {
@@ -84,6 +99,19 @@ class Server(Bot):
         )
 
     async def chat(self, request: Request):
+        '''
+        Returns the chat page.
+        
+        Parameters
+        ----------
+        None
+        
+        Returns
+        -------
+        message : dict
+            A dictionary containing the chat's settings.
+        '''
+
         message = {}
 
         return self.templates.TemplateResponse(
@@ -91,13 +119,29 @@ class Server(Bot):
         )
 
     async def commands(self, request: Request):
+        '''
+        Returns a list of commands.
+        
+        Parameters
+        ----------
+        None
+        
+        Returns
+        -------
+        message : dict
+            A dictionary containing the list of commands.
+        '''
+
         cmd_list, cdyn_list = [[], []]
         message = {}
 
         cmds: Cmd = await self.bot.cmd.get_all_non_dynamic_cmds()
+
+        # Classic commands (The one created by defaults)
         for cmd in cmds:
             cmd_list.append(self.bot.cmd.to_dict(cmd))
 
+        # Dynamic commands (The one created by users)
         cdyn: Cmd = await self.bot.cmd.get_all_dynamic_cmds()
         for cmd in cdyn:
             cdyn_list.append(self.bot.cmd.to_dict(cmd))
@@ -111,6 +155,19 @@ class Server(Bot):
         )
 
     async def sfx(self, request: Request):
+        '''
+        Returns the sfx page.
+        
+        Parameters
+        ----------
+        None
+        
+        Returns
+        -------
+        message : dict
+            A dictionary containing the sfx's settings.
+        '''
+
         message = {}
 
         return self.templates.TemplateResponse(
@@ -118,6 +175,19 @@ class Server(Bot):
         )
 
     async def curse(self, request: Request):
+        '''
+        Returns the curse page.
+        
+        Parameters
+        ----------
+        None
+        
+        Returns
+        -------
+        message : dict
+            A dictionary containing the curse's settings.
+        '''
+
         message = {}
 
         return self.templates.TemplateResponse(
@@ -150,7 +220,18 @@ class Server(Bot):
         )
 
     async def save_bot_settings(self, request: Request):
-        """Saves the bot's settings."""
+        '''
+        Saves the bot's settings.
+        
+        Parameters
+        ----------
+        request : Request
+            The request object.
+        
+        Returns
+        -------
+        None
+        '''
 
         form = await request.form()
 
@@ -249,6 +330,7 @@ class Server(Bot):
         """Updates the database."""
 
         json = await request.json()
+        print(json)
 
         for key, value in json.items():
             if key == "cmd":

@@ -15,16 +15,7 @@ class Message:
     is_subscriber: bool
     is_vip: bool
     is_mod: bool
-    is_broadcaster: bool
-    is_owner: bool
-    is_admin: bool
-    is_global_mod: bool
-    is_staff: bool
     is_turbo: bool
-    is_prime: bool
-    is_sub: bool
-    is_founder: bool
-
 
 class MessageCog:
     def __init__(self, connection: aiosqlite.Connection) -> None:
@@ -41,15 +32,7 @@ class MessageCog:
         self.is_subscriber = None
         self.is_vip = None
         self.is_mod = None
-        self.is_broadcaster = None
-        self.is_owner = None
-        self.is_admin = None
-        self.is_global_mod = None
-        self.is_staff = None
         self.is_turbo = None
-        self.is_prime = None
-        self.is_sub = None
-        self.is_founder = None
 
         self.connection = connection
 
@@ -58,9 +41,9 @@ class MessageCog:
         Returns the string representation of the message object.
         """
 
-        return f"Message(author={self.author}, content={self.content}, timestamp={self.timestamp}, channel={self.channel}, is_bot={self.is_bot}, is_command={self.is_command}, is_subscriber={self.is_subscriber}, is_vip={self.is_vip}, is_mod={self.is_mod}, is_broadcaster={self.is_broadcaster}, is_owner={self.is_owner}, is_admin={self.is_admin}, is_global_mod={self.is_global_mod}, is_staff={self.is_staff}, is_turbo={self.is_turbo}, is_prime={self.is_prime}, is_sub={self.is_sub}, is_founder={self.is_founder})"
+        return f"Message(author={self.author}, content={self.content}, timestamp={self.timestamp}, channel={self.channel}, is_bot={self.is_bot}, is_command={self.is_command}, is_subscriber={self.is_subscriber}, is_vip={self.is_vip}, is_mod={self.is_mod}, is_turbo={self.is_turbo})"
 
-    def set(self, message: TwitchMessage) -> None:
+    async def set(self, message: Message, bot) -> None:
         """
         Sets the message content.
 
@@ -75,25 +58,18 @@ class MessageCog:
         """
 
         self.author = (
-            message.author.name.lower() if message.author else self.bot_name.lower()
+            message.author.name.lower() if message.author else bot.bot_name.lower()
         )
+
         self.content = message.content
         self.timestamp = message.timestamp
-        self.channel = message.channel
-        self.is_bot = message.author.is_bot()
-        self.is_command = message.author.is_command()
-        self.is_subscriber = message.author.is_subscriber()
-        self.is_vip = message.author.is_vip()
-        self.is_mod = message.author.is_mod()
-        self.is_broadcaster = message.author.is_broadcaster()
-        self.is_owner = message.author.is_owner()
-        self.is_admin = message.author.is_admin()
-        self.is_global_mod = message.author.is_global_mod()
-        self.is_staff = message.author.is_staff()
-        self.is_turbo = message.author.is_turbo()
-        self.is_prime = message.author.is_prime()
-        self.is_sub = message.author.is_sub()
-        self.is_founder = message.author.is_founder()
+        self.channel = message.channel.name
+        self.is_bot = await bot.usr.is_bot(self.author)
+        self.is_command = True if message.content.startswith("!") else False
+        self.is_subscriber = True if message.author.is_subscriber else False
+        self.is_vip = message.author.is_vip
+        self.is_mod = message.author.is_mod
+        self.is_turbo = message.author.is_turbo
 
     async def set_message(self, message: dict) -> None:
         """
@@ -118,15 +94,7 @@ class MessageCog:
         self.is_subscriber = message["is_subscriber"]
         self.is_vip = message["is_vip"]
         self.is_mod = message["is_mod"]
-        self.is_broadcaster = message["is_broadcaster"]
-        self.is_owner = message["is_owner"]
-        self.is_admin = message["is_admin"]
-        self.is_global_mod = message["is_global_mod"]
-        self.is_staff = message["is_staff"]
         self.is_turbo = message["is_turbo"]
-        self.is_prime = message["is_prime"]
-        self.is_sub = message["is_sub"]
-        self.is_founder = message["is_founder"]
 
     async def create_table(self) -> None:
         """
@@ -154,20 +122,12 @@ class MessageCog:
                 is_subscriber INTEGER,
                 is_vip INTEGER,
                 is_mod INTEGER,
-                is_broadcaster INTEGER,
-                is_owner INTEGER,
-                is_admin INTEGER,
-                is_global_mod INTEGER,
-                is_staff INTEGER,
-                is_turbo INTEGER,
-                is_prime INTEGER,
-                is_sub INTEGER,
-                is_founder INTEGER
+                is_turbo INTEGER
             )
             """
         )
 
-    async def add_message(self, message: TwitchMessage) -> None:
+    async def add_message(self, message: TwitchMessage, bot) -> None:
         """
         Adds a message to the database.
 
@@ -181,11 +141,22 @@ class MessageCog:
         None
         """
 
-        self.set(message)
+        await self.set(message, bot)
 
-        self.connection.execute(
+        await self.connection.execute(
             """
-            INSERT INTO message
+            INSERT INTO message(
+                author,
+                content,
+                timestamp,
+                channel,
+                is_bot,
+                is_command,
+                is_subscriber,
+                is_vip,
+                is_mod,
+                is_turbo
+            )
             VALUES (
                 :author,
                 :content,
@@ -196,15 +167,7 @@ class MessageCog:
                 :is_subscriber,
                 :is_vip,
                 :is_mod,
-                :is_broadcaster,
-                :is_owner,
-                :is_admin,
-                :is_global_mod,
-                :is_staff,
-                :is_turbo,
-                :is_prime,
-                :is_sub,
-                :is_founder
+                :is_turbo
             )
             """,
             {
@@ -217,14 +180,6 @@ class MessageCog:
                 "is_subscriber": self.is_subscriber,
                 "is_vip": self.is_vip,
                 "is_mod": self.is_mod,
-                "is_broadcaster": self.is_broadcaster,
-                "is_owner": self.is_owner,
-                "is_admin": self.is_admin,
-                "is_global_mod": self.is_global_mod,
-                "is_staff": self.is_staff,
                 "is_turbo": self.is_turbo,
-                "is_prime": self.is_prime,
-                "is_sub": self.is_sub,
-                "is_founder": self.is_founder,
             },
         )
