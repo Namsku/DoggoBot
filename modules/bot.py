@@ -780,7 +780,7 @@ class Bot(commands.Bot):
             The commands names.
         """
         return await self.cmd.get_all_cmds()
-    
+
     async def get_user_commands(self) -> [Cmd]:
         """
         Gets all commands names.

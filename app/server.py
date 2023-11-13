@@ -46,30 +46,25 @@ class Server(Bot):
         self.app.include_router(self.router)
 
     async def home(self, request: Request):
-        '''
+        """
         Returns the home page.
-        
+
         Parameters
         ----------
         None
-        
+
         Returns
         -------
         message : dict
             A dictionary containing the bot's status.
-        '''
+        """
 
         message = {}
 
         # if requests is a POST request, initialize the bot
         if request.method == "POST":
             try:
-                self.bot.super().__init__(
-                    token=self.token,
-                    prefix=self.prefix,
-                    initial_channels=[self.channel_id],
-                )
-
+                bot = Bot(self.bot.channel)
                 await self.bot.__ainit__(self.bot.channel)
             except Exception as e:
                 self.bot.logger.error(f"Error while initializing bot: {e}")
@@ -99,18 +94,18 @@ class Server(Bot):
         )
 
     async def chat(self, request: Request):
-        '''
+        """
         Returns the chat page.
-        
+
         Parameters
         ----------
         None
-        
+
         Returns
         -------
         message : dict
             A dictionary containing the chat's settings.
-        '''
+        """
 
         message = {}
 
@@ -119,18 +114,18 @@ class Server(Bot):
         )
 
     async def commands(self, request: Request):
-        '''
+        """
         Returns a list of commands.
-        
+
         Parameters
         ----------
         None
-        
+
         Returns
         -------
         message : dict
             A dictionary containing the list of commands.
-        '''
+        """
 
         cmd_list, cdyn_list = [[], []]
         message = {}
@@ -155,18 +150,18 @@ class Server(Bot):
         )
 
     async def sfx(self, request: Request):
-        '''
+        """
         Returns the sfx page.
-        
+
         Parameters
         ----------
         None
-        
+
         Returns
         -------
         message : dict
             A dictionary containing the sfx's settings.
-        '''
+        """
 
         message = {}
 
@@ -175,18 +170,18 @@ class Server(Bot):
         )
 
     async def curse(self, request: Request):
-        '''
+        """
         Returns the curse page.
-        
+
         Parameters
         ----------
         None
-        
+
         Returns
         -------
         message : dict
             A dictionary containing the curse's settings.
-        '''
+        """
 
         message = {}
 
@@ -220,18 +215,18 @@ class Server(Bot):
         )
 
     async def save_bot_settings(self, request: Request):
-        '''
+        """
         Saves the bot's settings.
-        
+
         Parameters
         ----------
         request : Request
             The request object.
-        
+
         Returns
         -------
         None
-        '''
+        """
 
         form = await request.form()
 
