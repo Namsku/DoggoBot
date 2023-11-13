@@ -131,41 +131,53 @@ async function event_listener_switch_butons(database_name, attribute_name) {
   });
 }
 
-async function create_command() {
-    $(document).ready(function() {
-      const popupForm = $("#popup-form");
-      const modalContent = popupForm.find(".modal-content");
-  
-      // Open popup form when open button is clicked
-      $("#open-form-btn").click(function() {
-        popupForm.modal("show");
-      });
-  
-      // Add smooth animation to popup form
-      popupForm.on("show.bs.modal", function() {
-        modalContent.css({
-          "transform": "scale(1)",
-          "opacity": 0
-        }).animate({
-          "transform": "scale(1)",
-          "opacity": 1
-        }, 200);
-      });
-  
-      // Add darker background to popup form
-      popupForm.on("show.bs.modal", function() {
-        $("body").addClass("modal-open");
-        $(".modal-backdrop").addClass("bg-dark");
-      });
-  
-      // Remove darker background from popup form when it is closed
-      popupForm.on("hidden.bs.modal", function() {
-        $("body").removeClass("modal-open");
-        $(".modal-backdrop").removeClass("bg-dark");
-      });
-    });
-  }
 
+function setupModal(modalId, buttonId) {
+  $(document).ready(function() {
+    const popupForm = $(modalId);
+    const modalContent = popupForm.find(".modal-content");
+
+    // Open popup form when open button is clicked
+    $(buttonId).click(function() {
+      popupForm.modal("show");
+    });
+
+    // Add smooth animation to popup form
+    popupForm.on("show.bs.modal", function() {
+      modalContent.css({
+        "transform": "scale(1)",
+        "opacity": 0
+      }).animate({
+        "transform": "scale(1)",
+        "opacity": 1
+      }, 200);
+    });
+
+    // Add darker background to popup form
+    popupForm.on("show.bs.modal", function() {
+      $("body").addClass("modal-open");
+      $(".modal-backdrop").addClass("bg-dark");
+    });
+
+    // Remove darker background from popup form when it is closed
+    popupForm.on("hidden.bs.modal", function() {
+      $("body").removeClass("modal-open");
+      $(".modal-backdrop").removeClass("bg-dark");
+    });
+  });
+}
+
+async function form_delete_command() {
+  setupModal("#deleteModal", "#open-delete-form-btn");
+}
+
+async function form_edit_command() {
+  setupModal("#popup-edit-form", "#open-edit-form-btn");
+}
+
+async function form_create_command() {
+  setupModal("#popup-form", "#open-form-btn");
+}
 
 async function handle_submit_form() {
   await document.querySelector('#form-command').addEventListener('submit', function(event) {
