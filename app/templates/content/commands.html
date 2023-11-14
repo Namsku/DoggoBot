@@ -1,17 +1,21 @@
 <!-- MACRO SIDE -->
 
 {% macro generate_badge(value) %}
-  {% if value == 'bot' %} 
-  <span class="badge bg-warning-subtle border border-warning-subtle text-warning-emphasis rounded-pill">bot</span>
-  {% elif value == 'economy' %}
-  <span class="badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill">economy</span>
-  {% elif value == 'stream' %}
-  <span class="badge bg-danger-subtle border border-danger-subtle text-danger-emphasis rounded-pill">stream</span>
-  {% elif value == 'social' %}
-  <span class="badge bg-secondary-subtle border border-secondary-subtle text-secondary-emphasis rounded-pill">social</span>
-  {% elif value == 'games' %}
-  <span class="badge bg-info-subtle border border-info-subtle text-info-emphasis rounded-pill">games</span>
-  {% endif %}
+  {% set badge_classes = {
+    'bot': 'warning',
+    'economy': 'success',
+    'stream': 'danger',
+    'social': 'secondary',
+    'games': 'info'
+  } %}
+  <span class="badge bg-{{ badge_classes[value] }}-subtle border border-{{ badge_classes[value] }}-subtle text-{{ badge_classes[value] }}-emphasis rounded-pill">{{ value }}</span>
+{% endmacro %}
+
+{% macro generate_switch(value, name) %}
+  <div class="form-check form-switch">
+    <input class="form-check-input" type="checkbox" role="switch" id="switch-{{name}}" {{ 'checked' if value == 1 else '' }}>
+    <label class="form-check-label" for="switch-{{name}}"></label>
+  </div>
 {% endmacro %}
 
 {% macro generate_switch(value, name) %}
@@ -28,19 +32,40 @@
   {% endif %}
 {% endmacro %}
 
-{% macro generate_buttons() %}
-
-<button type="button" id="open-edit-form-btn" class="btn btn-primary" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
+{% macro generate_buttons(id) %}
+<button type="button" id="open-edit-form-btn-{{id}}" class="btn btn-primary" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pen" viewBox="0 0 16 16">
   <path d="m13.498.795.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001zm-.644.766a.5.5 0 0 0-.707 0L1.95 11.756l-.764 3.057 3.057-.764L14.44 3.854a.5.5 0 0 0 0-.708l-1.585-1.585z"></path>
   </svg>
 </button>
 
-<button type="button" id="open-delete-form-btn" class="btn btn-outline-danger" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
+<button type="button" id="open-delete-form-btn-{{id}}" class="btn btn-outline-danger" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3-fill" viewBox="0 0 16 16">
   <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5Zm-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5ZM4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06Zm6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528ZM8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5Z"></path>
   </svg>
 </button>
+{% endmacro %}
+
+{% macro generate_standard_table_row(msg) %}
+  <tr>
+    <td>{{ message['prefix'] }}{{ msg['name'] }}</td>
+    <td>{{ msg['description'] }}</td>
+    <td>{{ msg['aliases'] }}</td>
+    <td>{{ generate_badge(msg['category']).strip() }}</td>
+    <td>{{ msg['used'] }}</td>
+    <td>{{ generate_switch(msg['status'],msg['name']).strip() }}</td>
+  </tr> 
+{% endmacro %}
+
+{% macro generate_user_table_row(msg) %}
+  <tr>
+    <td>{{ message['prefix'] }}{{ msg['name'] }}</td>
+    <td>{{ msg['used'] }}</td>
+    <td>{{ msg['cost'] }}</td>
+    <td>{{ generate_badge(msg['category']).strip() }}</td>
+    <td>{{ generate_switch(msg['status'],msg['name']).strip() }}</td>
+    <td>{{ generate_buttons(msg['name']) }}</td>
+  </tr>
 {% endmacro %}
 
 {% macro get_route() %}
@@ -69,14 +94,11 @@
             <th scope="col">Status</th>
           </tr>
         </thead>
-        <tbody class="table-group-divider"> {% for msg in message['based'] %} <tr>
-            <td>{{ message['prefix'] }}{{ msg['name'] }}</td>
-            <td>{{ msg['description'] }}</td>
-            <td>{{ msg['aliases'] }}</td>
-            <td>{{ generate_badge(msg['category']).strip() }}</td>
-            <td>{{ msg['used'] }}</td>
-            <td>{{ generate_switch(msg['status'],msg['name']).strip() }}</td>
-          </tr> {% endfor %} </tbody>
+        <tbody class="table-group-divider"> 
+          {% for msg in message['based'] %}
+            {{ generate_standard_table_row(msg) }}
+          {% endfor %} 
+        </tbody>
       </table>
     </div>
     <div class="col-12 mt-4">
@@ -106,15 +128,10 @@
           </tr>
         </thead>
         <tbody id="user-commands" class="table-group-divider"> 
-          {% for msg in message['dynamic'] %} 
-          <tr>
-          <td>{{ message['prefix'] }}{{ msg['name'] }}</td>
-          <td>{{ msg['used'] }}</td>
-          <td>{{ msg['cost'] }}</td>
-          <td>{{ generate_badge(msg['category']).strip() }}</td>
-          <td>{{ generate_switch(msg['status'],msg['name']).strip() }}</td>
-          <td>{{ generate_buttons() }}</td>
-        </tr> {% endfor %} </tbody>
+          {% for msg in message['dynamic'] %}
+            {{ generate_user_table_row(msg) }}
+          {% endfor %}
+        </tbody>
       </table>
     </div>
   </div>
@@ -259,6 +276,7 @@
 
 <script>
   event_listener_switch_butons("cmd", "status");
+  document.getElementById('form-command').addEventListener('submit', validateForm);
   form_edit_command();
   form_create_command();
   form_delete_command();

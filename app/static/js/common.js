@@ -259,3 +259,53 @@ async function update_user_command_table() {
       user_table.appendChild(row);
     });
 }
+
+function createModal(title, id) {
+    // Create elements
+    let modal = document.createElement('div');
+    modal.id = 'popup-form';
+    modal.className = 'modal fade';
+    modal.tabIndex = '-1';
+    modal.role = 'dialog';
+    modal.setAttribute('aria-labelledby', 'popupFormLabel');
+    modal.setAttribute('aria-hidden', 'true');
+
+    let modalDialog = document.createElement('div');
+    modalDialog.className = 'modal-dialog';
+
+    let modalContent = document.createElement('div');
+    modalContent.className = 'modal-content';
+
+    let modalHeader = document.createElement('div');
+    modalHeader.className = 'modal-header';
+
+    let modalTitle = document.createElement('h5');
+    modalTitle.className = 'modal-title';
+    modalTitle.id = 'popupFormLabel';
+    modalTitle.textContent = title
+
+    let closeButton = document.createElement('button');
+    closeButton.type = 'button';
+    closeButton.className = 'btn-close';
+    closeButton.setAttribute('data-bs-dismiss', 'modal');
+    closeButton.setAttribute('aria-label', 'Close');
+
+    let modalBody = document.createElement('div');
+    modalBody.className = 'modal-body';
+
+    let form = document.createElement('form');
+    form.id = 'form-command';
+
+    // ... continue creating all elements ...
+
+    // Append elements
+    modalHeader.appendChild(modalTitle);
+    modalHeader.appendChild(closeButton);
+    modalContent.appendChild(modalHeader);
+    modalContent.appendChild(modalBody);
+    modalDialog.appendChild(modalContent);
+    modal.appendChild(modalDialog);
+
+    // Append modal to body
+    document.body.appendChild(modal);
+}

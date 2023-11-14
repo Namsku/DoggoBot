@@ -298,13 +298,13 @@ class CmdCog:
 
         return Cmd(cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], cmd[6], cmd[7], cmd[8])
 
-    async def add_cmd(self, cmd: Union[Cmd, dict]) -> None:
+    async def add_cmd(self, cmd: Union[Cmd, dict]) -> dict:
         """
         Adds a cmd.
 
         Returns
         -------
-        None
+        dict
         """
 
         if isinstance(cmd, dict):
@@ -323,7 +323,19 @@ class CmdCog:
 
         # Quit if the name already exists
         if await self.is_cmd_exists(cmd.name):
-            return
+            return {"error": "name already exists"}
+
+        if cmd.name.is_alnum():
+            return {"error": "name must be alphanumeric"}
+
+        if cmd.cost < 0 or cmd.cost > 1000000000:
+            return {"error": "cost must be between 0 and 1 000 000 000"}
+
+        if cmd.category == "Select category":
+            return {"error": "category must be selected"}
+
+        if cmd.description == "":
+            return {"error": "description must not be empty"}
 
         await self.connection.execute(
             "INSERT INTO cmd (name, description, usage, used, cost, status, aliases, category, dynamic, text) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ? , ?)",
@@ -342,6 +354,7 @@ class CmdCog:
         )
         await self.connection.commit()
         self.logger.info(f"Added cmd -> {cmd.name}.")
+        return {"success": "cmd added"}
 
     async def is_cmd_exists(self, name: str) -> bool:
         """
@@ -397,14 +410,14 @@ class CmdCog:
         )
 
     async def get_user_cmds(self) -> list[Cmd]:
-        '''
+        """
         Gets all dynamic cmds.
-        
+
         Returns
         -------
         list
             The cmds.
-        '''
+        """
 
         async with self.connection.execute(
             "SELECT * FROM cmd WHERE dynamic = ?", (1,)
