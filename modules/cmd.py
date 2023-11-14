@@ -2,6 +2,7 @@ from modules.logger import Logger
 
 from dataclasses import dataclass
 import aiosqlite
+import re
 
 from typing import Union
 
@@ -68,6 +69,24 @@ class CmdCog:
         self.status = cmd.status
         self.aliases = cmd.aliases
         self.category = cmd.category
+
+    def is_name_valid(self, name: str) -> bool:
+        """
+        Checks if the name is valid.
+
+        Parameters
+        ----------
+        name : str
+            The cmd name.
+
+        Returns
+        -------
+        bool
+            True if the name is valid, False otherwise.
+        """
+
+        re.compile(r"^[a-zA-Z0-9]+$")
+        return bool(re.match(r"^[a-zA-Z0-9]+$", name))
 
     async def fill_default_table(self) -> None:
         """
@@ -325,17 +344,21 @@ class CmdCog:
         if await self.is_cmd_exists(cmd.name):
             return {"error": "name already exists"}
 
-        if cmd.name.is_alnum():
-            return {"error": "name must be alphanumeric"}
-
-        if cmd.cost < 0 or cmd.cost > 1000000000:
-            return {"error": "cost must be between 0 and 1 000 000 000"}
+        if not self.is_name_valid(cmd.name):
+            return {"error": f"command {cmd.name} must only contains letters or/and numbers"}
 
         if cmd.category == "Select category":
-            return {"error": "category must be selected"}
+            return {"error": f"category must be selected"}
+        
+        if cmd.cost.isdigit() == False:
+            return {"error": f"cost must be a number"}
+
+        cmd.cost = int(cmd.cost)
+        if cmd.cost < 0 or cmd.cost > 1000000000:
+            return {"error": f"cost must be between 0 and 1 000 000 000"}
 
         if cmd.description == "":
-            return {"error": "description must not be empty"}
+            return {"error": f"description must not be empty"}
 
         await self.connection.execute(
             "INSERT INTO cmd (name, description, usage, used, cost, status, aliases, category, dynamic, text) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ? , ?)",
@@ -354,7 +377,7 @@ class CmdCog:
         )
         await self.connection.commit()
         self.logger.info(f"Added cmd -> {cmd.name}.")
-        return {"success": "cmd added"}
+        return {"success": f"command {cmd.name} added"}
 
     async def is_cmd_exists(self, name: str) -> bool:
         """
@@ -579,7 +602,7 @@ class CmdCog:
         await self.connection.commit()
         self.logger.info(f"Updated cmd status -> {name} -> {status}.")
 
-    async def update_cmd(self, name: str, cmd: Cmd) -> None:
+    async def update_cmd(self, name: str, cmd: Union[Cmd, dict]) -> dict:
         """
         Updates a cmd.
 
@@ -594,6 +617,33 @@ class CmdCog:
         -------
         None
         """
+
+        if isinstance(cmd, dict):
+            cmd = Cmd(
+                name=cmd["name"],
+                description=cmd["description"],
+                usage=0,
+                used=0,
+                cost=cmd["cost"],
+                status=1,
+                aliases="",
+                category=cmd["category"],
+                dynamic=1,
+                text="",
+            )
+        
+        if cmd.category == "Select category":
+            return {"error": f"category must be selected"}
+        
+        if cmd.cost.isdigit() == False:
+            return {"error": f"cost must be a number"}
+
+        cmd.cost = int(cmd.cost)
+        if cmd.cost < 0 or cmd.cost > 1000000000:
+            return {"error": f"cost must be between 0 and 1 000 000 000"}
+
+        if cmd.description == "":
+            return {"error": f"description must not be empty"}
 
         await self.connection.execute(
             "UPDATE cmd SET name = ?, description = ?, usage = ?, used = ?, cost = ?, status = ?, aliases = ?, category = ?, dynamic = ?, text = ? WHERE name = ?",
@@ -612,6 +662,8 @@ class CmdCog:
             ),
         )
         await self.connection.commit()
+        self.logger.info(f"Updated cmd -> {cmd.name}.")
+        return {"success": f"command {cmd.name} updated"}
 
     async def delete_cmd(self, name: str) -> None:
         """

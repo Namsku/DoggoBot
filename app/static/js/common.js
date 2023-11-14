@@ -172,48 +172,74 @@ async function form_delete_command() {
 }
 
 async function form_edit_command() {
-  setupModal("#popup-edit-form", "#open-edit-form-btn");
+  let buttons = document.querySelectorAll('[id^="open-edit-form-btn-"]');
+
+  // Add an event listener to each button
+  buttons.forEach(button => {
+    setupModal("#popup-edit-form", "#" + button.id);
+  });
+
 }
 
 async function form_create_command() {
   setupModal("#popup-form", "#open-form-btn");
 }
 
-async function handle_submit_form() {
-  await document.querySelector('#form-command').addEventListener('submit', function(event) {
-    event.preventDefault();
-    
-    var formData = new FormData(event.target);
-    var o_key = '';
-    let object = {};
+async function handle_submit_form(form_id, message_id) {
+  // Select all forms with the class "form-command"
+  let forms = document.querySelectorAll(form_id);
 
+  // Add an event listener to each form
+  forms.forEach(form => {
+    form.addEventListener('submit', async function(event) {
+      event.preventDefault(); // Prevent the form from being submitted
 
-    for (let [key, value] of formData.entries()) {
-      if (key != 'update_type') {
-        object[key] = value;
-      } else {
-        o_key = value;
+      let error_message = $(message_id + '-error-message')
+      let success_message = $(message_id + '-success-message')
+      
+      let formData = new FormData(event.target);
+      let o_key = '';
+      let object = {};
+
+      for (let [key, value] of formData.entries()) {
+        if (key !== 'update_type') {
+          object[key] = value;
+        } else {
+          o_key = value;
+        }
       }
-    }
 
-    object = {
-      [o_key]: object
-    }
+      object = {
+        [o_key]: object
+      }
 
-    let json = JSON.stringify(object);
+      try {
+        const response = await fetch("/api/update", {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(object),
+        });
 
-    fetch("/api/update", {
-      method: "POST",
-      body: json,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log(data);
-      })
-      .catch((error) => {
-        console.log(error)
-        // Handle the error.
-      });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        } else {
+          const data = await response.json();
+          if (Object.keys(data)[0] === 'success') {
+            error_message.hide();
+            success_message.text(data['success']).fadeIn();
+            setTimeout(function() {
+              location.reload(); // This will refresh the page
+            }, 1500);
+          } else {
+            error_message.text(data['error']).fadeIn();
+          }
+        }
+      } catch (error) {
+        console.error('An error occurred:', error);
+      }
+    });
   });
 }
 
@@ -260,52 +286,47 @@ async function update_user_command_table() {
     });
 }
 
-function createModal(title, id) {
-    // Create elements
-    let modal = document.createElement('div');
-    modal.id = 'popup-form';
-    modal.className = 'modal fade';
-    modal.tabIndex = '-1';
-    modal.role = 'dialog';
-    modal.setAttribute('aria-labelledby', 'popupFormLabel');
-    modal.setAttribute('aria-hidden', 'true');
+async function event_listener_edit_buttons() {
+  let buttons = document.querySelectorAll('[id^="open-edit-form-btn-"]');
+  let data;
 
-    let modalDialog = document.createElement('div');
-    modalDialog.className = 'modal-dialog';
+  // Add an event listener to each button
+  buttons.forEach(button => {
+    button.addEventListener('click', async function(event) {
+        event.preventDefault();
+        try {
+          const response = await fetch("/api/command", {
+            method: "POST",
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({"command": button.id.split('-').pop()}),
+          });
+    
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          } else {
+            data = await response.json();
+          }
+        } catch (error) {
+          console.error('An error occurred:', error);
+        }
 
-    let modalContent = document.createElement('div');
-    modalContent.className = 'modal-content';
 
-    let modalHeader = document.createElement('div');
-    modalHeader.className = 'modal-header';
+        // Select the container div
+        let popupEditForm = document.getElementById('popup-edit-form');
 
-    let modalTitle = document.createElement('h5');
-    modalTitle.className = 'modal-title';
-    modalTitle.id = 'popupFormLabel';
-    modalTitle.textContent = title
+        let name = popupEditForm.querySelector('#name');
+        let category = popupEditForm.querySelector('#category');
+        let cost = popupEditForm.querySelector('#cost');
+        let description = popupEditForm.querySelector('#description');
 
-    let closeButton = document.createElement('button');
-    closeButton.type = 'button';
-    closeButton.className = 'btn-close';
-    closeButton.setAttribute('data-bs-dismiss', 'modal');
-    closeButton.setAttribute('aria-label', 'Close');
 
-    let modalBody = document.createElement('div');
-    modalBody.className = 'modal-body';
-
-    let form = document.createElement('form');
-    form.id = 'form-command';
-
-    // ... continue creating all elements ...
-
-    // Append elements
-    modalHeader.appendChild(modalTitle);
-    modalHeader.appendChild(closeButton);
-    modalContent.appendChild(modalHeader);
-    modalContent.appendChild(modalBody);
-    modalDialog.appendChild(modalContent);
-    modal.appendChild(modalDialog);
-
-    // Append modal to body
-    document.body.appendChild(modal);
+        // Modify the field values
+        name.value = data['name'];
+        category.value = data['category']; // This should be one of the option values
+        cost.value = data['cost'];
+        description.value = data['description'];
+    });
+  });
 }

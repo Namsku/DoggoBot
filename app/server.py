@@ -33,6 +33,7 @@ class Server(Bot):
             "/api/users_stats", self.get_users_stats, methods=["GET"]
         )
 
+        self.router.add_api_route("/api/command", self.get_command, methods=["POST"])
         self.router.add_api_route("/api/update", self.update_database, methods=["POST"])
 
         self.router.add_api_route("/mods", self.mods, methods=["GET"])
@@ -321,16 +322,31 @@ class Server(Bot):
             indent=None,
         )
 
-    async def update_database(self, request: Request):
-        """Updates the database."""
+    async def get_command(self, request: Request) -> dict:
+        """Gets a command."""
 
         json = await request.json()
         print(json)
+
+        for key, value in json.items():
+            if key == "command":
+                # convert cmd to json
+                cmd = await self.bot.cmd.get_cmd(value)
+
+                return self.bot.cmd.to_dict(cmd)
+
+    async def update_database(self, request: Request) -> dict:
+        """Updates the database."""
+
+        json = await request.json()
+        print('update_database', json)
 
         for key, value in json.items():
             if key == "cmd":
                 if value["attribute"] == "status":
                     status = True if value["status"] == 1 else False
                     await self.bot.cmd.update_status(value["name"], status)
-            if key == "user_cmd":
-                await self.bot.cmd.add_cmd(value)
+            elif key == "user_cmd":
+                return await self.bot.cmd.add_cmd(value)
+            elif key == "update_cmd":
+                return await self.bot.cmd.update_cmd(value['name'], value)

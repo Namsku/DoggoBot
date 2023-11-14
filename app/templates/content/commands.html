@@ -145,6 +145,10 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
+        <!-- Error message display area -->
+        <div id="form-error-message" class="alert alert-danger" style="display: none;"></div>
+        <div id="form-success-message" class="alert alert-success" style="display: none;"></div>
+
         <form id="form-command">
           <div class="mb-3">
             <label for="name" class="form-label">Name</label>
@@ -203,7 +207,11 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <form id="form-command">
+        <!-- Error message display area -->
+        <div id="edit-error-message" class="alert alert-danger" style="display: none;"></div>
+        <div id="edit-success-message" class="alert alert-success" style="display: none;"></div>
+
+        <form id="edit-form-command">
           <div class="mb-3">
             <label for="name" class="form-label">Name</label>
             <div class="input-group">
@@ -212,8 +220,8 @@
                   <path d="M0 3a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3zm9.5 5.5h-3a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1zm-6.354-.354a.5.5 0 1 0 .708.708l2-2a.5.5 0 0 0 0-.708l-2-2a.5.5 0 1 0-.708.708L4.793 6.5 3.146 8.146z" />
                 </svg>
               </span>
-              <input type="hidden" class="form-control" id="update_type" name="update_type" value="user_cmd">
-              <input type="text" class="form-control" id="name" name="name">
+              <input type="hidden" class="form-control" id="update_type" name="update_type" value="update_cmd">
+              <input type="text" class="form-control" id="name" name="name" readonly>
             </div>
           </div>
           <div class="mb-3">
@@ -253,7 +261,6 @@
   </div>
 </div>
 
-
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -276,10 +283,13 @@
 
 <script>
   event_listener_switch_butons("cmd", "status");
-  document.getElementById('form-command').addEventListener('submit', validateForm);
+  event_listener_edit_buttons();
+  
   form_edit_command();
   form_create_command();
   form_delete_command();
-  handle_submit_form();
+
+  handle_submit_form('#edit-form-command','#edit');
+  handle_submit_form('#form-command','#form');
 </script>
 
