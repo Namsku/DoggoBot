@@ -344,25 +344,6 @@ class Bot(commands.Bot):
         """
         self.logger.error(f"{ctx} -> {error}")
 
-    async def event_command_error(
-        self, ctx: commands.Context, error: Exception
-    ) -> None:
-        """
-        Event called when a command error occurs.
-
-        Parameters
-        ----------
-        ctx : twitchio.Context
-            The context object.
-        error : Exception
-            The error object.
-
-        Returns
-        -------
-        None
-        """
-        self.logger.error(f"{ctx} -> {error}")
-
     async def event_join(self, channel: Channel, user: User):
         """
         Event called when a user joins the chat.

@@ -339,13 +339,12 @@ class Server(Bot):
         """Updates the database."""
 
         json = await request.json()
-        print('update_database', json)
-
+        
         for key, value in json.items():
             if key == "cmd":
                 if value["attribute"] == "status":
                     status = True if value["status"] == 1 else False
-                    await self.bot.cmd.update_status(value["name"], status)
+                    return await self.bot.cmd.update_status(value["name"], status)
             elif key == "user_cmd":
                 return await self.bot.cmd.add_cmd(value)
             elif key == "update_cmd":

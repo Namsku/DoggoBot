@@ -601,6 +601,7 @@ class CmdCog:
 
         await self.connection.commit()
         self.logger.info(f"Updated cmd status -> {name} -> {status}.")
+        return {"success": f"command {name} status updated"}
 
     async def update_cmd(self, name: str, cmd: Union[Cmd, dict]) -> dict:
         """

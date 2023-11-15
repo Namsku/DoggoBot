@@ -5,8 +5,10 @@ async function fetch_request(url, options) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
   
+    console.log(response)
     const json = await response.json();
-  
+    console.log(json)
+
     return json;
   }
 
@@ -22,10 +24,12 @@ async function request(url, method = 'GET', data = null) {
         credentials: 'same-origin'
       };
   
+      console.log(data, options)
       if (data) {
         options.body = JSON.stringify(data);
       }
   
+      console.log('after', options)
       const response = await fetch_request(url, options);
   
       return response;
