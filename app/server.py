@@ -339,7 +339,7 @@ class Server(Bot):
         """Updates the database."""
 
         json = await request.json()
-        
+
         for key, value in json.items():
             if key == "cmd":
                 if value["attribute"] == "status":
@@ -348,4 +348,4 @@ class Server(Bot):
             elif key == "user_cmd":
                 return await self.bot.cmd.add_cmd(value)
             elif key == "update_cmd":
-                return await self.bot.cmd.update_cmd(value['name'], value)
+                return await self.bot.cmd.update_cmd(value["name"], value)
