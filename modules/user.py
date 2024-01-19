@@ -421,15 +421,23 @@ class UserCog:
         self.logger.debug(f"Updated {username} to bot: {bot}")
 
     async def update_user_follower(self, username: str, follower: bool) -> None:
-        await self.connection.execute(
-            """
-            UPDATE users SET follower = ? WHERE username = ?
-        """,
-            (follower, username),
-        )
+        try:
+            follower = int(follower)
+            status = await self.get_user(username)
+            if follower == status.follower:
+                return
 
-        await self.connection.commit()
-        self.logger.debug(f"Updated {username} to follower: {follower}")
+            await self.connection.execute(
+                """
+                UPDATE users SET follower = ? WHERE username = ?
+            """,
+                (follower, username),
+            )
+
+            await self.connection.commit()
+            self.logger.debug(f"Updated {username} to follower: {follower}")
+        except Exception as e:
+            self.logger.error(f"An error occurred while updating user follower: {e}")
 
     async def update_user_subscriber(self, username: str, subscriber: bool) -> None:
         await self.connection.execute(
