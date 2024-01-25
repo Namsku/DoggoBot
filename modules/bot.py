@@ -4,6 +4,7 @@ from modules.sfx import SFXCog
 from modules.channel import ChannelCog
 from modules.message import MessageCog
 from modules.cmd import CmdCog, Cmd
+from modules.games import GamesCog
 
 import aiosqlite
 
@@ -110,6 +111,7 @@ class Bot(commands.Bot):
         )
         self.connection_user = await aiosqlite.connect("data/database/user.sqlite")
         self.connection_sfx = await aiosqlite.connect("data/database/sfx.sqlite")
+        self.connection_games = await aiosqlite.connect("data/database/games.sqlite")
         self.logger.debug("Database connection established.")
 
     async def _ainit_database_classes(self, channel: ChannelCog) -> None:
@@ -129,6 +131,7 @@ class Bot(commands.Bot):
         self.msg = MessageCog(self.connection_message)
         self.usr = UserCog(channel, self.connection_user)
         self.sfx = SFXCog(self.connection_sfx)
+        self.gms = GamesCog(self.connection_games)
         self.logger.debug("Database classes initialized.")
 
     async def _ainit_database_tables(self) -> None:
@@ -149,6 +152,8 @@ class Bot(commands.Bot):
         await self.msg.create_table()
         await self.usr.create_table()
         await self.sfx.create_table()
+        await self.gms.create_table()
+        await self.gms.__ainit__()
         self.logger.debug("Tables created.")
 
     async def _ainit_user_commands(self) -> None:
@@ -745,6 +750,56 @@ class Bot(commands.Bot):
         await ctx.send(
             f"{user} has been watching the channel for {await self.usr.get_watchtime(user)}"
         )
+
+    @commands.command(name="gamble")
+    async def gamble(self, ctx: commands.Context) -> None:
+        """
+        Gambles a certain amount of coins.
+
+        Parameters
+        ----------
+        ctx : twitchio.Context
+            The context object.
+
+        Returns
+        -------
+        None
+        """
+
+        if len(ctx.content.split()) != 2:
+            await ctx.send(f"Usage: !gamble <amount>")
+            return
+
+        user = ctx.author.name.lower()
+        amount = ctx.content.split()[1]
+
+        if not amount.isdigit():
+            await ctx.send(f"Usage: !gamble <amount>")
+            return
+
+        amount = int(amount)
+
+        if amount < 1:
+            await ctx.send(f"Usage: !gamble <amount>")
+            return
+
+        if user not in self.channel_members:
+            await ctx.send(f"{user} is not following the channel.")
+            return
+
+        if await self.usr.get_balance(user) < amount:
+            await ctx.send(f"{user} does not have enough coins.")
+            return
+        
+        if self.gms.roll.maximum_bet < amount:
+            await ctx.send(f"{user} cannot bet more than {self.gms.roll.maximum_bet} coins.")
+            return
+        
+        if self.gms.roll.minimum_bet > amount:
+            await ctx.send(f"{user} cannot bet less than {self.gms.roll.minimum_bet} coins.")
+            return
+
+        await self.gms.roll(ctx, user, amount)
 
     # get all commands names
     async def get_all_commands(self) -> [Cmd]:

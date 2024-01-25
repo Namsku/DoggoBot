@@ -211,6 +211,10 @@ class Server(Bot):
 
     async def games(self, request: Request):
         message = {}
+
+        message['slots'] = await self.bot.gms.get_slots()
+        message['roll'] = await self.bot.gms.get_roll()
+
         return self.templates.TemplateResponse(
             "index.html", {"request": request, "message": message}
         )
