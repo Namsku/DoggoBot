@@ -16,73 +16,60 @@
 {% endmacro %}
 
 <div class="container">
+
+  <div class="row">
+    <div class="col-12 mt-4">
+      <h1>Gambling games</h1>
+      <p>Configure games that you want with detailed options</p>
+    </div>
+  </div>
+
   <!-- Container Fluid 1 - Slots -->
-  <div class="bg-body-tertiary p-5 rounded">
+  <div class="bg-body-tertiary p-5 rounded border border-gray">
+  <!-- Container starting -->
   <div class="container-fluid">
+
     <div class="row">
       <div class="col-md-11">
         <h3> Slots </h3>
       </div>
       <div class="col-md-1">
-          <!--                 
-        cost = ?,
-        status = ?,
-        modify_success_rate = ?,
-        success_rate = ?,
-        reward_mushroom = ?,
-        reward_coin = ?,
-        reward_leaf = ?,
-        reward_diamond = ?,
-        jackpot = ?
-        -->
           {{ generate_switch(message['slots'].status, 'slots').strip() }}
       </div>
     </div>
+    
     <div class="row">
       <div class="col">
         <p class="d-inline-flex gap-1">
-          <a class="btn btn-primary" data-bs-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
+          <a class="btn btn-primary" data-bs-toggle="collapse" href="#collapse-slots-help" role="button" aria-expanded="false" aria-controls="collapseExample">
             Help
           </a>
         </p>
-        <div class="collapse" id="collapseExample">
+        <div class="collapse" id="collapse-slots-help">
           <div class="card card-body">
             <p> <b> Cost </b> - The amount of coins it costs to play the game. </p>
             <p> <b> Success Rate </b> - The chance of winning the game. (Range 1-99) </p>
             <p> <b> Default Jackpot </b> - The amount of coins the jackpot starts with. </p>
-            <p> <b> Mushroom Winning Amount Rate </b> - The amount of coins you win if you get 3 mushrooms. </p>
-            <p> <b> Coin Winning Amount Rate </b> - The amount of coins you win if you get 3 coins. </p>
-            <p> <b> Leaf Winning Amount Rate </b> - The amount of coins you win if you get 3 leaves. </p>
-            <p> <b> Diamond Winning Amount Rate </b> - The amount of coins you win if you get 3 diamonds. </p>
+            <p> <b> Multiplier - Mushroom </b> - Set a multiplier reward if you you get 3 mushrooms. </p>
+            <p> <b> Multiplier - Coin </b> - Set a multiplier reward if you get 3 coins. </p>
+            <p> <b> Multiplier - Leaf </b> - Set a multiplier reward if you get 3 leaves. </p>
+            <p> <b> Multiplier - Diamond </b> - Set a multiplier reward if you get 3 diamonds. </p>
           </div>
         </div>
+      </div>
     </div>
+
+    <!-- Start Form -->
+    <form novalidate method="post">
+
     <div class="row">
       <div class="col-md-6">
-        <form novalidate method="post">
           <div class="form-group">
             <label for="slots_cost"> Cost </label>
             <div class="col">
-
-              <!-- 
-                <div class="row g-3">
-                <div class="col-10">
-                  <label for="secret_token" class="form-label">Secret Token</label>
-                  <div class="input-group">
-                    <span class="input-group-text">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-incognito" viewBox="0 0 16 16">
-                        <path fill-rule="evenodd" d="m4.736 1.968-.892 3.269-.014.058C2.113 5.568 1 6.006 1 6.5 1 7.328 4.134 8 8 8s7-.672 7-1.5c0-.494-1.113-.932-2.83-1.205a1.032 1.032 0 0 0-.014-.058l-.892-3.27c-.146-.533-.698-.849-1.239-.734C9.411 1.363 8.62 1.5 8 1.5c-.62 0-1.411-.136-2.025-.267-.541-.115-1.093.2-1.239.735Zm.015 3.867a.25.25 0 0 1 .274-.224c.9.092 1.91.143 2.975.143a29.58 29.58 0 0 0 2.975-.143.25.25 0 0 1 .05.498c-.918.093-1.944.145-3.025.145s-2.107-.052-3.025-.145a.25.25 0 0 1-.224-.274ZM3.5 10h2a.5.5 0 0 1 .5.5v1a1.5 1.5 0 0 1-3 0v-1a.5.5 0 0 1 .5-.5Zm-1.5.5c0-.175.03-.344.085-.5H2a.5.5 0 0 1 0-1h3.5a1.5 1.5 0 0 1 1.488 1.312 3.5 3.5 0 0 1 2.024 0A1.5 1.5 0 0 1 10.5 9H14a.5.5 0 0 1 0 1h-.085c.055.156.085.325.085.5v1a2.5 2.5 0 0 1-5 0v-.14l-.21-.07a2.5 2.5 0 0 0-1.58 0l-.21.07v.14a2.5 2.5 0 0 1-5 0v-1Zm8.5-.5h2a.5.5 0 0 1 .5.5v1a1.5 1.5 0 0 1-3 0v-1a.5.5 0 0 1 .5-.5Z"></path>
-                      </svg>
-                    </span>
-                    <input type="password" class="form-control" id="secret_token" name="secret_token" value="{{ message.secret_token }}" placeholder="" required>
-                  </div>
-                </div>
-
-              -->
               <div class="input-group">
                 <!-- hidden input value -->
                 <input type="hidden" name="game_choose" value="slots">
-
                 <span class="input-group-text" id="basic-addon1">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cash" viewBox="0 0 16 16">
                     <path d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4"></path>
@@ -93,6 +80,7 @@
               </div>
             </div>
           </div>
+
           <div class="form-group">
             <label for="exampleInputPassword1"> Success Rate </label>
             <div class="col">
@@ -107,6 +95,7 @@
               </div>
             </div>
           </div>
+          
           <div class="form-group">
             <label for="exampleInputPassword1"> Default Jackpot </label>
             <div class="col">
@@ -121,9 +110,10 @@
             </div>
           </div>
       </div>
+      
       <div class="col-md-6">
           <div class="form-group">
-            <label for="exampleInputEmail1"> Mushroom Winning Amount Rate </label>
+            <label for="exampleInputEmail1"> Multiplier - Mushroom </label>
             <div class="col">
               <div class="input-group">
                 <span class="input-group-text" id="basic-addon1">
@@ -135,8 +125,9 @@
               </div>
             </div>
           </div>
+
           <div class="form-group">
-            <label for="exampleInputPassword1"> Coin Winning Amount Rate </label>
+            <label for="exampleInputPassword1"> Multiplier - Coin </label>
             <div class="col">
               <div class="input-group">
                 <span class="input-group-text" id="basic-addon1">
@@ -148,8 +139,9 @@
               </div>
             </div>
           </div>
+
         <div class="form-group">
-          <label for="exampleInputEmail1"> Leaf Winning Amount Rate </label>
+          <label for="exampleInputEmail1"> Multiplier - Leaf  </label>
           <div class="col">
             <div class="input-group">
               <span class="input-group-text" id="basic-addon1">
@@ -161,8 +153,9 @@
             </div>
           </div>
         </div>
+
         <div class="form-group">
-          <label for="exampleInputEmail1"> Diamond Winning Amount Rate </label>
+          <label for="exampleInputEmail1"> Multiplier - Diamond </label>
           <div class="col">
             <div class="input-group">
               <span class="input-group-text" id="basic-addon1">
@@ -174,58 +167,68 @@
             </div>
           </div>
         </div>
+      
       </div>
-      <div class="row">
-        <div class="col-md-11">
-        </div>
+    </div>
+      
+    <div class="row">
+        <div class="col-md-11"></div>
+
         <div class="col-md-1">
-            <!--                 
-          cost = ?,
-          modify_success_rate = ?,
-          success_rate = ?,
-          reward_mushroom = ?,
-          reward_coin = ?,
-          reward_leaf = ?,
-          reward_diamond = ?,
-          jackpot = ?
-          -->
-          <button class="btn btn-primary" type="submit">Save</button>
-          </div>
-      </div>
+          <button class="btn btn-primary mt-3" type="submit">Save</button>
+        </div>
+    </div>
+    
     </form>
+    <!-- End Form -->
+
     </div>
   </div>
-</div>
-</div>
+ 
 
   <!-- Container Fluid 2 - Gambling -->
-  <div class="container-fluid">
-    <div class="bg-body-tertiary p-5 rounded">
+  <div class="bg-body-tertiary p-5 rounded border border-gray mt-3">
+    <div class="container-fluid">
     <div class="row">
+
       <div class="col-md-11">
         <h3> Gamble </h3>
       </div>
+
       <div class="col-md-1">
-          <!--                 
-                minimum_bet = ?,
-                maximum_bet = ?,
-                reward_critical_success = ?,
-                reward_critical_failure = ?
-        -->
         {{ generate_switch(message['roll'].status, 'roll').strip() }}
       </div>
-      <div class="row">
+    </div>  
+  
+  
+    <div class="row">
+      <div class="col">
+        <p class="d-inline-flex gap-1">
+          <a class="btn btn-primary" data-bs-toggle="collapse" href="#collapse-roll-help" role="button" aria-expanded="false" aria-controls="collapseExample">
+            Help
+          </a>
+        </p>
+        <div class="collapse" id="collapse-roll-help">
+          <div class="card card-body">
+            <p> <b> Minimum Bet </b> - The minimum amount of coins you can bet. </p>
+            <p> <b> Maximum Bet </b> - The maximum amount of coins you can bet. </p>
+            <p> <b> Critical Success Reward Multiplier </b> - Set a multiplier from what you had bet if you win with a roll equal to 100. </p>
+            <p> <b> Critical Failure Loosing Multiplier </b> - Set a multipier from what you had bet if you loose with a roll equal to 0. </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
         <div class="col-md-6">
           <form role="form">
+
             <div class="form-group">
               <label for="slots_cost"> Minimum Bet </label>
               <div class="col">
                 <div class="input-group">
-                  
-                <!-- hidden input value -->
-                <input type="hidden" name="game_choose" value="rolls">
-
-
+                  <!-- hidden input value -->
+                  <input type="hidden" name="game_choose" value="rolls">
                   <span class="input-group-text" id="basic-addon1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cash" viewBox="0 0 16 16">
                       <path d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4"></path>
@@ -236,6 +239,7 @@
                 </div>
               </div>
             </div>
+
             <div class="form-group">
               <label for="exampleInputPassword1"> Maximum Bet </label>
               <div class="col">
@@ -245,10 +249,11 @@
                       <path d="M9.05.435c-.58-.58-1.52-.58-2.1 0L.436 6.95c-.58.58-.58 1.519 0 2.098l6.516 6.516c.58.58 1.519.58 2.098 0l6.516-6.516c.58-.58.58-1.519 0-2.098zM8 4c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995A.905.905 0 0 1 8 4m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"></path>
                     </svg>
                   </span>
-              <input type="text" class="form-control" id="roll_maximum_bet" name="roll_maximum_bet" value="{{ message['roll'].maximum_bet }}" placeholder="" required>
+                  <input type="text" class="form-control" id="roll_maximum_bet" name="roll_maximum_bet" value="{{ message['roll'].maximum_bet }}" placeholder="" required>
                 </div>
               </div>
             </div>
+
             <div class="form-group">
               <label for="exampleInputPassword1"> Critical Success Reward Rate </label>
               <div class="col">
@@ -263,6 +268,7 @@
                 </div>
               </div>
             </div>
+
             <div class="form-group">
               <label for="exampleInputPassword1"> Critical Failure Loosing Rate </label>
               <div class="col">
@@ -276,10 +282,11 @@
                 </div>
               </div>
             </div>
+
           </form>
         </div>
-      </div>
+    </div>
+
     </div>
   </div>
-  </div>  
-</div>  <!-- End of Content Side -->
+</div>
