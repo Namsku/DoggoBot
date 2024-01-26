@@ -8,6 +8,7 @@ import time
 
 @dataclass
 class Roll:
+    status: int
     minimum_bet: int
     maximum_bet: int
     reward_critical_success: float
@@ -16,6 +17,8 @@ class Roll:
 @dataclass
 class Slots:
     cost: int
+    status: int
+    rng_manipulation: int
     success_rate: int
     reward_mushroom: float
     reward_coin: float
@@ -88,6 +91,8 @@ class GamesCog:
             """
             CREATE TABLE IF NOT EXISTS slots (
                 cost INTEGER NOT NULL,
+                status INTEGER NOT NULL,
+                rng_manipulation INTEGER NOT NULL,
                 success_rate INTEGER NOT NULL,
                 reward_mushroom REAL NOT NULL,
                 reward_coin REAL NOT NULL,
@@ -96,6 +101,7 @@ class GamesCog:
                 jackpot INTEGER NOT NULL
             );
             CREATE TABLE IF NOT EXISTS roll (
+                status INTEGER NOT NULL,
                 minimum_bet INTEGER NOT NULL,
                 maximum_bet INTEGER NOT NULL,
                 reward_critical_success REAL NOT NULL,
@@ -148,15 +154,17 @@ class GamesCog:
         '''
         
         await self.connection.execute(
-            "INSERT INTO slots (cost, success_rate, reward_mushroom, reward_coin, reward_leaf, reward_diamond, jackpot) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO slots (cost, status, rng_manipulation, success_rate, reward_mushroom, reward_coin, reward_leaf, reward_diamond, jackpot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
-                100,
-                0,
-                0.5,
                 1,
-                2,
-                5,
-                1000,
+                1,
+                0,
+                0,
+                1.5,
+                0.5,
+                0.5,
+                0.5,
+                100,
             ),
         )
         await self.connection.commit()
@@ -176,8 +184,9 @@ class GamesCog:
         '''
 
         await self.connection.execute(
-            "INSERT INTO roll (minimum_bet, maximum_bet, reward_critical_success, reward_critical_failure) VALUES (?, ?, ?, ?)",
+            "INSERT INTO roll (status, minimum_bet, maximum_bet, reward_critical_success, reward_critical_failure) VALUES (?, ?, ?, ?, ?)",
             (
+                1,
                 1,
                 100,
                 1.5,
@@ -271,12 +280,14 @@ class GamesCog:
 
             slots = Slots(
                 cost=slots[0],
-                success_rate=slots[1],
-                reward_mushroom=slots[2],
-                reward_coin=slots[3],
-                reward_leaf=slots[4],
-                reward_diamond=slots[5],
-                jackpot=slots[6],
+                status=slots[1],
+                rng_manipulation=slots[2],
+                success_rate=slots[3],
+                reward_mushroom=slots[4],
+                reward_coin=slots[5],
+                reward_leaf=slots[6],
+                reward_diamond=slots[7],
+                jackpot=slots[8],
             )
 
         return slots
@@ -303,10 +314,11 @@ class GamesCog:
             self.roll = await cursor.fetchone()
 
             roll = Roll(
-                minimum_bet=self.roll[0],
-                maximum_bet=self.roll[1],
-                reward_critical_success=self.roll[2],
-                reward_critical_failure=self.roll[3],
+                status=self.roll[0],
+                minimum_bet=self.roll[1],
+                maximum_bet=self.roll[2],
+                reward_critical_success=self.roll[3],
+                reward_critical_failure=self.roll[4],
             )
 
         return roll
@@ -328,12 +340,14 @@ class GamesCog:
         await self.connection.execute(
             """
             UPDATE roll SET
+                status = ?,
                 minimum_bet = ?,
                 maximum_bet = ?,
                 reward_critical_success = ?,
                 reward_critical_failure = ?
         """,
             (
+                self.roll.status,
                 self.roll.minimum_bet,
                 self.roll.maximum_bet,
                 self.roll.reward_critical_success,
@@ -364,6 +378,8 @@ class GamesCog:
             """
             UPDATE slots SET
                 cost = ?,
+                status = ?,
+                rng_manipulation = ?,
                 success_rate = ?,
                 reward_mushroom = ?,
                 reward_coin = ?,
@@ -373,6 +389,8 @@ class GamesCog:
         """,
             (
                 self.slots.cost,
+                self.slots.status,
+                self.slots.rng_manipulation,
                 self.slots.success_rate,
                 self.slots.reward_mushroom,
                 self.slots.reward_coin,

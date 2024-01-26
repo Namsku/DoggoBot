@@ -2,12 +2,14 @@ from modules.bot import Bot
 from modules.cmd import Cmd
 from modules.channel import Channel
 
+import os
+import arel
+
 from fastapi import FastAPI, APIRouter, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
 from typing import Optional
-
 from json import dumps
 
 
@@ -15,8 +17,16 @@ class Server(Bot):
     def __init__(self, bot: Bot, app: FastAPI):
         self.bot = bot
         self.app = app
-
         self.templates = Jinja2Templates(directory="app/templates")
+
+        if _debug := os.getenv("DOGGOBOT_SERVER_DBG"):
+            hot_reload = arel.HotReload(paths=[arel.Path("app"), arel.Path("modules")])
+            app.add_websocket_route("/hot-reload", route=hot_reload, name="hot-reload")
+            app.add_event_handler("startup", hot_reload.startup)
+            app.add_event_handler("shutdown", hot_reload.shutdown)
+            self.templates.env.globals["DEBUG"] = _debug
+            self.templates.env.globals["hot_reload"] = hot_reload
+
         self.app.mount("/static", StaticFiles(directory="app/static"), name="static")
         self.router = APIRouter()
 
@@ -24,7 +34,7 @@ class Server(Bot):
         self.router.add_api_route("/chat", self.chat, methods=["GET"])
         self.router.add_api_route("/commands", self.commands, methods=["GET"])
         self.router.add_api_route("/curse", self.curse, methods=["GET"])
-        self.router.add_api_route("/games", self.games, methods=["GET"])
+        self.router.add_api_route("/games", self.games, methods=["GET", "POST"])
 
         self.router.add_api_route(
             "/api/chatters_stats", self.get_top_chatter, methods=["GET"]
@@ -208,12 +218,57 @@ class Server(Bot):
         return self.templates.TemplateResponse(
             "index.html", {"request": request, "message": message}
         )
+    
+    async def save_games_settings(self, request: Request):
+        """
+        Saves the bot's settings.
+
+        Parameters
+        ----------
+        request : Request
+            The request object.
+
+        Returns
+        -------
+        None
+        """
+
+        form = await request.form()
+
+        if form.get("game_choose") == "slots":
+            '''
+            FormData([('slots_cost', '1'), ('slots_success_rate', '0'), ('slots_jackpot', '100'), ('slots_mushroom', '1.5'), ('slots_coin', '0.5'), ('slots_leaf', '0.5'), ('slots_diamond', '0.5')])
+            '''
+            cfg = {
+                "cost": int(form.get("slots_cost")),
+                "success_rate": int(form.get("slots_success_rate")),
+                "jackpot": int(form.get("slots_jackpot")),
+                "reward_mushroom": float(form.get("slots_mushroom")),
+                "reward_coin": float(form.get("slots_coin")),
+                "reward_leaf": float(form.get("slots_leaf")),
+                "reward_diamond": float(form.get("slots_diamond")),
+
+            }
+        else:
+            cfg = {
+                "minimum_bet": int(form.get("slots_cost")),
+                "maximum_bet": int(form.get("slots_success_rate")),
+                "critical_success_rate": int(form.get("slots_jackpot")),
+                "critical_failure_rate": float(form.get("slots_mushroom")),
+
+            }
+
+        self.bot.gms.set_env(cfg)
 
     async def games(self, request: Request):
         message = {}
 
         message['slots'] = await self.bot.gms.get_slots()
         message['roll'] = await self.bot.gms.get_roll()
+
+        if request.method == "POST":
+            self.bot.logger.debug(f"POST request received {await request.form()}")
+
 
         return self.templates.TemplateResponse(
             "index.html", {"request": request, "message": message}

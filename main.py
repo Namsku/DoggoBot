@@ -66,7 +66,8 @@ async def create_bot(channel: ChannelCog) -> Bot:
         await bot.__ainit__(channel)
         logger.debug("Bot initialized successfully.")
     except Exception as e:
-        logger.error(f"Error while initializing bot: {e} - {traceback.format_exc()}")
+        # logger.error(f"Error while initializing bot: {e} - {traceback.format_exc()}")
+        logger.error(f"Error while initializing bot: {e}")
 
     return bot
 
@@ -107,6 +108,9 @@ async def main() -> None:
     app = FastAPI()
     server: Server = Server(bot, app)
     bot.server = server
+    
+    if (os.getenv("DOGGOBOT_SERVER_DBG") == "1"):
+        logger.debug("Debug mode enabled.")
 
     if not (os.getenv("TWITCH_SECRET_TOKEN") and os.getenv("TWITCH_CLIENT_TOKEN")):
         logger.warning(

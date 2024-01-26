@@ -22,6 +22,9 @@
     <script src="{{ url_for('static', path='js/common.js') }}"></script>
     <script src="{{ url_for('static', path='js/bootstrap.bundle.min.js') }}"></script>
 
+    <!-- Hot reload script -->
+    {% if DEBUG %} {{ hot_reload.script(url_for('hot-reload')) | safe }} {% endif %}
+
     <style>
       .sidebar.main {
         position: fixed;
