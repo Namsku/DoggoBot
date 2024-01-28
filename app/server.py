@@ -234,45 +234,23 @@ class Server(Bot):
         """
 
         form = await request.form()
-
-        if form.get("game_choose") == "slots":
-            """
-            FormData([('slots_cost', '1'), ('slots_success_rate', '0'), ('slots_jackpot', '100'), ('slots_mushroom', '1.5'), ('slots_coin', '0.5'), ('slots_leaf', '0.5'), ('slots_diamond', '0.5')])
-            """
-            cfg = {
-                "type": form.get("game_choose"),
-                "cost": int(form.get("slots_cost")),
-                "success_rate": int(form.get("slots_success_rate")),
-                "jackpot": int(form.get("slots_jackpot")),
-                "reward_mushroom": float(form.get("slots_mushroom")),
-                "reward_coin": float(form.get("slots_coin")),
-                "reward_leaf": float(form.get("slots_leaf")),
-                "reward_diamond": float(form.get("slots_diamond")),
-            }
-        else:
-            cfg = {
-                "type": form.get("game_choose"),
-                "minimum_bet": int(form.get("roll_minimum_bet")),
-                "maximum_bet": int(form.get("roll_maximum_bet")),
-                "critical_success_rate": float(
-                    form.get("roll_reward_critical_success")
-                ),
-                "critical_failure_rate": float(
-                    form.get("roll_reward_critical_failure")
-                ),
-            }
-
-        self.bot.gms.set_game(cfg)
+        result = await self.bot.gbg.set_game(form)
+        self.bot.logger.debug(f"result: {result}")
+        
+        return result
 
     async def games(self, request: Request):
         message = {}
-
-        message["slots"] = await self.bot.gms.get_slots()
-        message["roll"] = await self.bot.gms.get_roll()
         status = "none"
 
         if request.method == "POST":
-            self.bot.logger.debug(f"POST request received {await request.form()}")
+            result = await self.save_games_settings(request)
+            status = "error" if result.get("error") else "success"
+            message[status] = result.get(status)
+        
+        message["slots"] = await self.bot.gbg.get_slots()
+        message["roll"] = await self.bot.gbg.get_roll()
+        message["status"] = status
 
         return self.templates.TemplateResponse(
             "index.html", {"request": request, "message": message}

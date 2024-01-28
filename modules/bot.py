@@ -4,7 +4,7 @@ from modules.sfx import SFXCog
 from modules.channel import ChannelCog
 from modules.message import MessageCog
 from modules.cmd import CmdCog, Cmd
-from modules.games import GamesCog
+from modules.gambling import GamblingCog
 
 import aiosqlite
 
@@ -131,7 +131,7 @@ class Bot(commands.Bot):
         self.msg = MessageCog(self.connection_message)
         self.usr = UserCog(channel, self.connection_user)
         self.sfx = SFXCog(self.connection_sfx)
-        self.gms = GamesCog(self.connection_games)
+        self.gbg = GamesCog(self.connection_games)
         self.logger.debug("Database classes initialized.")
 
     async def _ainit_database_tables(self) -> None:
@@ -152,8 +152,8 @@ class Bot(commands.Bot):
         await self.msg.create_table()
         await self.usr.create_table()
         await self.sfx.create_table()
-        await self.gms.create_table()
-        await self.gms.__ainit__()
+        await self.gbg.create_table()
+        await self.gbg.__ainit__()
         self.logger.debug("Tables created.")
 
     async def _ainit_user_commands(self) -> None:
@@ -751,6 +751,37 @@ class Bot(commands.Bot):
             f"{user} has been watching the channel for {await self.usr.get_watchtime(user)}"
         )
 
+    @commands.command(name="slots")
+    async def slots(self, ctx: commands.Context) -> None:
+        """
+        Slots game.
+
+        Parameters
+        ----------
+        ctx : twitchio.Context
+            The context object.
+
+        Returns
+        -------
+        None
+        """
+
+        user = ctx.author.name.lower()
+        amount = ctx.content.split()[1]
+
+        if await self.usr.get_balance(user) < amount:
+            await ctx.send(f"{user} does not have enough coins.")
+            return
+        
+        result = self.gbg.get_slots_result()
+
+        if result['status']:
+            await self.usr.update_user_balance(user, result['amount'])
+            await ctx.send(f"{' '.join(result['spin'])} | {user} won {result['amount']} {self.coin_name}!")
+        else:
+            await self.usr.update_user_balance(user, -result['amount'])
+            await ctx.send(f"{' '.join(result['spin'])} | {user} lost {result['amount']} {self.coin_name}!")
+
     @commands.command(name="gamble")
     async def gamble(self, ctx: commands.Context) -> None:
         """
@@ -791,15 +822,37 @@ class Bot(commands.Bot):
             await ctx.send(f"{user} does not have enough coins.")
             return
         
-        if self.gms.roll.maximum_bet < amount:
-            await ctx.send(f"{user} cannot bet more than {self.gms.roll.maximum_bet} coins.")
+        if self.gbg.roll.maximum_bet < amount:
+            await ctx.send(f"{user} cannot bet more than {self.gbg.roll.maximum_bet} coins.")
             return
         
-        if self.gms.roll.minimum_bet > amount:
-            await ctx.send(f"{user} cannot bet less than {self.gms.roll.minimum_bet} coins.")
+        if self.gbg.roll.minimum_bet > amount:
+            await ctx.send(f"{user} cannot bet less than {self.gbg.roll.minimum_bet} coins.")
             return
 
-        await self.gms.roll(ctx, user, amount)
+        rng = self.gbg.get_roll_number()
+
+        # Critical Failure
+        if rng == 0:
+            # change amount has negative be sure it's integer without decimals
+            amount = self.gbg.roll.reward_critical_failure * amount 
+            amount = int(-amount)
+
+            await self.usr.update_user_balance(user, amount)
+            await ctx.send(f"{user} rolled an awful {rng} and lost {amount} {self.coin_name}!")
+        elif rng == 100:
+            amount = int(self.gbg.roll.reward_critical_success * amount)
+            await self.usr.update_user_balance(user, amount)
+            await ctx.send(f"{user} rolled a perfect {rng} and won {amount} {self.coin_name}!")
+        elif rng < 50:
+            await self.usr.update_user_balance(user, -amount)
+            await ctx.send(f"{user} rolled a {rng} and lost {amount} {self.coin_name}.")
+        elif rng == 50:
+            await ctx.send(f"{user} rolled a {rng} and nothing happened.")
+        else:
+            amount = int(2 * amount)
+            await self.usr.update_user_balance(user, amount)
+            await ctx.send(f"{user} rolled a {rng} and won {amount} {self.coin_name}!")
 
     # get all commands names
     async def get_all_commands(self) -> [Cmd]:
