@@ -234,7 +234,7 @@ class Server(Bot):
         """
 
         form = await request.form()
-        result = await self.bot.gbg.set_game(form)
+        result = await self.bot.gms.gambling.set_game(form)
         self.bot.logger.debug(f"result: {result}")
         
         return result
@@ -248,9 +248,11 @@ class Server(Bot):
             status = "error" if result.get("error") else "success"
             message[status] = result.get(status)
         
-        message["slots"] = await self.bot.gbg.get_slots()
-        message["roll"] = await self.bot.gbg.get_roll()
+        message["slots"] = await self.bot.gms.gambling.get_slots()
+        message["roll"] = await self.bot.gms.gambling.get_roll()
         message["status"] = status
+
+        self.bot.logger.debug(f"message: {message}")
 
         return self.templates.TemplateResponse(
             "index.html", {"request": request, "message": message}

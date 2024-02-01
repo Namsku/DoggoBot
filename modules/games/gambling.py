@@ -13,6 +13,7 @@ class Roll:
     maximum_bet: int
     reward_critical_success: float
     reward_critical_failure: float
+    time: int
 
 
 @dataclass
@@ -27,6 +28,7 @@ class Slots:
     reward_leaf: float
     reward_diamond: float
     jackpot: int
+    time: int
 
 
 class GamblingCog:
@@ -44,8 +46,8 @@ class GamblingCog:
         None
         """
 
-        self.connection = connection
         self.logger = Logger(__name__)
+        self.connection = connection
         self.roll = None  # type: Roll
         self.slots = None  # type: Slots
 
@@ -62,7 +64,7 @@ class GamblingCog:
         None
         """
 
-        self.logger.info("Initializing GamesCog...")
+        self.logger.info("Initializing GambingCog...")
         if await self.is_slots_table_empty():
             self.logger.info("Slots table not configured. Filling")
             await self.fill_default_slots_table()
@@ -98,14 +100,40 @@ class GamblingCog:
                 reward_coin REAL NOT NULL,
                 reward_leaf REAL NOT NULL,
                 reward_diamond REAL NOT NULL,
-                jackpot INTEGER NOT NULL
+                jackpot INTEGER NOT NULL,
+                time INTEGER NOT NULL
             );
+
             CREATE TABLE IF NOT EXISTS roll (
                 status INTEGER NOT NULL,
                 minimum_bet INTEGER NOT NULL,
                 maximum_bet INTEGER NOT NULL,
                 reward_critical_success REAL NOT NULL,
-                reward_critical_failure REAL NOT NULL
+                reward_critical_failure REAL NOT NULL,
+                time INTEGER NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS game (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                type TEXT NOT NULL,
+                cost INTEGER NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS rpg (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                game_id INTEGER NOT NULL,
+                text TEXT NOT NULL,
+                boss INTEGER NOT NULL,
+                time INTEGER NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS gatcha (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                game_id INTEGER NOT NULL,
+                text TEXT NOT NULL,
+                rarity INTEGER NOT NULL,
+                time INTEGER NOT NULL
             );
         """
         )
@@ -154,7 +182,7 @@ class GamblingCog:
         """
 
         await self.connection.execute(
-            "INSERT INTO slots (cost, status, rng_manipulation, success_rate, reward_mushroom, reward_coin, reward_leaf, reward_diamond, jackpot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO slots (cost, status, rng_manipulation, success_rate, reward_mushroom, reward_coin, reward_leaf, reward_diamond, jackpot, time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 10000,
                 1,
@@ -165,6 +193,7 @@ class GamblingCog:
                 5,
                 10,
                 7777777,
+                0,
             ),
         )
         await self.connection.commit()
@@ -184,13 +213,14 @@ class GamblingCog:
         """
 
         await self.connection.execute(
-            "INSERT INTO roll (status, minimum_bet, maximum_bet, reward_critical_success, reward_critical_failure) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO roll (status, minimum_bet, maximum_bet, reward_critical_success, reward_critical_failure, time) VALUES (?, ?, ?, ?, ?, ?)",
             (
                 1,
                 100,
                 777777,
                 7.777,
                 6.66,
+                0,
             ),
         )
         await self.connection.commit()
@@ -210,7 +240,23 @@ class GamblingCog:
             The roll object.
         """
 
-        return self.generate_random_number()
+        async with self.connection.execute(
+            """
+            SELECT * FROM roll
+        """
+        ) as cursor:
+            roll = await cursor.fetchone()
+
+            roll = Roll(
+                status=roll[0],
+                minimum_bet=roll[1],
+                maximum_bet=roll[2],
+                reward_critical_success=roll[3],
+                reward_critical_failure=roll[4],
+                time=roll[5],
+            )
+
+        return roll
 
     async def get_slot_spin(self) -> list:
         """
@@ -237,7 +283,7 @@ class GamblingCog:
 
         return reels
 
-    async def generate_random_number(self, min=0, max=100) -> int:
+    def generate_random_number(self, min=0, max=100) -> int:
         """
         Generate a random number between min and max.
 
@@ -288,6 +334,7 @@ class GamblingCog:
                 reward_leaf=slots[6],
                 reward_diamond=slots[7],
                 jackpot=slots[8],
+                time=slots[9],
             )
 
         return slots
@@ -319,6 +366,7 @@ class GamblingCog:
                 maximum_bet=roll[2],
                 reward_critical_success=roll[3],
                 reward_critical_failure=roll[4],
+                time=roll[5],
             )
 
         return roll
@@ -344,7 +392,8 @@ class GamblingCog:
                 minimum_bet = ?,
                 maximum_bet = ?,
                 reward_critical_success = ?,
-                reward_critical_failure = ?
+                reward_critical_failure = ?,
+                time = ?
         """,
             (
                 self.roll.status,
@@ -352,6 +401,7 @@ class GamblingCog:
                 self.roll.maximum_bet,
                 self.roll.reward_critical_success,
                 self.roll.reward_critical_failure,
+                self.roll.time,
             ),
         )
 
@@ -383,7 +433,8 @@ class GamblingCog:
                 reward_coin = ?,
                 reward_leaf = ?,
                 reward_diamond = ?,
-                jackpot = ?
+                jackpot = ?,
+                time = ?
         """,
             (
                 self.slots.cost,
@@ -395,6 +446,7 @@ class GamblingCog:
                 self.slots.reward_leaf,
                 self.slots.reward_diamond,
                 self.slots.jackpot,
+                self.slots.time,
             ),
         )
 
@@ -422,7 +474,7 @@ class GamblingCog:
                 "slots_success_rate",
                 "The success rate can't be empty.",
                 "The success rate must be a number.",
-            ),
+            ),           
             (
                 "slots_mushroom",
                 "The reward mushroom can't be empty.",
@@ -449,6 +501,11 @@ class GamblingCog:
                 "The jackpot must be a number.",
             ),
             (
+                "slots_time",
+                "The success rate can't be empty.",
+                "The success rate must be a number.",
+            ),
+            (
                 "roll_minimum_bet",
                 "The minimum bet can't be empty.",
                 "The minimum bet must be a number.",
@@ -468,12 +525,17 @@ class GamblingCog:
                 "The reward critical failure can't be empty.",
                 "The reward critical failure must be a number.",
             ),
+            (
+                "roll_time",
+                "The time can't be empty.",
+                "The time must be a number.",
+            ),
         ]
 
         if form.get("game_choose") == "roll":
-            fields = fields[7:]
+            fields = fields[8:]
         else:
-            fields = fields[:7]
+            fields = fields[:8]
 
         for field, empty_error, digit_error in fields:
             value = form.get(field)
@@ -510,6 +572,7 @@ class GamblingCog:
                 "reward_critical_failure": float(
                     form.get(f"{game_type}_reward_critical_failure")
                 ),
+                "time": int(form.get(f"{game_type}_time")),
             }
         elif game_type == "slots":
             cfg = {
@@ -521,6 +584,7 @@ class GamblingCog:
                 "reward_coin": float(form.get(f"{game_type}_coin")),
                 "reward_leaf": float(form.get(f"{game_type}_leaf")),
                 "reward_diamond": float(form.get(f"{game_type}_diamond")),
+                "time": int(form.get(f"{game_type}_time")),
             }
 
         return cfg
@@ -534,11 +598,12 @@ class GamblingCog:
         self.slots.reward_leaf = cfg["reward_leaf"]
         self.slots.reward_diamond = cfg["reward_diamond"]
         self.slots.jackpot = cfg["jackpot"]
+        self.slots.time = int(cfg["time"])
 
         for key, value in cfg.items():
             error = await self.validate_value(
                 value,
-                int if key in ["cost", "success_rate", "jackpot"] else float,
+                int if key in ["cost", "success_rate", "jackpot", "time"] else float,
                 key,
                 0,
                 99 if key == "success_rate" else None,
@@ -554,10 +619,11 @@ class GamblingCog:
         self.roll.maximum_bet = cfg["maximum_bet"]
         self.roll.reward_critical_success = cfg["reward_critical_success"]
         self.roll.reward_critical_failure = cfg["reward_critical_failure"]
+        self.roll.time = int(cfg["time"])
 
         for key, value in cfg.items():
             error = await self.validate_value(
-                value, int if key in ["minimum_bet", "maximum_bet"] else float, key, 0
+                value, int if key in ["minimum_bet", "maximum_bet", "time"] else float, key, 0
             )
             if error and key != "type":
                 return error

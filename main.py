@@ -66,8 +66,8 @@ async def create_bot(channel: ChannelCog) -> Bot:
         await bot.__ainit__(channel)
         logger.debug("Bot initialized successfully.")
     except Exception as e:
-        # logger.error(f"Error while initializing bot: {e} - {traceback.format_exc()}")
-        logger.error(f"Error while initializing bot: {e}")
+        logger.error(f"Error while initializing bot: {e} - {traceback.format_exc()}")
+        # logger.error(f"Error while initializing bot: {e}")
 
     return bot
 
@@ -86,6 +86,24 @@ def check_admin():
 
     return False
 
+def create_hyperconfig() -> HyperConfig:
+    '''
+    Creates a Hypercorn configuration object.
+    
+    Parameters
+    ----------
+    None
+    
+    Returns
+    -------
+    hyperconfig : HyperConfig
+        The Hypercorn configuration object.
+    '''
+    
+    hyperconfig = HyperConfig()
+    hyperconfig.bind = ["0.0.0.0:8000"]
+    hyperconfig.worker_class = "asyncio"
+    return hyperconfig
 
 async def main() -> None:
     '''
@@ -123,9 +141,7 @@ async def main() -> None:
     else:
         asyncio.create_task(bot.start())
 
-    hyperconfig = HyperConfig()
-    hyperconfig.bind = ["0.0.0.0:8000"]
-    hyperconfig.worker_class = "asyncio"
+    hyperconfig = create_hyperconfig()
 
     await serve(app, hyperconfig)
 

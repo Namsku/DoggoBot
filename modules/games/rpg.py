@@ -16,14 +16,6 @@ class Rpg:
     boss_bonus: int
     boss_malus: int
 
-@dataclass
-class RpgAction:
-    id: int
-    rpg_id: int
-    message: str
-    type: str
-    boss: bool
-
 class RpgCog:
     def __init__(self, connection: aiosqlite.Connection) -> None:
         """
