@@ -29,6 +29,7 @@ class RpgCog:
             The connection to the database.
         """
         self.connection = connection
+        
         self.id = None
         self.name = None
         self.cost = None
@@ -57,7 +58,7 @@ class RpgCog:
             rpg = Rpg(**rpg)
 
         # Quit if the name already exists
-        if await self.is_cmd_exists(rpg.name):
+        if await self.is_name_exists(rpg.name):
             return {"error": "name already exists"}
 
         if not self.is_name_valid(rpg.name):
@@ -74,8 +75,8 @@ class RpgCog:
             return {"error": "cost must be a number"}
 
         rpg.success_rate = float(rpg.success_rate)
-        if rpg.success_rate < 0 or rpg.success_rate > 100:
-            return {"error": "cost must be between 0 and 100"}
+        if rpg.success_rate < 1 or rpg.success_rate > 100:
+            return {"error": "success rate must be from 1% to 100%"}
 
         rpg.cost = int(rpg.cost)
         if rpg.cost < 0 or rpg.cost > 1000000000:
