@@ -8,12 +8,12 @@ from modules.games.common import GamesCog
 
 import aiosqlite
 
-from twitchio import ChannelFollowerEvent, Message, Client
+from twitchio import ChannelFollowerEvent, Message
 from twitchio.ext import commands
 from twitchio.channel import Channel
 from twitchio.user import User
 
-from twitchio.ext import eventsub
+# from twitchio.ext import eventsub
 
 import os
 
@@ -106,9 +106,7 @@ class Bot(commands.Bot):
         """
         self.connection_channel = channel.connection
         self.connection_cmd = await aiosqlite.connect("data/database/cmd.sqlite")
-        self.connection_message = await aiosqlite.connect(
-            "data/database/message.sqlite"
-        )
+        self.connection_message = await aiosqlite.connect("data/database/message.sqlite")
         self.connection_user = await aiosqlite.connect("data/database/user.sqlite")
         self.connection_sfx = await aiosqlite.connect("data/database/sfx.sqlite")
         self.connection_games = await aiosqlite.connect("data/database/games.sqlite")
@@ -330,9 +328,7 @@ class Bot(commands.Bot):
         self.logger.info(f"{name} -> {message.content}")
         return await super().event_message(message)
 
-    async def event_command_error(
-        self, ctx: commands.Context, error: Exception
-    ) -> None:
+    async def event_command_error(self, ctx: commands.Context, error: Exception) -> None:
         """
         Event called when a command error occurs.
 
@@ -387,6 +383,7 @@ class Bot(commands.Bot):
         """
         self.logger.info(f"{user.name} left")
 
+    '''
     async def get_channel_mods(self) -> None:
         """
         Gets the channel mods.
@@ -400,9 +397,8 @@ class Bot(commands.Bot):
         None
         """
 
-        self.usr.mods = [
-            mod.name.lower() for mod in await client.fetch_moderators(self.token)
-        ]
+        self.usr.mods = [mod.name.lower() for mod in await client.fetch_moderators(self.token)]
+    '''
 
     async def get_channel_members(self) -> None:
         """
@@ -417,9 +413,7 @@ class Bot(commands.Bot):
         None
         """
         your_channel: [User] = await self.fetch_users([self.channel_id])
-        followers: [ChannelFollowerEvent] = await your_channel[
-            0
-        ].fetch_channel_followers(self.token)
+        followers: [ChannelFollowerEvent] = await your_channel[0].fetch_channel_followers(self.token)
 
         self.channel_members = [follower.user.name.lower() for follower in followers]
 
@@ -486,14 +480,13 @@ class Bot(commands.Bot):
         """
 
         if len(ctx.message.content.split()) != 2:
-            await ctx.send(f"Usage: !so <user>")
+            await ctx.send("Usage: !so <user>")
             return
 
         user = ctx.content.split()[1].lower().replace("@", "")
 
         await ctx.send(
-            f" 📢 Please give a look to our >>> {user} <<<, "
-            f"Take a look at his twitch channel (twitch.tv/{str.lower(user)})"
+            f" 📢 Please give a look to our >>> {user} <<<, " f"Take a look at his twitch channel (twitch.tv/{str.lower(user)})"
         )
 
     @commands.command(name="topchatter")
@@ -512,7 +505,7 @@ class Bot(commands.Bot):
         """
 
         if len(ctx.message.content.split()) != 1:
-            await ctx.send(f"Usage: !topchatter")
+            await ctx.send("Usage: !topchatter")
             return
 
         user = await self.usr.get_top_chatter()
@@ -520,7 +513,7 @@ class Bot(commands.Bot):
         if user:
             await ctx.send(f"The top chatter is {user}")
         else:
-            await ctx.send(f"No top chatter found.")
+            await ctx.send("No top chatter found.")
 
     @commands.command(name="mods")
     async def info_mods(self, ctx: commands.Context):
@@ -536,9 +529,7 @@ class Bot(commands.Bot):
         -------
         None
         """
-        await ctx.send(
-            "📢 If you search a list of good mods/tools for RE, everything is on my discord (!socials for more info)"
-        )
+        await ctx.send("📢 If you search a list of good mods/tools for RE, everything is on my discord (!socials for more info)")
 
     @commands.command(name="balance")
     async def balance(self, ctx: commands.Context) -> None:
@@ -556,7 +547,7 @@ class Bot(commands.Bot):
         """
 
         if len(ctx.message.content.split()) != 1:
-            await ctx.send(f"Usage: !balance")
+            await ctx.send("Usage: !balance")
             return
 
         user = ctx.author.name.lower()
@@ -565,9 +556,7 @@ class Bot(commands.Bot):
             await ctx.send(f"{user} is not following the channel.")
             return
 
-        await ctx.send(
-            f"{user} has {await self.usr.get_balance(user)} {self.coin_name}"
-        )
+        await ctx.send(f"{user} has {await self.usr.get_balance(user)} {self.coin_name}")
 
     @commands.command(name="schedule")
     async def schedule(self, ctx: commands.Context):
@@ -638,10 +627,10 @@ class Bot(commands.Bot):
         """
 
         if len(ctx.message.content.split()) != 1:
-            await ctx.send(f"Usage: !clip")
+            await ctx.send("Usage: !clip")
             return
 
-        await ctx.send(f"Creating clip...")
+        await ctx.send("Creating clip...")
         await ctx.channel.create_clip()
 
     @commands.command(name="followdate")
@@ -660,7 +649,7 @@ class Bot(commands.Bot):
         """
 
         if len(ctx.message.content.split()) != 1:
-            await ctx.send(f"Usage: !followdate")
+            await ctx.send("Usage: !followdate")
             return
 
         user = ctx.author.name.lower()
@@ -669,9 +658,7 @@ class Bot(commands.Bot):
             await ctx.send(f"{user} is not following the channel.")
             return
 
-        await ctx.send(
-            f"{user} has been following the channel since {await self.usr.get_followdate(user)}"
-        )
+        await ctx.send(f"{user} has been following the channel since {await self.usr.get_followdate(user)}")
 
     @commands.command(name="about")
     async def about_bot(self, ctx: commands.Context):
@@ -689,9 +676,7 @@ class Bot(commands.Bot):
         """
 
         link = "discord.gg/SjGyhS9T"
-        await ctx.send(
-            f"DoggoBot has been created by Fumi - If you want more info ping him on his Discord ({link})"
-        )
+        await ctx.send(f"DoggoBot has been created by Fumi - If you want more info ping him on his Discord ({link})")
 
     @commands.command(name="followage")
     async def followage(self, ctx: commands.Context) -> None:
@@ -709,7 +694,7 @@ class Bot(commands.Bot):
         """
 
         if len(ctx.message.content.split()) != 1:
-            await ctx.send(f"Usage: !followage")
+            await ctx.send("Usage: !followage")
             return
 
         user = ctx.author.name.lower()
@@ -718,9 +703,7 @@ class Bot(commands.Bot):
             await ctx.send(f"{user} is not following the channel.")
             return
 
-        await ctx.send(
-            f"{user} has been following the channel for {await self.usr.get_followage(user)}"
-        )
+        await ctx.send(f"{user} has been following the channel for {await self.usr.get_followage(user)}")
 
     @commands.command(name="watchtime")
     async def watchtime(self, ctx: commands.Context) -> None:
@@ -738,7 +721,7 @@ class Bot(commands.Bot):
         """
 
         if len(ctx.message.content.split()) != 1:
-            await ctx.send(f"Usage: !watchtime")
+            await ctx.send("Usage: !watchtime")
             return
 
         user = ctx.author.name.lower()
@@ -747,9 +730,7 @@ class Bot(commands.Bot):
             await ctx.send(f"{user} is not following the channel.")
             return
 
-        await ctx.send(
-            f"{user} has been watching the channel for {await self.usr.get_watchtime(user)}"
-        )
+        await ctx.send(f"{user} has been watching the channel for {await self.usr.get_watchtime(user)}")
 
     @commands.command(name="slots")
     async def slots(self, ctx: commands.Context) -> None:
@@ -772,14 +753,14 @@ class Bot(commands.Bot):
         if await self.usr.get_balance(user) < amount:
             await ctx.send(f"{user} does not have enough coins.")
             return
-        
+
         result = self.gms.get_slots_result()
 
-        if result['status']:
-            await self.usr.update_user_balance(user, result['amount'])
+        if result["status"]:
+            await self.usr.update_user_balance(user, result["amount"])
             await ctx.send(f"{' '.join(result['spin'])} | {user} won {result['amount']} {self.coin_name}!")
         else:
-            await self.usr.update_user_balance(user, -result['amount'])
+            await self.usr.update_user_balance(user, -result["amount"])
             await ctx.send(f"{' '.join(result['spin'])} | {user} lost {result['amount']} {self.coin_name}!")
 
     @commands.command(name="gamble")
@@ -798,20 +779,20 @@ class Bot(commands.Bot):
         """
 
         if len(ctx.content.split()) != 2:
-            await ctx.send(f"Usage: !gamble <amount>")
+            await ctx.send("Usage: !gamble <amount>")
             return
 
         user = ctx.author.name.lower()
         amount = ctx.content.split()[1]
 
         if not amount.isdigit():
-            await ctx.send(f"Usage: !gamble <amount>")
+            await ctx.send("Usage: !gamble <amount>")
             return
 
         amount = int(amount)
 
         if amount < 1:
-            await ctx.send(f"Usage: !gamble <amount>")
+            await ctx.send("Usage: !gamble <amount>")
             return
 
         if user not in self.channel_members:
@@ -821,11 +802,11 @@ class Bot(commands.Bot):
         if await self.usr.get_balance(user) < amount:
             await ctx.send(f"{user} does not have enough coins.")
             return
-        
+
         if self.gms.roll.maximum_bet < amount:
             await ctx.send(f"{user} cannot bet more than {self.gms.roll.maximum_bet} coins.")
             return
-        
+
         if self.gms.roll.minimum_bet > amount:
             await ctx.send(f"{user} cannot bet less than {self.gms.roll.minimum_bet} coins.")
             return
@@ -835,7 +816,7 @@ class Bot(commands.Bot):
         # Critical Failure
         if rng == 0:
             # change amount has negative be sure it's integer without decimals
-            amount = self.gms.roll.reward_critical_failure * amount 
+            amount = self.gms.roll.reward_critical_failure * amount
             amount = int(-amount)
 
             await self.usr.update_user_balance(user, amount)

@@ -23,16 +23,12 @@ class Logger(logging.Logger):
         # Create a file handler
         self.create_logger_file()
         file_handler = logging.FileHandler("data/logs/doggobot.log", "w", "utf-8")
-        file_handler.setFormatter(
-            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-        )
+        file_handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
         self.addHandler(file_handler)
 
         # Create a console handler
         console_handler = logging.StreamHandler()
-        console_handler.setFormatter(
-            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-        )
+        console_handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
         self.addHandler(console_handler)
 
     def create_logger_file(self) -> None:

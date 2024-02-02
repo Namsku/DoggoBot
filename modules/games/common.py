@@ -4,8 +4,6 @@ from modules.games.gambling import GamblingCog
 
 
 import aiosqlite
-import random
-import time
 
 @dataclass
 class Game:
@@ -32,7 +30,7 @@ class GamesCog:
 
         self.connection = connection
         self.logger = Logger(__name__)
-        self.gambling = GamblingCog(connection)   
+        self.gambling = GamblingCog(connection)
 
     async def __ainit__(self) -> None:
         """
@@ -61,7 +59,7 @@ class GamesCog:
         None
         """
 
-        ## create two table in one single execute
+        # create two table in one single execute
         await self.connection.executescript(
             """
             CREATE TABLE IF NOT EXISTS slots (
@@ -121,5 +119,4 @@ class GamesCog:
                 time INTEGER NOT NULL
             );
         """
-        )    
-    
+        )

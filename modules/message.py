@@ -17,6 +17,7 @@ class Message:
     is_mod: bool
     is_turbo: bool
 
+
 class MessageCog:
     def __init__(self, connection: aiosqlite.Connection) -> None:
         """
@@ -57,9 +58,7 @@ class MessageCog:
         None
         """
 
-        self.author = (
-            message.author.name.lower() if message.author else bot.bot_name.lower()
-        )
+        self.author = message.author.name.lower() if message.author else bot.bot_name.lower()
 
         self.content = message.content
         self.timestamp = message.timestamp

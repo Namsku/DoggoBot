@@ -1,5 +1,4 @@
 import aiosqlite
-import asyncio
 import os
 from dataclasses import dataclass
 

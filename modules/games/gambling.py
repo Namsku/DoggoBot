@@ -88,7 +88,7 @@ class GamblingCog:
         None
         """
 
-        ## create two table in one single execute
+        # create two table in one single execute
         await self.connection.executescript(
             """
             CREATE TABLE IF NOT EXISTS slots (
@@ -271,7 +271,7 @@ class GamblingCog:
         None
         """
 
-        symbols = ["🍄","🪙","🍀","💎","💛"]
+        symbols = ["🍄", "🪙", "🍀", "💎", "💛"]
         reels = [random.choice(symbols) for _ in range(3)]
 
         if self.slots.success_rate < 0:
@@ -453,9 +453,7 @@ class GamblingCog:
         await self.connection.commit()
         self.logger.info("Database info - Slots updated.")
 
-    async def validate_value(
-        self, value, value_type, name, min_value=None, max_value=None
-    ) -> dict:
+    async def validate_value(self, value, value_type, name, min_value=None, max_value=None) -> dict:
         if not isinstance(value, value_type):
             return {"error": f"The {name} must be a {value_type.__name__}."}
 
@@ -474,7 +472,7 @@ class GamblingCog:
                 "slots_success_rate",
                 "The success rate can't be empty.",
                 "The success rate must be a number.",
-            ),           
+            ),
             (
                 "slots_mushroom",
                 "The reward mushroom can't be empty.",
@@ -566,12 +564,8 @@ class GamblingCog:
                 "type": game_type,
                 "minimum_bet": int(form.get(f"{game_type}_minimum_bet")),
                 "maximum_bet": int(form.get(f"{game_type}_maximum_bet")),
-                "reward_critical_success": float(
-                    form.get(f"{game_type}_reward_critical_success")
-                ),
-                "reward_critical_failure": float(
-                    form.get(f"{game_type}_reward_critical_failure")
-                ),
+                "reward_critical_success": float(form.get(f"{game_type}_reward_critical_success")),
+                "reward_critical_failure": float(form.get(f"{game_type}_reward_critical_failure")),
                 "time": int(form.get(f"{game_type}_time")),
             }
         elif game_type == "slots":
@@ -622,14 +616,12 @@ class GamblingCog:
         self.roll.time = int(cfg["time"])
 
         for key, value in cfg.items():
-            error = await self.validate_value(
-                value, int if key in ["minimum_bet", "maximum_bet", "time"] else float, key, 0
-            )
+            error = await self.validate_value(value, int if key in ["minimum_bet", "maximum_bet", "time"] else float, key, 0)
             if error and key != "type":
                 return error
 
         if self.roll.maximum_bet < self.roll.minimum_bet:
-            return {"error": f"The maximum bet must be greater than the minimum bet."}
+            return {"error": "The maximum bet must be greater than the minimum bet."}
 
         await self.update_roll()
         return {"success": "Roll updated."}
@@ -660,7 +652,7 @@ class GamblingCog:
             return await self.set_roll_config(cfg)
 
         return {"error": "Invalid game."}
-    
+
     async def get_spin_result(self) -> dict:
         """
         Get the slots spin.
@@ -690,7 +682,7 @@ class GamblingCog:
                 reward = int(self.slots.reward_diamond * self.slots.cost)
             elif spin[0] == "💛":
                 reward = self.slots.jackpot
-            
+
             status = True
 
         return {

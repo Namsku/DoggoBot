@@ -36,12 +36,8 @@ class Server(Bot):
         self.router.add_api_route("/curse", self.curse, methods=["GET"])
         self.router.add_api_route("/games", self.games, methods=["GET", "POST"])
 
-        self.router.add_api_route(
-            "/api/chatters_stats", self.get_top_chatter, methods=["GET"]
-        )
-        self.router.add_api_route(
-            "/api/users_stats", self.get_users_stats, methods=["GET"]
-        )
+        self.router.add_api_route("/api/chatters_stats", self.get_top_chatter, methods=["GET"])
+        self.router.add_api_route("/api/users_stats", self.get_users_stats, methods=["GET"])
 
         self.router.add_api_route("/api/command", self.get_command, methods=["POST"])
         self.router.add_api_route("/api/update", self.update_database, methods=["POST"])
@@ -75,7 +71,6 @@ class Server(Bot):
         # if requests is a POST request, initialize the bot
         if request.method == "POST":
             try:
-                bot = Bot(self.bot.channel)
                 await self.bot.__ainit__(self.bot.channel)
             except Exception as e:
                 self.bot.logger.error(f"Error while initializing bot: {e}")
@@ -100,9 +95,7 @@ class Server(Bot):
                 }
             )
 
-        return self.templates.TemplateResponse(
-            "index.html", {"request": request, "message": message}
-        )
+        return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
 
     async def chat(self, request: Request):
         """
@@ -120,9 +113,7 @@ class Server(Bot):
 
         message = {}
 
-        return self.templates.TemplateResponse(
-            "index.html", {"request": request, "message": message}
-        )
+        return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
 
     async def commands(self, request: Request):
         """
@@ -156,9 +147,7 @@ class Server(Bot):
         message["based"] = cmd_list
         message["dynamic"] = cdyn_list
 
-        return self.templates.TemplateResponse(
-            "index.html", {"request": request, "message": message}
-        )
+        return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
 
     async def sfx(self, request: Request):
         """
@@ -176,9 +165,7 @@ class Server(Bot):
 
         message = {}
 
-        return self.templates.TemplateResponse(
-            "index.html", {"request": request, "message": message}
-        )
+        return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
 
     async def curse(self, request: Request):
         """
@@ -196,28 +183,20 @@ class Server(Bot):
 
         message = {}
 
-        return self.templates.TemplateResponse(
-            "index.html", {"request": request, "message": message}
-        )
+        return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
 
     async def overlay(self, request: Request):
         message = {}
 
-        return self.templates.TemplateResponse(
-            "overlay.html", {"request": request, "message": message}
-        )
+        return self.templates.TemplateResponse("overlay.html", {"request": request, "message": message})
 
     async def rpg(self, request: Request):
         message = {}
-        return self.templates.TemplateResponse(
-            "index.html", {"request": request, "message": message}
-        )
+        return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
 
     async def mods(self, request: Request):
         message = {}
-        return self.templates.TemplateResponse(
-            "index.html", {"request": request, "message": message}
-        )
+        return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
 
     async def save_games_settings(self, request: Request):
         """
@@ -236,7 +215,7 @@ class Server(Bot):
         form = await request.form()
         result = await self.bot.gms.gambling.set_game(form)
         self.bot.logger.debug(f"result: {result}")
-        
+
         return result
 
     async def games(self, request: Request):
@@ -247,16 +226,14 @@ class Server(Bot):
             result = await self.save_games_settings(request)
             status = "error" if result.get("error") else "success"
             message[status] = result.get(status)
-        
+
         message["slots"] = await self.bot.gms.gambling.get_slots()
         message["roll"] = await self.bot.gms.gambling.get_roll()
         message["status"] = status
 
         self.bot.logger.debug(f"message: {message}")
 
-        return self.templates.TemplateResponse(
-            "index.html", {"request": request, "message": message}
-        )
+        return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
 
     async def save_bot_settings(self, request: Request):
         """
@@ -323,9 +300,7 @@ class Server(Bot):
             **bot_settings,
         }
 
-        return self.templates.TemplateResponse(
-            "index.html", {"request": request, "message": message}
-        )
+        return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
 
     async def user(self, request: Request, name: str):
         message = {
@@ -333,9 +308,7 @@ class Server(Bot):
             "avatar": await self.bot.usr.get_user_avatar(name),
         }
 
-        return self.templates.TemplateResponse(
-            "index.html", {"request": request, "message": message}
-        )
+        return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
 
     async def get_top_chatter(self):
         chatters = await self.bot.usr.get_top5_chatters()

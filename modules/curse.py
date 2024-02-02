@@ -3,6 +3,7 @@ import aiosqlite
 from twitchio.ext import sounds, commands
 from dataclasses import dataclass
 
+
 @dataclass
 class curse:
     id: int
@@ -12,7 +13,8 @@ class curse:
     cost: int
     cooldown: int
 
-class curseCog():
+
+class curseCog:
     def __init__(self, connection: aiosqlite.Connection):
         self.connection = connection
         self.player = sounds.AudioPlayer(callback=self.sound_executed)
@@ -35,7 +37,7 @@ class curseCog():
         await self.connection.commit()
 
     async def user_able_to_play(self, ctx: commands.Context, curse_sound: str) -> bool:
-        '''
+        """
         Checks if a user is able to play a sound effect.
 
         Parameters
@@ -49,7 +51,7 @@ class curseCog():
         -------
         bool
             Whether or not the user is able to play the sound effect.
-        '''
+        """
 
         curse = await self.get_curse(curse_sound)
 
@@ -72,7 +74,7 @@ class curseCog():
         return True
 
     async def play_curse(self, ctx: commands.Context, curse_sound: str) -> None:
-        '''
+        """
         Plays a sound effect.
 
         Parameters
@@ -85,14 +87,14 @@ class curseCog():
         Returns
         -------
         None
-        '''
-        
+        """
+
         event_player = sounds.AudioPlayer(callback=self.sound_done)
         curse = await self.get_curse(curse_sound)
 
         if curse is None:
             return
-        
+
         event_player.source = self.source
         await event_player.play(curse.path, volume=curse.volume)
 
@@ -109,7 +111,7 @@ class curseCog():
             return None
 
         return curse(*result)
-    
+
     async def get_curse_by_id(self, id: int) -> curse:
         async with self.connection.execute(
             """
@@ -123,7 +125,7 @@ class curseCog():
             return None
 
         return curse(*result)
-    
+
     async def get_all_curse(self) -> list[curse]:
         async with self.connection.execute(
             """
@@ -136,7 +138,7 @@ class curseCog():
             return None
 
         return [curse(*curse) for curse in result]
-    
+
     async def get_all_curse_names(self) -> list[str]:
         async with self.connection.execute(
             """
@@ -149,7 +151,7 @@ class curseCog():
             return None
 
         return [name[0] for name in result]
-    
+
     async def get_all_curse_paths(self) -> list[str]:
         async with self.connection.execute(
             """
@@ -162,7 +164,7 @@ class curseCog():
             return None
 
         return [path[0] for path in result]
-    
+
     async def get_all_curse_volumes(self) -> list[int]:
         async with self.connection.execute(
             """
@@ -175,7 +177,7 @@ class curseCog():
             return None
 
         return [volume[0] for volume in result]
-    
+
     async def get_all_curse_costs(self) -> list[int]:
         async with self.connection.execute(
             """
@@ -188,7 +190,7 @@ class curseCog():
             return None
 
         return [cost[0] for cost in result]
-    
+
     async def get_all_curse_cooldowns(self) -> list[int]:
         async with self.connection.execute(
             """
@@ -201,7 +203,7 @@ class curseCog():
             return None
 
         return [cooldown[0] for cooldown in result]
-    
+
     async def add_curse(self, name: str, path: str, volume: int, cost: int, cooldown: int) -> None:
         await self.connection.execute(
             """
@@ -210,7 +212,7 @@ class curseCog():
             (name, path, volume, cost, cooldown),
         )
         await self.connection.commit()
-    
+
     async def delete_curse(self, name: str) -> None:
         await self.connection.execute(
             """
@@ -246,7 +248,7 @@ class curseCog():
             (volume, name),
         )
         await self.connection.commit()
-    
+
     async def update_curse_cost(self, name: str, cost: int) -> None:
         await self.connection.execute(
             """
@@ -255,7 +257,7 @@ class curseCog():
             (cost, name),
         )
         await self.connection.commit()
-    
+
     async def update_curse_cooldown(self, name: str, cooldown: int) -> None:
         await self.connection.execute(
             """
@@ -264,7 +266,7 @@ class curseCog():
             (cooldown, name),
         )
         await self.connection.commit()
-    
+
     async def update_curse_volume_by_id(self, id: int, volume: int) -> None:
         await self.connection.execute(
             """
@@ -273,7 +275,7 @@ class curseCog():
             (volume, id),
         )
         await self.connection.commit()
-    
+
     async def update_curse_cost_by_id(self, id: int, cost: int) -> None:
         await self.connection.execute(
             """
@@ -282,7 +284,7 @@ class curseCog():
             (cost, id),
         )
         await self.connection.commit()
-    
+
     async def update_curse_cooldown_by_id(self, id: int, cooldown: int) -> None:
         await self.connection.execute(
             """
@@ -291,7 +293,7 @@ class curseCog():
             (cooldown, id),
         )
         await self.connection.commit()
-    
+
     async def update_curse_path_by_id(self, id: int, path: str) -> None:
         await self.connection.execute(
             """
@@ -300,7 +302,7 @@ class curseCog():
             (path, id),
         )
         await self.connection.commit()
-    
+
     async def update_curse_name_by_id(self, id: int, name: str) -> None:
         await self.connection.execute(
             """
@@ -309,7 +311,7 @@ class curseCog():
             (name, id),
         )
         await self.connection.commit()
-    
+
     async def update_curse_name(self, old_name: str, new_name: str) -> None:
         await self.connection.execute(
             """
@@ -318,7 +320,7 @@ class curseCog():
             (new_name, old_name),
         )
         await self.connection.commit()
-    
+
     async def update_curse_path_by_name(self, old_name: str, new_path: str) -> None:
         await self.connection.execute(
             """
@@ -327,7 +329,7 @@ class curseCog():
             (new_path, old_name),
         )
         await self.connection.commit()
-    
+
     async def update_curse_volume_by_name(self, name: str, volume: int) -> None:
         await self.connection.execute(
             """
@@ -336,7 +338,7 @@ class curseCog():
             (volume, name),
         )
         await self.connection.commit()
-    
+
     async def update_curse_cost_by_name(self, name: str, cost: int) -> None:
         await self.connection.execute(
             """
@@ -345,7 +347,7 @@ class curseCog():
             (cost, name),
         )
         await self.connection.commit()
-    
+
     async def update_curse_cooldown_by_name(self, name: str, cooldown: int) -> None:
         await self.connection.execute(
             """
@@ -354,7 +356,3 @@ class curseCog():
             (cooldown, name),
         )
         await self.connection.commit()
-    
-    
-
-    

@@ -5,6 +5,7 @@ import aiosqlite
 
 from typing import Union
 
+
 @dataclass
 class Rpg:
     id: int
@@ -15,6 +16,7 @@ class Rpg:
     success_bonus: int
     boss_bonus: int
     boss_malus: int
+
 
 class RpgCog:
     def __init__(self, connection: aiosqlite.Connection) -> None:
@@ -60,34 +62,34 @@ class RpgCog:
 
         if not self.is_name_valid(rpg.name):
             return {"error": f"command {rpg.name} must only contains letters or/and numbers"}
-        
-        if rpg.cost.isdigit() == False:
-            return {"error": f"cost must be a number"}
+
+        if rpg.cost.isdigit() is False:
+            return {"error": "cost must be a number"}
 
         rpg.cost = int(rpg.cost)
         if rpg.cost < 0 or rpg.cost > 1000000000:
-            return {"error": f"cost must be between 0 and 1 000 000 000"}
-        
-        if rpg.success_rate.isdigit() == False:
-            return {"error": f"cost must be a number"}
+            return {"error": "cost must be between 0 and 1 000 000 000"}
+
+        if rpg.success_rate.isdigit() is False:
+            return {"error": "cost must be a number"}
 
         rpg.success_rate = float(rpg.success_rate)
         if rpg.success_rate < 0 or rpg.success_rate > 100:
-            return {"error": f"cost must be between 0 and 100"}
-        
+            return {"error": "cost must be between 0 and 100"}
+
         rpg.cost = int(rpg.cost)
         if rpg.cost < 0 or rpg.cost > 1000000000:
-            return {"error": f"cost must be between 0 and 1 000 000 000"}
-        
-        if rpg.success_rate.isdigit() == False:
-            return {"error": f"cost must be a number"}
+            return {"error": "cost must be between 0 and 1 000 000 000"}
+
+        if rpg.success_rate.isdigit() is False:
+            return {"error": "cost must be a number"}
 
         if rpg.description == "":
-            return {"error": f"description must not be empty"}
+            return {"error": "description must not be empty"}
 
         await self.connection.execute(
             """
-            INSERT INTO rpg ( 
+            INSERT INTO rpg (
                 id,
                 name,
                 cost,
@@ -107,7 +109,7 @@ class RpgCog:
                 :boss_malus
             )
             """,
-            rpg
+            rpg,
         )
 
         await self.connection.commit()

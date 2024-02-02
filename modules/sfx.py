@@ -3,6 +3,7 @@ import aiosqlite
 from twitchio.ext import sounds, commands
 from dataclasses import dataclass
 
+
 @dataclass
 class SFX:
     id: int
@@ -12,26 +13,27 @@ class SFX:
     cost: int
     cooldown: int
 
-class SFXCog():
+
+class SFXCog:
     def __init__(self, connection: aiosqlite.Connection):
-        '''
+        """
         Initializes the SFXCog class.
-        
+
         Parameters
         ----------
         connection : aiosqlite.Connection
             The connection to the database.
-        
+
         Returns
         -------
         None
-        '''
+        """
 
         self.connection = connection
         self.source = None
 
     async def create_table(self):
-        '''
+        """
         Creates the table for the database.
 
         Parameters
@@ -41,7 +43,7 @@ class SFXCog():
         Returns
         -------
         None
-        '''
+        """
 
         await self.connection.execute(
             """
@@ -59,7 +61,7 @@ class SFXCog():
         await self.connection.commit()
 
     async def user_able_to_play(self, ctx: commands.Context, sfx_sound: str) -> bool:
-        '''
+        """
         Checks if a user is able to play a sound effect.
 
         Parameters
@@ -73,7 +75,7 @@ class SFXCog():
         -------
         bool
             Whether or not the user is able to play the sound effect.
-        '''
+        """
 
         sfx = await self.get_sfx(sfx_sound)
 
@@ -96,7 +98,7 @@ class SFXCog():
         return True
 
     async def play_sfx(self, ctx: commands.Context, sfx_sound: str) -> None:
-        '''
+        """
         Plays a sound effect.
 
         Parameters
@@ -109,30 +111,30 @@ class SFXCog():
         Returns
         -------
         None
-        '''
-        
+        """
+
         event_player = sounds.AudioPlayer(callback=self.sound_done)
         sfx = await self.get_sfx(sfx_sound)
 
         if sfx is None:
             return
-        
+
         event_player.source = self.source
         await event_player.play(sfx.path, volume=sfx.volume)
 
     async def get_sfx(self, name: str) -> SFX:
-        '''
+        """
         Gets a sound effect from the database.
-        
+
         Parameters
         ----------
         name : str
             The name of the sound effect.
-        
+
         Returns
         -------
         SFX
-        '''
+        """
 
         async with self.connection.execute(
             """
@@ -146,21 +148,21 @@ class SFXCog():
             return None
 
         return SFX(*result)
-    
+
     async def get_sfx_by_id(self, id: int) -> SFX:
-        '''
+        """
         Gets a sound effect from the database.
-        
+
         Parameters
         ----------
         id : int
             The id of the sound effect.
-        
+
         Returns
         -------
         SFX
-        '''
-        
+        """
+
         async with self.connection.execute(
             """
             SELECT * FROM sfx WHERE id = ?
@@ -173,20 +175,20 @@ class SFXCog():
             return None
 
         return SFX(*result)
-    
+
     async def get_all_sfx(self) -> list[SFX]:
-        '''
+        """
         Gets all sound effects from the database.
-        
+
         Parameters
         ----------
         None
-        
+
         Returns
         -------
         list[SFX]
-        '''
-        
+        """
+
         async with self.connection.execute(
             """
             SELECT * FROM sfx
@@ -198,7 +200,7 @@ class SFXCog():
             return None
 
         return [SFX(*sfx) for sfx in result]
-    
+
     async def get_all_sfx_names(self) -> list[str]:
         async with self.connection.execute(
             """
@@ -211,7 +213,7 @@ class SFXCog():
             return None
 
         return [name[0] for name in result]
-    
+
     async def get_all_sfx_paths(self) -> list[str]:
         async with self.connection.execute(
             """
@@ -224,7 +226,7 @@ class SFXCog():
             return None
 
         return [path[0] for path in result]
-    
+
     async def get_all_sfx_volumes(self) -> list[int]:
         async with self.connection.execute(
             """
@@ -237,7 +239,7 @@ class SFXCog():
             return None
 
         return [volume[0] for volume in result]
-    
+
     async def get_all_sfx_costs(self) -> list[int]:
         async with self.connection.execute(
             """
@@ -250,7 +252,7 @@ class SFXCog():
             return None
 
         return [cost[0] for cost in result]
-    
+
     async def get_all_sfx_cooldowns(self) -> list[int]:
         async with self.connection.execute(
             """
@@ -263,7 +265,7 @@ class SFXCog():
             return None
 
         return [cooldown[0] for cooldown in result]
-    
+
     async def add_sfx(self, name: str, path: str, volume: int, cost: int, cooldown: int) -> None:
         await self.connection.execute(
             """
@@ -272,7 +274,7 @@ class SFXCog():
             (name, path, volume, cost, cooldown),
         )
         await self.connection.commit()
-    
+
     async def delete_sfx(self, name: str) -> None:
         await self.connection.execute(
             """
@@ -308,7 +310,7 @@ class SFXCog():
             (volume, name),
         )
         await self.connection.commit()
-    
+
     async def update_sfx_cost(self, name: str, cost: int) -> None:
         await self.connection.execute(
             """
@@ -317,7 +319,7 @@ class SFXCog():
             (cost, name),
         )
         await self.connection.commit()
-    
+
     async def update_sfx_cooldown(self, name: str, cooldown: int) -> None:
         await self.connection.execute(
             """
@@ -326,7 +328,7 @@ class SFXCog():
             (cooldown, name),
         )
         await self.connection.commit()
-    
+
     async def update_sfx_volume_by_id(self, id: int, volume: int) -> None:
         await self.connection.execute(
             """
@@ -335,7 +337,7 @@ class SFXCog():
             (volume, id),
         )
         await self.connection.commit()
-    
+
     async def update_sfx_cost_by_id(self, id: int, cost: int) -> None:
         await self.connection.execute(
             """
@@ -344,7 +346,7 @@ class SFXCog():
             (cost, id),
         )
         await self.connection.commit()
-    
+
     async def update_sfx_cooldown_by_id(self, id: int, cooldown: int) -> None:
         await self.connection.execute(
             """
@@ -353,7 +355,7 @@ class SFXCog():
             (cooldown, id),
         )
         await self.connection.commit()
-    
+
     async def update_sfx_path_by_id(self, id: int, path: str) -> None:
         await self.connection.execute(
             """
@@ -362,7 +364,7 @@ class SFXCog():
             (path, id),
         )
         await self.connection.commit()
-    
+
     async def update_sfx_name_by_id(self, id: int, name: str) -> None:
         await self.connection.execute(
             """
@@ -371,7 +373,7 @@ class SFXCog():
             (name, id),
         )
         await self.connection.commit()
-    
+
     async def update_sfx_name(self, old_name: str, new_name: str) -> None:
         await self.connection.execute(
             """
@@ -380,7 +382,7 @@ class SFXCog():
             (new_name, old_name),
         )
         await self.connection.commit()
-    
+
     async def update_sfx_path_by_name(self, old_name: str, new_path: str) -> None:
         await self.connection.execute(
             """
@@ -389,7 +391,7 @@ class SFXCog():
             (new_path, old_name),
         )
         await self.connection.commit()
-    
+
     async def update_sfx_volume_by_name(self, name: str, volume: int) -> None:
         await self.connection.execute(
             """
@@ -398,7 +400,7 @@ class SFXCog():
             (volume, name),
         )
         await self.connection.commit()
-    
+
     async def update_sfx_cost_by_name(self, name: str, cost: int) -> None:
         await self.connection.execute(
             """
@@ -407,7 +409,7 @@ class SFXCog():
             (cost, name),
         )
         await self.connection.commit()
-    
+
     async def update_sfx_cooldown_by_name(self, name: str, cooldown: int) -> None:
         await self.connection.execute(
             """
@@ -416,7 +418,3 @@ class SFXCog():
             (cooldown, name),
         )
         await self.connection.commit()
-    
-    
-
-    

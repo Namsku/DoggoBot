@@ -53,9 +53,7 @@ class UserCog:
         None
         """
         async with aiohttp.ClientSession() as session:
-            async with session.get(
-                f"https://tmi.twitch.tv/group/user/{self.channel.streamer_channel}/chatters"
-            ) as response:
+            async with session.get(f"https://tmi.twitch.tv/group/user/{self.channel.streamer_channel}/chatters") as response:
                 json_file = await response.json()
 
         if json_file:
@@ -74,9 +72,7 @@ class UserCog:
         None
         """
         async with aiohttp.ClientSession() as session:
-            async with session.get(
-                "https://api.twitchinsights.net/v1/bots/all"
-            ) as response:
+            async with session.get("https://api.twitchinsights.net/v1/bots/all") as response:
                 json_file = await response.json()
 
         if json_file:
@@ -95,7 +91,7 @@ class UserCog:
         Returns
         -------
             bool
-                True if the user is a bot, False otherwise.
+                True if the user is a bot,False otherwise.
         """
         if self.bots is None:
             await self.get_bots()
@@ -305,35 +301,35 @@ class UserCog:
         await self.connection.execute(
             """
             INSERT INTO users (
-                username, 
-                income, 
+                username,
+                income,
                 message_count,
-                bot, 
-                follower, 
-                subscriber, 
+                bot,
+                follower,
+                subscriber,
                 mod,
-                gamble_lock, 
-                roll_lock, 
-                rpg_lock, 
-                sfx_lock, 
-                slots_lock, 
-                ban_time, 
+                gamble_lock,
+                roll_lock,
+                rpg_lock,
+                sfx_lock,
+                slots_lock,
+                ban_time,
                 warning
                 )
             VALUES (
-                ?, 
-                ?, 
+                ?,
+                ?,
                 0,
-                0, 
-                0, 
-                0, 
-                0, 
+                0,
+                0,
+                0,
+                0,
                 'unlocked',
-                'unlocked', 
-                'unlocked', 
-                'unlocked', 
-                'unlocked', 
-                NULL, 
+                'unlocked',
+                'unlocked',
+                'unlocked',
+                'unlocked',
+                NULL,
                 0
             )
         """,
@@ -357,18 +353,18 @@ class UserCog:
         await self.connection.execute(
             """
             UPDATE users SET 
-                income = ?, 
+                income = ?,
                 message_count = ?,
-                bot = ?, 
-                follower = ?, 
-                subscriber = ?, 
+                bot = ?,
+                follower = ?,
+                subscriber = ?,
                 mod = ?,
-                gamble_lock = ?, 
-                roll_lock = ?, 
-                rpg_lock = ?, 
-                sfx_lock = ?, 
-                slots_lock = ?, 
-                ban_time = ?, 
+                gamble_lock = ?,
+                roll_lock = ?,
+                rpg_lock = ?,
+                sfx_lock = ?,
+                slots_lock = ?,
+                ban_time = ?,
                 warning = ?
             WHERE username = ?
         """,
@@ -557,9 +553,7 @@ class UserCog:
             The followage of the user.
         """
         async with aiohttp.ClientSession() as session:
-            async with session.get(
-                f"https://beta.decapi.me/twitch/followage/{self.channel.streamer_channel}/{username}"
-            ) as response:
+            async with session.get(f"https://beta.decapi.me/twitch/followage/{self.channel.streamer_channel}/{username}") as response:
                 followage = await response.text()
 
         return followage
@@ -622,12 +616,12 @@ class UserCog:
 
         Returns
         -------
-        dict[str, int]
+        dict[str,int]
             The top 5 chatters.
         """
         async with self.connection.execute(
             """
-            SELECT username, message_count FROM users ORDER BY message_count DESC LIMIT 5
+            SELECT username,message_count FROM users ORDER BY message_count DESC LIMIT 5
             """
         ) as cursor:
             result = await cursor.fetchall()
@@ -639,10 +633,10 @@ class UserCog:
 
         return None
 
-    # Get in dict[str,int] format the number of user without any roles, the followers, the subscribers, the bots
+    # Get in dict[str,int] format the number of user without any roles,the followers,the subscribers,the bots
     async def get_users_stats(self) -> dict[str, int]:
         """
-        Gets the number of followers, subscribers, bots, and user without any of those roles.
+        Gets the number of followers,subscribers,bots,and user without any of those roles.
 
         Parameters
         ----------
@@ -650,8 +644,8 @@ class UserCog:
 
         Returns
         -------
-        dict[str, int]
-            The number of followers, subscribers, bots, and user without any of those roles.
+        dict[str,int]
+            The number of followers,subscribers,bots,and user without any of those roles.
         """
         followers = await self.get_followers()
         subscribers = await self.get_subscribers()
@@ -680,9 +674,7 @@ class UserCog:
             The avatar of the user.
         """
         async with aiohttp.ClientSession() as session:
-            async with session.get(
-                f"https://decapi.me/twitch/avatar/{username}"
-            ) as response:
+            async with session.get(f"https://decapi.me/twitch/avatar/{username}") as response:
                 avatar = await response.text()
 
         return avatar
