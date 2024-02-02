@@ -94,12 +94,24 @@ class GamesCog:
             );
 
             CREATE TABLE IF NOT EXISTS rpg (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                game_id INTEGER NOT NULL,
-                text TEXT NOT NULL,
-                boss INTEGER NOT NULL,
-                time INTEGER NOT NULL
+                id INTEGER PRIMARY KEY,
+                name TEXT,
+                cost INTEGER,
+                description TEXT,
+                success_rate REAL,
+                success_bonus INTEGER,
+                boss_bonus INTEGER,
+                boss_malus INTEGER
             );
+
+            CREATE TABLE IF NOT EXISTS rpg_action (
+                id INTEGER PRIMARY KEY,
+                rpg_id INTEGER,
+                message TEXT,
+                type TEXT,
+                boss BOOLEAN,
+                FOREIGN KEY(rpg_id) REFERENCES rpg(id)
+            );            
 
             CREATE TABLE IF NOT EXISTS gatcha (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -37,48 +37,6 @@ class RpgCog:
         self.boss_malus = None
         self.logger = Logger(__name__)
 
-    async def create_table(self) -> None:
-        """
-        Creates the table in the database.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
-        """
-        await self.connection.execute(
-            """
-            CREATE TABLE IF NOT EXISTS rpg (
-                id INTEGER PRIMARY KEY,
-                name TEXT,
-                cost INTEGER,
-                description TEXT,
-                success_rate REAL,
-                success_bonus INTEGER,
-                boss_bonus INTEGER,
-                boss_malus INTEGER
-            )
-            """
-        )
-
-        await self.connection.execute(
-            """
-            CREATE TABLE IF NOT EXISTS rpg_action (
-                id INTEGER PRIMARY KEY,
-                rpg_id INTEGER,
-                message TEXT,
-                type TEXT,
-                boss BOOLEAN,
-                FOREIGN KEY(rpg_id) REFERENCES rpg(id)
-            )
-            """
-        )
-
-        await self.connection.commit()
-
     async def add_rpg_profile(self, rpg: Union[Rpg, dict]) -> dict:
         """
         Adds a rpg profile to the database.
@@ -95,7 +53,6 @@ class RpgCog:
         """
         if isinstance(rpg, dict):
             rpg = Rpg(**rpg)
-
 
         # Quit if the name already exists
         if await self.is_cmd_exists(rpg.name):

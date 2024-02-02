@@ -6,14 +6,11 @@ DoggoBot is a Twitch bot that is currently in development. It is written in Pyth
 
 ## Features
 
-- [x] Basic chat commands
-- [x] Basic moderation commands
-- [x] Basic game commands
-- [x] Basic channel point redemption commands
 - [x] Basic Twitch API integration
-- [x] Basic Twitch PubSub integration
-- [x] Basic Twitch IRC integration
+- [x] Basic Twitch IRC integration (Chatbot)
 - [x] Basic Twitch Sound Alerts integration
+- [x] Basic Twitch Channel Points integration (Own Points)
+- [x] Basic Twitch EventSub integration (Subscriptions, Follows, Bits, etc.)
 
 ## Installation
 
@@ -22,25 +19,13 @@ DoggoBot is a Twitch bot that is currently in development. It is written in Pyth
 
 ## Configuration
 
-1. Create a file called `config.json` in the root directory of the project
+1. Create a file called `.env` in the root directory of the project
 2. Add the following to the file:
 
-```json
-{
-    "nick": "doggo_bot",
-    "prefix": "!",
-    "initial_channels": [
-        "doggo_bot"
-    ]
-}
-```
-3. Replace the values with your own
-4. Create a file called `.env` in the root directory of the project
-5. Add the following to the file:
-
 ```env
-TWITCH_CLIENT_ID=
-TWITCH_CLIENT_SECRET=
+TWITCH_CLIENT_ID=XXXXX
+TWITCH_CLIENT_SECRET=XXXXX
+DOGGOBOT_SERVER_DBG=0
 ```
 6. Replace the values with your own 
 
@@ -64,6 +49,3 @@ If you would like to contribute to the project, feel free to fork the repository
 
 If you would like to support the project, feel free to donate to the following:
 
-- [PayPal](https://paypal.me/itsdoggo)
-- [Ko-fi](https://ko-fi.com/itsdoggo)
-- [Patreon](https://patreon.com/itsdoggo)
