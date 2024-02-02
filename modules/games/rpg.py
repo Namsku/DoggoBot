@@ -93,31 +93,49 @@ class RpgCog:
             if error:
                 return error
 
-        await self.connection.execute(
-            """
-            INSERT INTO rpg (
-                id,
-                name,
-                cost,
-                description,
-                success_rate,
-                success_bonus,
-                boss_bonus,
-                boss_malus
-            ) VALUES (
-                :id,
-                :name,
-                :cost,
-                :description,
-                :success_rate,
-                :success_bonus,
-                :boss_bonus,
-                :boss_malus
-            )
-            """,
-            rpg,
-        )
+        sql_query = f"INSERT INTO rpg ({', '.join(rpg.keys())}) VALUES ({', '.join(':' + key for key in rpg.keys())})"
+        await self.connection.execute(sql_query, rpg)
 
         await self.connection.commit()
 
-        return rpg
+        return {"success": f"rpg profile {rpg.name} added successfully"}
+
+    async def update_rpg_profile(self, rpg : Rpg):
+        """
+        Updates a rpg profile in the database.
+
+        Parameters
+        ----------
+        rpg : Union[Rpg, dict]
+            The rpg profile to update.
+
+        Returns
+        -------
+        rpg : dict
+            The rpg profile.
+        """
+        if isinstance(rpg, dict):
+            rpg = Rpg(**rpg)
+
+        if not await self.is_id_exists(rpg.id):
+            return {"error": "id not exists"}
+
+        fields_to_validate = [
+            (rpg.cost, "cost", 0, 1000000000),
+            (rpg.success_rate, "success rate", 1, 100, False),
+            (rpg.description, "description", is_empty_allowed=True),
+            (rpg.success_bonus, "success bonus", 0, 1000000000),
+            (rpg.boss_bonus, "boss bonus", 0, 1000000000),
+            (rpg.boss_malus, "boss malus", 0, 1000000000)
+        ]
+
+        for field in fields_to_validate:
+            error = self.validate_field(*field)
+            if error:
+                return error
+
+        sql_query = f"UPDATE rpg SET {', '.join(f'{key} = :{key}' for key in rpg.keys())} WHERE id = :id"
+        await self.connection.execute(sql_query, rpg)
+        await self.connection.commit()
+
+        return {"success": f"rpg profile {rpg.name} updated successfully"}

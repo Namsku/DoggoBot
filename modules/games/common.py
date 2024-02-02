@@ -9,8 +9,8 @@ import aiosqlite
 class Game:
     id: int
     name: str
-    type: str
-    cost: int
+    category: str
+    description: str
 
 
 class GamesCog:
@@ -87,8 +87,8 @@ class GamesCog:
             CREATE TABLE IF NOT EXISTS game (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
-                type TEXT NOT NULL,
-                cost INTEGER NOT NULL
+                category TEXT NOT NULL,
+                description TEXT NOT NULL
             );
 
             CREATE TABLE IF NOT EXISTS rpg (
@@ -121,4 +121,3 @@ class GamesCog:
         """
         )
 
-    
