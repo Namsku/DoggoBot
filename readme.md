@@ -6,11 +6,7 @@ DoggoBot is a Twitch bot that is currently in development. It is written in Pyth
 
 ## Features
 
-- [x] Basic Twitch API integration
-- [x] Basic Twitch IRC integration (Chatbot)
-- [x] Basic Twitch Sound Alerts integration
-- [x] Basic Twitch Channel Points integration (Own Points)
-- [x] Basic Twitch EventSub integration (Subscriptions, Follows, Bits, etc.)
+- [x] Basic Twitch bot functionalities
 
 ## Installation
 
