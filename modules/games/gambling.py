@@ -1,5 +1,7 @@
-from dataclasses import dataclass
+
 from modules.logger import Logger
+
+from dataclasses import asdict, dataclass, fields
 
 import aiosqlite
 import random
@@ -240,21 +242,14 @@ class GamblingCog:
             The roll object.
         """
 
-        async with self.connection.execute(
-            """
-            SELECT * FROM roll
-        """
-        ) as cursor:
-            roll = await cursor.fetchone()
-
-            roll = Roll(
-                status=roll[0],
-                minimum_bet=roll[1],
-                maximum_bet=roll[2],
-                reward_critical_success=roll[3],
-                reward_critical_failure=roll[4],
-                time=roll[5],
-            )
+        async with self.connection.execute("SELECT * FROM roll") as cursor:
+            roll_row = await cursor.fetchone()
+        
+        if roll_row is None:
+            return None
+        
+        roll_attributes = [field.name for field in fields(Roll)]
+        roll = Roll(**dict(zip(roll_attributes, roll_row)))
 
         return roll
 
@@ -317,59 +312,16 @@ class GamblingCog:
             The slots object.
         """
 
-        async with self.connection.execute(
-            """
-            SELECT * FROM slots
-        """
-        ) as cursor:
-            slots = await cursor.fetchone()
+        async with self.connection.execute("SELECT * FROM slots") as cursor:
+            slots_row = await cursor.fetchone()
 
-            slots = Slots(
-                cost=slots[0],
-                status=slots[1],
-                rng_manipulation=slots[2],
-                success_rate=slots[3],
-                reward_mushroom=slots[4],
-                reward_coin=slots[5],
-                reward_leaf=slots[6],
-                reward_diamond=slots[7],
-                jackpot=slots[8],
-                time=slots[9],
-            )
+        if slots_row is None:
+            return None
+
+        slots_attributes = [field.name for field in fields(Slots)]
+        slots = Slots(**dict(zip(slots_attributes, slots_row)))
 
         return slots
-
-    async def get_roll_number(self) -> Roll:
-        """
-        Get the roll object.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        Roll
-            The roll object.
-        """
-
-        async with self.connection.execute(
-            """
-            SELECT * FROM roll
-        """
-        ) as cursor:
-            roll = await cursor.fetchone()
-
-            roll = Roll(
-                status=roll[0],
-                minimum_bet=roll[1],
-                maximum_bet=roll[2],
-                reward_critical_success=roll[3],
-                reward_critical_failure=roll[4],
-                time=roll[5],
-            )
-
-        return roll
 
     async def update_roll(self) -> None:
         """
@@ -385,27 +337,13 @@ class GamblingCog:
         None
         """
 
-        await self.connection.execute(
-            """
-            UPDATE roll SET
-                status = ?,
-                minimum_bet = ?,
-                maximum_bet = ?,
-                reward_critical_success = ?,
-                reward_critical_failure = ?,
-                time = ?
-        """,
-            (
-                self.roll.status,
-                self.roll.minimum_bet,
-                self.roll.maximum_bet,
-                self.roll.reward_critical_success,
-                self.roll.reward_critical_failure,
-                self.roll.time,
-            ),
-        )
+        roll_dict = asdict(self.roll)
+        sql_query = "UPDATE roll SET " + ", ".join(f"{key} = ?" for key in roll_dict.keys())
+        parameters = tuple(roll_dict.values())
 
+        await self.connection.execute(sql_query, parameters)
         await self.connection.commit()
+
         self.logger.info("Roll updated.")
 
     async def update_slots(self) -> None:
@@ -422,35 +360,13 @@ class GamblingCog:
         None
         """
 
-        await self.connection.execute(
-            """
-            UPDATE slots SET
-                cost = ?,
-                status = ?,
-                rng_manipulation = ?,
-                success_rate = ?,
-                reward_mushroom = ?,
-                reward_coin = ?,
-                reward_leaf = ?,
-                reward_diamond = ?,
-                jackpot = ?,
-                time = ?
-        """,
-            (
-                self.slots.cost,
-                self.slots.status,
-                self.slots.rng_manipulation,
-                self.slots.success_rate,
-                self.slots.reward_mushroom,
-                self.slots.reward_coin,
-                self.slots.reward_leaf,
-                self.slots.reward_diamond,
-                self.slots.jackpot,
-                self.slots.time,
-            ),
-        )
+        slots_dict = asdict(self.slots)
+        sql_query = "UPDATE slots SET " + ", ".join(f"{key} = ?" for key in slots_dict.keys())
+        parameters = tuple(slots_dict.values())
 
+        await self.connection.execute(sql_query, parameters)
         await self.connection.commit()
+
         self.logger.info("Database info - Slots updated.")
 
     async def validate_value(self, value, value_type, name, min_value=None, max_value=None) -> dict:
