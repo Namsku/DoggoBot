@@ -1,6 +1,8 @@
-from dataclasses import dataclass
 from modules.logger import Logger
 from modules.games.gambling import GamblingCog
+
+from dataclasses import asdict, dataclass, fields
+from typing import Union
 
 
 import aiosqlite
@@ -11,6 +13,7 @@ class Game:
     name: str
     category: str
     description: str
+    status: int
 
 
 class GamesCog:
@@ -88,7 +91,8 @@ class GamesCog:
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
                 category TEXT NOT NULL,
-                description TEXT NOT NULL
+                description TEXT NOT NULL,
+                status INTEGER NOT NULL
             );
 
             CREATE TABLE IF NOT EXISTS rpg (
@@ -121,3 +125,103 @@ class GamesCog:
         """
         )
 
+        await self.connection.commit()
+    
+    async def add_game(self, game: Union[Game, dict]):
+        """
+        Add a game to the database.
+
+        Parameters
+        ----------
+        game : Game
+            The game to add.
+
+        Returns
+        -------
+        None
+        """
+
+
+        if isinstance(game, Game):
+            game = asdict(game)
+
+        game_attributes = [field.name for field in fields(Game)]
+        sql_request = f"INSERT INTO game ({', '.join(game_attributes)}) VALUES ({', '.join(':' + attribute for attribute in game_attributes)})"
+        parameters = tuple(game.values())
+
+        await self.connection.execute(sql_request, parameters)
+        await self.connection.commit()
+
+        return {"success": f"game {game['name']} added successfully"}
+    
+    async def update_game(self, game: Union[Game, dict]):
+        """
+        Update a game in the database.
+
+        Parameters
+        ----------
+        game : Union[Game, dict]
+            The game to update.
+
+        Returns
+        -------
+        None
+        """
+
+        if isinstance(game, Game):
+            game = asdict(game)
+
+        sql_query = f"UPDATE game SET {', '.join(f'{key} = ?' for key in game.keys())} WHERE id = ?"
+        parameters = tuple(list(game.values()) + [game["id"]])
+
+        print(sql_query, parameters)
+
+        await self.connection.execute(sql_query, parameters)
+        await self.connection.commit()
+
+        return {"success": f"game {game['name']} updated successfully"}
+
+    async def delete_game(self, game_id: int):
+        """
+        Delete a game from the database.
+
+        Parameters
+        ----------
+        game_id : int
+            The game id to delete.
+
+        Returns
+        -------
+        None
+        """
+
+        await self.connection.execute(
+            "DELETE FROM game WHERE id = ?",
+            (game_id,)
+        )
+
+        await self.connection.commit()
+
+        return {"success": f"game {game_id} deleted successfully"}
+
+    async def get_all_games(self) -> list:
+        """
+        Get all games from the database.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        list
+            A list of all games.
+        """
+
+        async with self.connection.execute("SELECT * FROM game") as cursor:
+            games = await cursor.fetchall()
+
+        # Convert as list asdict(Game)
+        games = [asdict(Game(*game)) for game in games]
+
+        return games

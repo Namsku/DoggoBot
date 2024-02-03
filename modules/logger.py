@@ -134,3 +134,9 @@ class Logger(logging.Logger):
         None
         """
         self.log(logging.CRITICAL, message)
+
+    # closing the file handler
+    def __del__(self):
+        for handler in self.handlers:
+            handler.close()
+            self.removeHandler(handler)

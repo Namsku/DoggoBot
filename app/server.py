@@ -192,6 +192,7 @@ class Server(Bot):
 
     async def rpg(self, request: Request):
         message = {}
+        message["games"] = await self.bot.gms.get_all_games()
         return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
 
     async def mods(self, request: Request):

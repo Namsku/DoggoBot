@@ -336,7 +336,6 @@ class CmdCog:
                 text="",
             )
 
-        # Quit if the name already exists
         if await self.is_cmd_exists(cmd.name):
             return {"error": "name already exists"}
 
@@ -346,7 +345,7 @@ class CmdCog:
         if cmd.category == "Select category":
             return {"error": "category must be selected"}
 
-        if cmd.cost.isdigit() is False:
+        if str(cmd.cost).isdigit() is False:
             return {"error": "cost must be a number"}
 
         cmd.cost = int(cmd.cost)
