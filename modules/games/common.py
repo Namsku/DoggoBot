@@ -118,6 +118,7 @@ class GamesCog:
             CREATE TABLE IF NOT EXISTS gatcha (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 game_id INTEGER NOT NULL,
+                cost INTEGER NOT NULL,
                 text TEXT NOT NULL,
                 rarity INTEGER NOT NULL,
                 time INTEGER NOT NULL
@@ -225,3 +226,28 @@ class GamesCog:
         games = [asdict(Game(*game)) for game in games]
 
         return games
+    
+    async def update_status(self, game_name: str, status: bool):
+        """
+        Get the game status from the database.
+
+        Parameters
+        ----------
+        game_name : str
+            The game name to update.
+
+        status : int
+            The game status to update.
+
+        Returns
+        -------
+        None
+        """
+
+        status = 1 if status else 0
+
+        await self.connection.execute("UPDATE game SET status = ? WHERE name = ?", (status, game_name))
+
+        await self.connection.commit()
+        self.logger.info(f"Updated cmd status -> {game_name} -> {status}.")
+        return {"success": f"game {game_name} updated successfully"}

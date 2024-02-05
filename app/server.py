@@ -31,23 +31,24 @@ class Server(Bot):
         self.router = APIRouter()
 
         self.router.add_api_route("/", self.home, methods=["GET", "POST"])
-        self.router.add_api_route("/chat", self.chat, methods=["GET"])
-        self.router.add_api_route("/commands", self.commands, methods=["GET"])
-        self.router.add_api_route("/curse", self.curse, methods=["GET"])
-        self.router.add_api_route("/games", self.games, methods=["GET", "POST"])
 
         self.router.add_api_route("/api/chatters_stats", self.get_top_chatter, methods=["GET"])
         self.router.add_api_route("/api/users_stats", self.get_users_stats, methods=["GET"])
-
         self.router.add_api_route("/api/command", self.get_command, methods=["POST"])
         self.router.add_api_route("/api/update", self.update_database, methods=["POST"])
 
+        self.router.add_api_route("/chat", self.chat, methods=["GET"])
+        self.router.add_api_route("/commands", self.commands, methods=["GET"])
+        self.router.add_api_route("/curse", self.curse, methods=["GET"])
+        self.router.add_api_route("/gambling", self.gambling, methods=["GET", "POST"])
+        self.router.add_api_route("/games", self.games, methods=["GET"])
+        self.router.add_api_route("/rpg/{name}", self.rpg, methods=["GET", "POST"])
+        self.router.add_api_route("/gatcha/{name}", self.gatcha, methods=["GET", "POST"])
+        
         self.router.add_api_route("/mods", self.mods, methods=["GET"])
         self.router.add_api_route("/overlay", self.overlay, methods=["GET"])
-        self.router.add_api_route("/rpg", self.rpg, methods=["GET"])
         self.router.add_api_route("/settings", self.settings, methods=["GET", "POST"])
         self.router.add_api_route("/sfx", self.sfx, methods=["GET"])
-
         self.router.add_api_route("/user/{name}", self.user, methods=["GET"])
 
         self.app.include_router(self.router)
@@ -190,7 +191,7 @@ class Server(Bot):
 
         return self.templates.TemplateResponse("overlay.html", {"request": request, "message": message})
 
-    async def rpg(self, request: Request):
+    async def games(self, request: Request):
         message = {}
         message["games"] = await self.bot.gms.get_all_games()
         return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
@@ -199,7 +200,7 @@ class Server(Bot):
         message = {}
         return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
 
-    async def save_games_settings(self, request: Request):
+    async def save_gambling_settings(self, request: Request):
         """
         Saves the bot's settings.
 
@@ -219,12 +220,12 @@ class Server(Bot):
 
         return result
 
-    async def games(self, request: Request):
+    async def gambling(self, request: Request):
         message = {}
         status = "none"
 
         if request.method == "POST":
-            result = await self.save_games_settings(request)
+            result = await self.save_gambling_settings(request)
             status = "error" if result.get("error") else "success"
             message[status] = result.get(status)
 
@@ -356,6 +357,7 @@ class Server(Bot):
         """Updates the database."""
 
         json = await request.json()
+        self.bot.logger.debug(f"json: {json}")
 
         for key, value in json.items():
             if key == "cmd":
@@ -366,3 +368,21 @@ class Server(Bot):
                 return await self.bot.cmd.add_cmd(value)
             elif key == "update_cmd":
                 return await self.bot.cmd.update_cmd(value["name"], value)
+            elif key == "game":
+                if value["attribute"] == "status":
+                    status = True if value["status"] == 1 else False
+                    return await self.bot.gms.update_status(value["name"], status)
+
+    async def rpg(self, request: Request, name: str):
+        message = {
+            "rpg": await self.bot.rpg.get_rpg(name),
+        }
+
+        return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
+    
+    async def gatcha(self, request: Request, name: str):
+        message = {
+            "gatcha": await self.bot.gms.get_gatcha(name),
+        }
+
+        return self.templates.TemplateResponse("index.html", {"request": request, "message": message})

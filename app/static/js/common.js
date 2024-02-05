@@ -1,15 +1,12 @@
 async function fetch_request(url, options) {
+    console.log('fetch_request', url, options)
     const response = await fetch(url, options);
   
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
   
-    console.log(response)
-    const json = await response.json();
-    console.log(json)
-
-    return json;
+    return await response.json();
   }
 
 async function request(url, method = 'GET', data = null) {
@@ -24,12 +21,10 @@ async function request(url, method = 'GET', data = null) {
         credentials: 'same-origin'
       };
   
-      console.log(data, options)
       if (data) {
         options.body = JSON.stringify(data);
       }
   
-      console.log('after', options)
       const response = await fetch_request(url, options);
   
       return response;
@@ -170,6 +165,31 @@ function setupModal(modalId, buttonId) {
     });
   });
 }
+
+
+async function form_create_game() {
+  setupModal("#popup-form", "#open-form-btn");
+}
+
+
+async function form_delete_game() {
+  setupModal("#deleteModal", "#open-delete-form-btn");
+}
+
+async function form_edit_game() {
+  let buttons = document.querySelectorAll('[id^="open-edit-form-btn-"]');
+
+  // Add an event listener to each button
+  buttons.forEach(button => {
+    setupModal("#popup-edit-form", "#" + button.id);
+  });
+
+}
+
+async function form_create_command() {
+  setupModal("#popup-form", "#open-form-btn");
+}
+
 
 async function form_delete_command() {
   setupModal("#deleteModal", "#open-delete-form-btn");

@@ -12,10 +12,10 @@ class Rpg:
     name: str
     cost: int
     description: str
-    success_rate: float
-    success_bonus: int
-    boss_bonus: int
-    boss_malus: int
+    success_rate: int
+    success_bonus: float
+    boss_bonus: float
+    boss_malus: float
 
 
 class RpgCog:
@@ -40,23 +40,59 @@ class RpgCog:
         self.boss_malus = None
         self.logger = Logger(__name__)
 
+    async def is_id_exists(self, id: int) -> bool:
+        """
+        Checks if the id exists in the database.
 
-    def validate_field(self, field, field_name, min_val=None, max_val=None, is_digit=True, is_empty_allowed=False):
-        if is_digit and not field.isdigit():
-            return {"error": f"{field_name} must be a number"}
+        Parameters
+        ----------
+        id : int
+            The id to check.
 
-        if is_digit:
-            field = int(field)
+        Returns
+        -------
+        bool
+            True if the id exists, False otherwise.
+        """
+        sql_query = "SELECT * FROM rpg WHERE id = ?"
+        async with self.connection.execute(sql_query, (id,)) as cursor:
+            return await cursor.fetchone() is not None
+    
+    async def is_name_exists(self, name: str) -> bool:
+        """
+        Checks if the name exists in the database.
 
-        if min_val is not None and field < min_val or max_val is not None and field > max_val:
-            return {"error": f"{field_name} must be between {min_val} and {max_val}"}
+        Parameters
+        ----------
+        name : str
+            The name to check.
 
-        if not is_empty_allowed and field == "":
-            return {"error": f"{field_name} must not be empty"}
+        Returns
+        -------
+        bool
+            True if the name exists, False otherwise.
+        """
+        sql_query = "SELECT * FROM rpg WHERE name = ?"
+        async with self.connection.execute(sql_query, (name,)) as cursor:
+            return await cursor.fetchone() is not None
+        
+    async def get_last_id(self) -> int:
+        """
+        Get the last id from the database.
 
-        return None
+        Parameters
+        ----------
+        None
 
-    async def add_rpg_profile(self, rpg : Rpg):
+        Returns
+        -------
+        int
+            The last id.
+        """
+        async with self.connection.execute("SELECT id FROM rpg ORDER BY id DESC LIMIT 1") as cursor:
+            return await cursor.fetchone()
+
+    async def add_rpg_profile(self, rpg : Union[Rpg, str]  = None):
         """
         Adds a rpg profile to the database.
 
@@ -70,32 +106,26 @@ class RpgCog:
         rpg : dict
             The rpg profile.
         """
+
+        if rpg is str:
+            rpg = Rpg(
+                id = await self.get_last_id() + 1,
+                name = rpg,
+                cost = 1000,
+                success_rate = 50,
+                success_bonus = 100,
+                boss_bonus = 7.777,
+                boss_malus = 6.66
+            )
+    
         if isinstance(rpg, dict):
             rpg = Rpg(**rpg)
 
         if await self.is_name_exists(rpg.name):
             return {"error": "name already exists"}
 
-        if not self.is_name_valid(rpg.name):
-            return {"error": f"command {rpg.name} must only contains letters or/and numbers"}
-
-        fields_to_validate = [
-            (rpg.cost, "cost", 0, 1000000000),
-            (rpg.success_rate, "success rate", 1, 100, False),
-            (rpg.description, "description", is_empty_allowed=True),
-            (rpg.success_bonus, "success bonus", 0, 1000000000),
-            (rpg.boss_bonus, "boss bonus", 0, 1000000000),
-            (rpg.boss_malus, "boss malus", 0, 1000000000)
-        ]
-
-        for field in fields_to_validate:
-            error = self.validate_field(*field)
-            if error:
-                return error
-
         sql_query = f"INSERT INTO rpg ({', '.join(rpg.keys())}) VALUES ({', '.join(':' + key for key in rpg.keys())})"
         await self.connection.execute(sql_query, rpg)
-
         await self.connection.commit()
 
         return {"success": f"rpg profile {rpg.name} added successfully"}
@@ -119,20 +149,6 @@ class RpgCog:
 
         if not await self.is_id_exists(rpg.id):
             return {"error": "id not exists"}
-
-        fields_to_validate = [
-            (rpg.cost, "cost", 0, 1000000000),
-            (rpg.success_rate, "success rate", 1, 100, False),
-            (rpg.description, "description", is_empty_allowed=True),
-            (rpg.success_bonus, "success bonus", 0, 1000000000),
-            (rpg.boss_bonus, "boss bonus", 0, 1000000000),
-            (rpg.boss_malus, "boss malus", 0, 1000000000)
-        ]
-
-        for field in fields_to_validate:
-            error = self.validate_field(*field)
-            if error:
-                return error
 
         sql_query = f"UPDATE rpg SET {', '.join(f'{key} = :{key}' for key in rpg.keys())} WHERE id = :id"
         await self.connection.execute(sql_query, rpg)
