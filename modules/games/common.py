@@ -107,15 +107,20 @@ class GamesCog:
                 success_bonus INTEGER NOT NULL,
                 boss_bonus INTEGER NOT NULL,
                 boss_malus INTEGER NOT NULL,
-                timer INTEGER NOT NULL
+                timer INTEGER NOT NULL,
+                ratio_normal_event INTEGER NOT NULL,
+                ratio_treasure_event INTEGER NOT NULL,
+                ratio_monster_event INTEGER NOT NULL,
+                ratio_trap_event INTEGER NOT NULL,
+                ratio_boss_event INTEGER NOT NULL
             );
 
-            CREATE TABLE IF NOT EXISTS rpg_action (
+            CREATE TABLE IF NOT EXISTS rpg_event (
                 id INTEGER PRIMARY KEY,
                 rpg_id INTEGER,
                 message TEXT,
                 type TEXT,
-                boss BOOLEAN,
+                event TEXT,
                 FOREIGN KEY(rpg_id) REFERENCES rpg(id)
             );            
 

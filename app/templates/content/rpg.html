@@ -1,4 +1,28 @@
 <!-- CONTENT SIDE -->
+{% macro generate_buttons(id) %}
+<button type="button" id="open-edit-form-btn-{{id}}" class="btn btn-primary" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pen" viewBox="0 0 16 16">
+  <path d="m13.498.795.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001zm-.644.766a.5.5 0 0 0-.707 0L1.95 11.756l-.764 3.057 3.057-.764L14.44 3.854a.5.5 0 0 0 0-.708l-1.585-1.585z"></path>
+  </svg>
+</button>
+
+<button type="button" id="open-delete-form-btn-{{id}}" class="btn btn-outline-danger" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3-fill" viewBox="0 0 16 16">
+  <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5Zm-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5ZM4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06Zm6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528ZM8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5Z"></path>
+  </svg>
+</button>
+{% endmacro %}
+
+{% macro generate_game_table_row(msg) %}
+  <tr>
+    <td>{{ msg.id }}</td>
+    <td>{{ msg.message }}</td>
+    <td>{{ msg.type }}</td>
+    <td>{{ msg.event }}</td>
+    <td>{{ generate_buttons(msg.id) }}</td>
+  </tr>
+{% endmacro %}
+
 <div class="container">
     <div class="row p-4 rounded">
       <div class="col-12 mt-4">
@@ -58,6 +82,7 @@
         <form novalidate method="post">
           <div class="row">
             <div class="col-md-6">
+
               <div class="form-group mb-1">
                 <label for="rpg_cost"> Cost </label>
                 <div class="col">
@@ -75,6 +100,7 @@
                   </div>
                 </div>
               </div>
+
               <div class="form-group mb-1">
                 <label for="exampleInputPassword1"> Success Rate </label>
                 <div class="col">
@@ -89,6 +115,7 @@
                   </div>
                 </div>
               </div>
+
               <div class="form-group mb-1">
                 <label for="exampleInputPassword1"> Timer </label>
                 <div class="col">
@@ -103,8 +130,7 @@
                   </div>
                 </div>
               </div>
-            </div>
-            <div class="col-md-6">
+
               <div class="form-group mb-1">
                 <label for="exampleInputEmail1"> Success Bonus - Multiplier </label>
                 <div class="col">
@@ -118,6 +144,7 @@
                   </div>
                 </div>
               </div>
+
               <div class="form-group mb-1">
                 <label for="exampleInputPassword1"> Boss Bonus - Multiplier </label>
                 <div class="col">
@@ -131,6 +158,7 @@
                   </div>
                 </div>
               </div>
+
               <div class="form-group mb-1">
                 <label for="exampleInputEmail1"> Boss Malus - Multiplier </label>
                 <div class="col">
@@ -144,6 +172,82 @@
                   </div>
                 </div>
               </div>
+
+            </div>
+
+            <div class="col-md-6">
+
+              <div class="form-group mb-1">
+                <label for="exampleInputEmail1"> Ratio - Normal Events  </label>
+                <div class="col">
+                  <div class="input-group mt-1">
+                    <span class="input-group-text" id="basic-addon1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-1-circle-fill" viewBox="0 0 16 16">
+                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M9.283 4.002H7.971L6.072 5.385v1.271l1.834-1.318h.065V12h1.312z"></path>
+                      </svg>
+                    </span>
+                    <input type="text" class="form-control" id="rpg_ratio_normal_event" name="rpg_ratio_normal_event" value="{{ message['rpg'].ratio_normal_event }}" placeholder="" required>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group mb-1">
+                <label for="exampleInputPassword1"> Ratio - Treasure Events </label>
+                <div class="col">
+                  <div class="input-group mt-1">
+                    <span class="input-group-text" id="basic-addon1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-2-circle-fill" viewBox="0 0 16 16">
+                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M6.646 6.24c0-.691.493-1.306 1.336-1.306.756 0 1.313.492 1.313 1.236 0 .697-.469 1.23-.902 1.705l-2.971 3.293V12h5.344v-1.107H7.268v-.077l1.974-2.22.096-.107c.688-.763 1.287-1.428 1.287-2.43 0-1.266-1.031-2.215-2.613-2.215-1.758 0-2.637 1.19-2.637 2.402v.065h1.271v-.07Z"></path>
+                      </svg>
+                    </span>
+                    <input type="text" class="form-control" id="rpg_ratio_treasure_event" name="rpg_ratio_treasure_event" value="{{ message['rpg'].ratio_treasure_event }}" placeholder="" required>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group mb-1">
+                <label for="exampleInputEmail1"> Ratio - Trap Events  </label>
+                <div class="col">
+                  <div class="input-group mt-1">
+                    <span class="input-group-text" id="basic-addon1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-3-circle-fill" viewBox="0 0 16 16">
+                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-8.082.414c.92 0 1.535.54 1.541 1.318.012.791-.615 1.36-1.588 1.354-.861-.006-1.482-.469-1.54-1.066H5.104c.047 1.177 1.05 2.144 2.754 2.144 1.653 0 2.954-.937 2.93-2.396-.023-1.278-1.031-1.846-1.734-1.916v-.07c.597-.1 1.505-.739 1.482-1.876-.03-1.177-1.043-2.074-2.637-2.062-1.675.006-2.59.984-2.625 2.12h1.248c.036-.556.557-1.054 1.348-1.054.785 0 1.348.486 1.348 1.195.006.715-.563 1.237-1.342 1.237h-.838v1.072h.879Z"></path>
+                      </svg>
+                    </span>
+                    <input type="text" class="form-control" id="rpg_ratio_trap_event" name="rpg_ratio_trap_event" value="{{ message['rpg'].ratio_trap_event }}" placeholder="" required>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group mb-1">
+                <label for="exampleInputPassword1"> Ratio - Monster Events </label>
+                <div class="col">
+                  <div class="input-group mt-1">
+                    <span class="input-group-text" id="basic-addon1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-2-circle-fill" viewBox="0 0 16 16">
+                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M6.646 6.24c0-.691.493-1.306 1.336-1.306.756 0 1.313.492 1.313 1.236 0 .697-.469 1.23-.902 1.705l-2.971 3.293V12h5.344v-1.107H7.268v-.077l1.974-2.22.096-.107c.688-.763 1.287-1.428 1.287-2.43 0-1.266-1.031-2.215-2.613-2.215-1.758 0-2.637 1.19-2.637 2.402v.065h1.271v-.07Z"></path>
+                      </svg>
+                    </span>
+                    <input type="text" class="form-control" id="rpg_ratio_monster_event" name="rpg_ratio_monster_event" value="{{ message['rpg'].ratio_monster_event }}" placeholder="" required>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group mb-1">
+                <label for="exampleInputEmail1"> Ratio - Boss Events  </label>
+                <div class="col">
+                  <div class="input-group mt-1">
+                    <span class="input-group-text" id="basic-addon1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-3-circle-fill" viewBox="0 0 16 16">
+                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-8.082.414c.92 0 1.535.54 1.541 1.318.012.791-.615 1.36-1.588 1.354-.861-.006-1.482-.469-1.54-1.066H5.104c.047 1.177 1.05 2.144 2.754 2.144 1.653 0 2.954-.937 2.93-2.396-.023-1.278-1.031-1.846-1.734-1.916v-.07c.597-.1 1.505-.739 1.482-1.876-.03-1.177-1.043-2.074-2.637-2.062-1.675.006-2.59.984-2.625 2.12h1.248c.036-.556.557-1.054 1.348-1.054.785 0 1.348.486 1.348 1.195.006.715-.563 1.237-1.342 1.237h-.838v1.072h.879Z"></path>
+                      </svg>
+                    </span>
+                    <input type="text" class="form-control" id="rpg_ratio_boss_event" name="rpg_ratio_boss_event" value="{{ message['rpg'].ratio_boss_event }}" placeholder="" required>
+                  </div>
+                </div>
+              </div>
+
+            </div>
           <div class="row">
             <div class="col-md-11"></div>
             <div class="col-md-1">
@@ -155,7 +259,7 @@
       </div>
     </div>
   </div>
-</div>
+
 <!-- Container Fluid 2 - rpg -->
 <div class="container">
   <div class="col-12 mt-4">
@@ -165,26 +269,42 @@
       </div>
       <div class="col  d-flex justify-content-end mb-4">
         <!-- Make a add command button on the right side of the div class -->
-        <button type="button" id="open-form-btn" class="btn btn-primary" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
-            Generate default game events 
-        </button>
-
-        <button type="button" id="open-form-btn" class="btn btn-primary" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
+        <button type="button" id="open-form-btn" class="btn btn-primary me-3" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
             Add event 
         </button>
 
-        <button type="button" id="open-form-btn" class="btn btn-primary" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
+        <button type="button" id="open-form-btn" class="btn btn-primary me-3" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
             Import events 
         </button>
 
-        
-        <button type="button" id="open-form-btn" class="btn btn-primary" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
+        <button type="button" id="export-btn" class="btn btn-primary me-3" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
             Export events 
         </button>
+        </a>
       </div>
+    </div>
+    <div class="col-12 mb-4">
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th scope="col" class="w-5">ID</th>
+            <th scope="col" class="w-55">Message</th>
+            <th scope="col" class="w-15">Type</th>
+            <th scope="col" class="w-15">Event</th>
+            <th scope="col" class="w-10">Action</th>
+          </tr>
+        </thead>
+        <tbody id="user-commands" class="table-group-divider"> 
+          {% for msg in message['events'] %}
+            {{ generate_game_table_row(msg) }}
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
+
+
 
   <script>
     window.setTimeout(function() {
@@ -196,4 +316,21 @@
             });
         }
     }, 1000);
+
+    document.getElementById('export-btn').addEventListener('click', function() {
+    fetch("/api/rpg/events/{{ message['rpg'].id }}")
+        .then(response => response.json())
+        .then(data => {
+          const jsonData = JSON.parse(data);
+            const blob = new Blob([JSON.stringify(jsonData, null, 4)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+           
+            a.href = url;
+            a.download = `rpg_events_{{ message['rpg'].name}}-${timestamp}.json`;
+            a.click();
+        })
+        .catch(error => console.error(error));
+});
   </script>

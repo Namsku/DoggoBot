@@ -1,3 +1,4 @@
+from dataclasses import asdict
 from modules.bot import Bot
 from modules.cmd import Cmd
 from modules.channel import Channel
@@ -34,6 +35,8 @@ class Server(Bot):
 
         self.router.add_api_route("/api/chatters_stats", self.get_top_chatter, methods=["GET"])
         self.router.add_api_route("/api/users_stats", self.get_users_stats, methods=["GET"])
+        self.router.add_api_route("/api/rpg/events/{id}", self.get_all_rpg_events_by_id, methods=["GET"])
+        # self.router.add_api_route("/api/gatcha/events/{id}", self.get_all_gatch_events_by_id, methods=["GET"])
         self.router.add_api_route("/api/command", self.get_command, methods=["POST"])
         self.router.add_api_route("/api/update", self.update_database, methods=["POST"])
 
@@ -50,6 +53,8 @@ class Server(Bot):
         self.router.add_api_route("/settings", self.settings, methods=["GET", "POST"])
         self.router.add_api_route("/sfx", self.sfx, methods=["GET"])
         self.router.add_api_route("/user/{name}", self.user, methods=["GET"])
+
+        self.router.add_api_route("/api/oath", self.get_oath, methods=["GET"])
 
         self.app.include_router(self.router)
 
@@ -97,6 +102,41 @@ class Server(Bot):
             )
 
         return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
+    
+    # parse content from the twitch oath redirect
+    async def get_oath(self, request: Request):
+        message = {}
+
+        # if requests is a POST request, initialize the bot
+        if request.method == "GET":
+            try:
+                message = request.query_params
+            except Exception as e:
+                self.bot.logger.error(f"Error while initializing bot: {e}")
+                message = {"error": str(e)}
+
+        # parse the query parameters in text format and indent the content
+        # return is a very simplistic html page
+        return dumps(message, indent=4)
+
+    
+    async def get_all_rpg_events_by_id(self, request: Request, id: int):
+        message = {
+            "events": await self.bot.gms.rpg.get_all_rpg_events_by_id(id)
+        }
+
+        self.bot.logger.debug(f"message: {message}")
+
+        message = [asdict(event) for event in message["events"]]
+
+        # remove the id from the list
+        for event in message:
+            event.pop("id")
+            event.pop("rpg_id")
+        
+
+        # Return the content indent
+        return dumps(message, indent=4)
 
     async def chat(self, request: Request):
         """
@@ -411,9 +451,16 @@ class Server(Bot):
             category = value["category"].lower()
             if category == "rpg":
                 rpg_result = await self.bot.gms.rpg.add_rpg_profile(value['name'])
+                
                 if not rpg_result.get("success"):
                     await self.bot.gms.delete_game_by_name(value['name'])
                     return rpg_result  # Return the RPG failure result
+                
+                rpg_events_result = await self.bot.gms.rpg.fill_default_rpg_events(await self.bot.gms.rpg.get_last_id())
+                if not rpg_events_result.get("success"):
+                    await self.bot.gms.delete_game_by_name(value['name'])
+                    return rpg_events_result
+
                 return rpg_result
             elif category == "gatcha":
                 return await self.bot.gms.add_gatcha(value)
@@ -439,9 +486,7 @@ class Server(Bot):
             message["status"] = status
 
         message["rpg"] = await self.bot.gms.rpg.get_rpg_profile_by_name(name)
-        
-
-        self.bot.logger.debug(f"message: {message}")
+        message["events"] = await self.bot.gms.rpg.get_all_rpg_events_by_id(message["rpg"].id)
 
         return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
     
