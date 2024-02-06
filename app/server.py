@@ -381,13 +381,13 @@ class Server(Bot):
 
         # Define a dictionary to map keys to functions
         key_to_func = {
+            "add_cmd": self.bot.cmd.add_cmd,
+            "add_game": self.add_game,
             "cmd": self.update_cmd_status,
-            "user_cmd": self.bot.cmd.add_cmd,
-            "update_cmd": self.update_cmd,
+            "delete_game": self.delete_game,
             "delete_cmd": self.bot.cmd.delete_cmd,
             "game": self.update_game_status,
-            "add_game": self.add_game,
-            "delete_game": self.delete_game,
+            "update_cmd": self.update_cmd,
         }
 
         for key, value in json.items():
@@ -413,13 +413,12 @@ class Server(Bot):
         result = await self.bot.gms.add_game(value)
         if result.get("success"):
             category = value["category"].lower()
-
             if category == "rpg":
                 rpg_result = await self.bot.gms.rpg.add_rpg_profile(value['name'])
                 if not rpg_result.get("success"):
-                    # RPG entry failed, roll back game entry
                     await self.bot.gms.delete_game_by_name(value['name'])
                     return rpg_result  # Return the RPG failure result
+                return rpg_result
             elif category == "gatcha":
                 return await self.bot.gms.add_gatcha(value)
         else:

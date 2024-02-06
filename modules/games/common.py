@@ -194,8 +194,6 @@ class GamesCog:
         sql_request = f"INSERT INTO game ({', '.join(game_attributes)}) VALUES ({', '.join(':' + attribute for attribute in game_attributes)})"
         parameters = tuple(game.values())
 
-        self.logger.debug(f"{sql_request} - {parameters}")
-
         await self.connection.execute(sql_request, parameters)
         await self.connection.commit()
 
@@ -220,8 +218,6 @@ class GamesCog:
 
         sql_query = f"UPDATE game SET {', '.join(f'{key} = ?' for key in game.keys())} WHERE id = ?"
         parameters = tuple(list(game.values()) + [game["id"]])
-
-        print(sql_query, parameters)
 
         await self.connection.execute(sql_query, parameters)
         await self.connection.commit()

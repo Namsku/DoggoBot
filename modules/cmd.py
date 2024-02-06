@@ -659,6 +659,12 @@ class CmdCog:
         None
         """
 
+        if isinstance(name, Cmd):
+            name = name.name
+        
+        if isinstance(name, dict):
+            name = name["name"]
+
         await self.connection.execute("DELETE FROM cmd WHERE name = ?", (name,))
         await self.connection.commit()
         self.logger.info(f"Deleted cmd -> {name}.")

@@ -263,3 +263,30 @@ class RpgCog:
         
         cfg = await self.fill_cfg(form)
         return await self.update_rpg_profile(cfg)
+    
+    async def delete_rpg_profile(self, name: str) -> dict:
+        """
+        Delete a rpg profile from the database.
+
+        Parameters
+        ----------
+        name : str
+            The name of the rpg profile.
+
+        Returns
+        -------
+        dict
+            The result.
+        """
+
+        if isinstance(name, dict):
+            name = name.get("name")
+
+        if not await self.is_name_exists(name):
+            return {"error": "name not exists"}
+
+        sql_query = "DELETE FROM rpg WHERE name = ?"
+        await self.connection.execute(sql_query, (name,))
+        await self.connection.commit()
+
+        return {"success": f"rpg profile {name} deleted successfully"}
