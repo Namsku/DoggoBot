@@ -363,15 +363,19 @@ class Server(Bot):
             if key == "cmd":
                 if value["attribute"] == "status":
                     status = True if value["status"] == 1 else False
-                    return await self.bot.cmd.update_status(value["name"], status)
+                    return await self.bot.cmd.update_status(value["name"], status)    
             elif key == "user_cmd":
                 return await self.bot.cmd.add_cmd(value)
             elif key == "update_cmd":
                 return await self.bot.cmd.update_cmd(value["name"], value)
+            elif key == "delete_cmd":
+                return await self.bot.cmd.delete_cmd(value["name"])
             elif key == "game":
                 if value["attribute"] == "status":
                     status = True if value["status"] == 1 else False
                     return await self.bot.gms.update_status(value["name"], status)
+            elif key == "delete_game":
+                return await self.bot.gms.delete_game_by_name(value["name"])
 
     async def rpg(self, request: Request, name: str):
         message = {

@@ -9,11 +9,10 @@
 {% endmacro %}
 
 <body class="bg-body-tertiary">
+    {% block sidebar %}
+      {% include "sidebar.html" %}
+    {% endblock %}
     <main class="d-flex">
-        {% block sidebar %}
-            {% include "sidebar.html" %}
-        {% endblock %}
-
         {% block content %}
             {% include "content/" + generate_path().strip() + ".html" %}
         {% endblock %}

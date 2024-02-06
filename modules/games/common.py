@@ -182,7 +182,7 @@ class GamesCog:
 
         return {"success": f"game {game['name']} updated successfully"}
 
-    async def delete_game(self, game_id: int):
+    async def delete_game_by_id(self, game_id: int):
         """
         Delete a game from the database.
 
@@ -204,6 +204,30 @@ class GamesCog:
         await self.connection.commit()
 
         return {"success": f"game {game_id} deleted successfully"}
+    
+    async def delete_game_by_name(self, game_name: str):
+        """
+        Delete a game from the database.
+
+        Parameters
+        ----------
+        game_name : str
+            The game name to delete.
+
+        Returns
+        -------
+        None
+        """
+
+        await self.connection.execute(
+            "DELETE FROM game WHERE name = ?",
+            (game_name,)
+        )
+
+        await self.connection.commit()
+        self.logger.info(f"Deleted game -> {game_name}.")
+
+        return {"success": f"game {game_name} deleted successfully"}
 
     async def get_all_games(self) -> list:
         """

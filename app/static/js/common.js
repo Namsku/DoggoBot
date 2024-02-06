@@ -173,7 +173,17 @@ async function form_create_game() {
 
 
 async function form_delete_game() {
-  setupModal("#deleteModal", "#open-delete-form-btn");
+  let buttons = document.querySelectorAll('[id^="open-delete-form-btn-"]');
+
+  // Add an event listener to each button
+  buttons.forEach(button => {
+    button.addEventListener('click', function() {
+      var buttonId = button.id;
+      document.getElementById('delete-name').value = buttonId.split('-').pop();
+    });
+    setupModal("#popup-delete-form", "#" + button.id);
+  });
+
 }
 
 async function form_edit_game() {
@@ -190,9 +200,18 @@ async function form_create_command() {
   setupModal("#popup-form", "#open-form-btn");
 }
 
-
 async function form_delete_command() {
-  setupModal("#deleteModal", "#open-delete-form-btn");
+
+  let buttons = document.querySelectorAll('[id^="open-delete-form-btn-"]');
+
+  // Add an event listener to each button
+  buttons.forEach(button => {
+    button.addEventListener('click', function() {
+      var buttonId = button.id;
+      document.getElementById('delete-name').value = buttonId.split('-').pop();
+    });
+    setupModal("#popup-delete-form", "#" + button.id);
+  });
 }
 
 async function form_edit_command() {
@@ -203,10 +222,6 @@ async function form_edit_command() {
     setupModal("#popup-edit-form", "#" + button.id);
   });
 
-}
-
-async function form_create_command() {
-  setupModal("#popup-form", "#open-form-btn");
 }
 
 async function handle_submit_form(form_id, message_id) {
@@ -273,15 +288,6 @@ async function handle_event(form_id=None, name=None) {
     }
 
       // Send the form data to the API
-      const response = await fetch('/api/update', {
-        method: 'POST',
-        body: formData
-      });
-  
-      return response.json();
-}
-
-async function delete_command(name) {
       const response = await fetch('/api/update', {
         method: 'POST',
         body: formData

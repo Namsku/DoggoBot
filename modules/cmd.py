@@ -661,6 +661,8 @@ class CmdCog:
 
         await self.connection.execute("DELETE FROM cmd WHERE name = ?", (name,))
         await self.connection.commit()
+        self.logger.info(f"Deleted cmd -> {name}.")
+        return {"success": f"command {name} deleted"}
 
     async def get_all_non_dynamic_cmds(self) -> list:
         """

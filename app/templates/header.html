@@ -26,6 +26,17 @@
     {% if DEBUG %} {{ hot_reload.script(url_for('hot-reload')) | safe }} {% endif %}
 
     <style>
+        .sidebar {
+          position: fixed;
+          width: 200px; /* Adjust this to the width of your sidebar */
+          max-height: 100vh;
+          overflow-y: auto;
+        }
+
+        .content {
+          margin-left: 200px; /* This should be the same as the width of your sidebar */
+        }
+
       .sidebar.main {
         position: fixed;
         bottom: 0;

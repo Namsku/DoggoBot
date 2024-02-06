@@ -261,20 +261,27 @@
   </div>
 </div>
 
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+<div class="modal fade" id="popup-delete-form" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="deleteModalLabel">Delete command</h5>
+              
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
-        Are you sure you want to delete this command?
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
-        <button type="button" class="btn btn-primary">Yes</button>
-      </div>
+        <div class="modal-body">
+          <div id="delete-error-message" class="alert alert-danger" style="display: none;"></div>
+          <div id="delete-success-message" class="alert alert-success" style="display: none;"></div>
+          Are you sure you want to delete this command?
+        </div>
+        <form id="delete-form-command">
+        <input type="hidden" class="form-control" id="delete-name" name="name" value="">
+        <input type="hidden" class="form-control" id="update_type" name="update_type" value="delete_cmd">
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+          <button type="submit" id="delete-command-form" class="btn btn-primary">Yes</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
@@ -290,6 +297,7 @@
   form_delete_command();
 
   handle_submit_form('#edit-form-command','#edit');
+  handle_submit_form('#delete-form-command','#delete');
   handle_submit_form('#form-command','#form');
 </script>
 
