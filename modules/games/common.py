@@ -1,5 +1,7 @@
+from collections import OrderedDict
 from modules.logger import Logger
 from modules.games.gambling import GamblingCog
+from modules.games.rpg import RpgCog
 
 from dataclasses import asdict, dataclass, fields
 from typing import Union
@@ -33,6 +35,8 @@ class GamesCog:
 
         self.connection = connection
         self.logger = Logger(__name__)
+        
+        self.rpg = RpgCog(connection)
         self.gambling = GamblingCog(connection)
 
     async def __ainit__(self) -> None:
@@ -97,13 +101,13 @@ class GamesCog:
 
             CREATE TABLE IF NOT EXISTS rpg (
                 id INTEGER PRIMARY KEY,
-                name TEXT,
-                cost INTEGER,
-                description TEXT,
-                success_rate REAL,
-                success_bonus INTEGER,
-                boss_bonus INTEGER,
-                boss_malus INTEGER
+                name TEXT NOT NULL,
+                cost INTEGER NOT NULL,
+                success_rate REAL NOT NULL,
+                success_bonus INTEGER NOT NULL,
+                boss_bonus INTEGER NOT NULL,
+                boss_malus INTEGER NOT NULL,
+                timer INTEGER NOT NULL
             );
 
             CREATE TABLE IF NOT EXISTS rpg_action (
@@ -142,13 +146,55 @@ class GamesCog:
         None
         """
 
-
         if isinstance(game, Game):
             game = asdict(game)
+
+        if isinstance(game, dict):
+            if 'id' not in game:
+                ordered_game = OrderedDict()
+                ordered_game['id'] = await self.get_last_id()
+                ordered_game['name'] = game['name']
+                ordered_game['category'] = game['category']
+                ordered_game['description'] = game['description']
+                ordered_game['status'] = game['status']
+                game = dict(ordered_game)
+
+        if game['name'] is None:
+            return {"error": "name is required"}
+        
+        if game['name'] == "":
+            return {"error": "name cannot be empty"}
+        
+        if game['name'] in [game['name'] for game in await self.get_all_games()]:
+            return {"error": "name already exists"}
+        
+        # game name must be alphanumeric with no spaces
+        if not game['name'].isalnum():
+            return {"error": "name must be alphanumeric"}
+
+        if game['category'] is None:
+            return {"error": "category is required"}
+        
+        if game['category'] not in ['RPG', 'Gatcha']:
+            return {"error": "category must be RPG or Gatcha"}
+        
+        if game['status'] is None:
+            return {"error": "status is required"}
+        
+        if game['status'] not in ["0", "1"]:
+            return {"error": "status must be 0 or 1"}
+        
+        if game['description'] is None:
+            return {"error": "description is required"}
+        
+        if game['description'] == "":
+            return {"error": "description cannot be empty"}
 
         game_attributes = [field.name for field in fields(Game)]
         sql_request = f"INSERT INTO game ({', '.join(game_attributes)}) VALUES ({', '.join(':' + attribute for attribute in game_attributes)})"
         parameters = tuple(game.values())
+
+        self.logger.debug(f"{sql_request} - {parameters}")
 
         await self.connection.execute(sql_request, parameters)
         await self.connection.commit()
@@ -273,5 +319,24 @@ class GamesCog:
         await self.connection.execute("UPDATE game SET status = ? WHERE name = ?", (status, game_name))
 
         await self.connection.commit()
-        self.logger.info(f"Updated cmd status -> {game_name} -> {status}.")
+        self.logger.info(f"Updated game status -> {game_name} -> {status}.")
         return {"success": f"game {game_name} updated successfully"}
+    
+    async def get_last_id(self) -> int:
+        """
+        Get the last game id from the database.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        int
+            The last game id.
+        """
+
+        async with self.connection.execute("SELECT id FROM game ORDER BY id DESC LIMIT 1") as cursor:
+            last_id = await cursor.fetchone()
+
+        return last_id[0] if last_id else 0

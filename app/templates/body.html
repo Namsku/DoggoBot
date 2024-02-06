@@ -3,16 +3,20 @@
     dashboard
   {% elif 'user' in request.url.path %}
     user
+    {% elif 'rpg' in request.url.path %}
+    rpg
   {% else %}
     {{ request.url.path.split('/')[-1] }}
   {% endif %}
 {% endmacro %}
 
+
 <body class="bg-body-tertiary">
-    {% block sidebar %}
-      {% include "sidebar.html" %}
-    {% endblock %}
     <main class="d-flex">
+        {% block sidebar %}
+          {% include "sidebar.html" %}
+        {% endblock %}
+        
         {% block content %}
             {% include "content/" + generate_path().strip() + ".html" %}
         {% endblock %}

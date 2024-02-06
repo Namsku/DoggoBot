@@ -43,7 +43,7 @@ class Server(Bot):
         self.router.add_api_route("/gambling", self.gambling, methods=["GET", "POST"])
         self.router.add_api_route("/games", self.games, methods=["GET"])
         self.router.add_api_route("/rpg/{name}", self.rpg, methods=["GET", "POST"])
-        self.router.add_api_route("/gatcha/{name}", self.gatcha, methods=["GET", "POST"])
+        self.router.add_api_route("/gatcha/{name}", self.gatcha, methods=["GET"])
         
         self.router.add_api_route("/mods", self.mods, methods=["GET"])
         self.router.add_api_route("/overlay", self.overlay, methods=["GET"])
@@ -374,13 +374,31 @@ class Server(Bot):
                 if value["attribute"] == "status":
                     status = True if value["status"] == 1 else False
                     return await self.bot.gms.update_status(value["name"], status)
+            elif key == "add_game":
+                result = await self.bot.gms.add_game(value)
+                if result.get("success"):
+                    category = value["category"].lower()   
+
+                    if category == "rpg":
+                        return await self.bot.gms.rpg.add_rpg_profile(value['name'])
+                    elif category == "gatcha":
+                        return await self.bot.gms.add_gatcha(value)
+                else:
+                    return result
+
             elif key == "delete_game":
                 return await self.bot.gms.delete_game_by_name(value["name"])
 
     async def rpg(self, request: Request, name: str):
         message = {
-            "rpg": await self.bot.rpg.get_rpg(name),
+            "rpg": await self.bot.gms.rpg.get_rpg_profile_by_name(name),
+            "status": "none"
         }
+
+        if request.method == "POST":
+            result = await self.bot.gms.rpg.update_rpg_profile(request.form)
+            status = "error" if result.get("error") else "success"
+            message[status] = result.get(status)
 
         return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
     
