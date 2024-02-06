@@ -431,7 +431,6 @@ class Server(Bot):
             return await self.bot.gms.delete_game_by_name(value)
         else:
             return rpg_result
-        
 
     async def rpg(self, request: Request, name: str):
         message = {

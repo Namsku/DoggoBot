@@ -260,6 +260,8 @@ class GamesCog:
         -------
         None
         """
+        
+
 
         await self.connection.execute(
             "DELETE FROM game WHERE name = ?",
