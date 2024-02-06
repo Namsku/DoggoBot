@@ -219,6 +219,26 @@ class Server(Bot):
         self.bot.logger.debug(f"result: {result}")
 
         return result
+    
+    async def save_rpg_settings(self, request: Request):
+        """
+        Saves the bot's settings.
+
+        Parameters
+        ----------
+        request : Request
+            The request object.
+
+        Returns
+        -------
+        None
+        """
+
+        form = await request.form()
+        result = await self.bot.gms.rpg.set_rpg(form)
+        self.bot.logger.debug(f"result: {result}")
+
+        return result
 
     async def gambling(self, request: Request):
         message = {}
@@ -359,35 +379,60 @@ class Server(Bot):
         json = await request.json()
         self.bot.logger.debug(f"json: {json}")
 
+        # Define a dictionary to map keys to functions
+        key_to_func = {
+            "cmd": self.update_cmd_status,
+            "user_cmd": self.bot.cmd.add_cmd,
+            "update_cmd": self.update_cmd,
+            "delete_cmd": self.bot.cmd.delete_cmd,
+            "game": self.update_game_status,
+            "add_game": self.add_game,
+            "delete_game": self.delete_game,
+        }
+
         for key, value in json.items():
-            if key == "cmd":
-                if value["attribute"] == "status":
-                    status = True if value["status"] == 1 else False
-                    return await self.bot.cmd.update_status(value["name"], status)    
-            elif key == "user_cmd":
-                return await self.bot.cmd.add_cmd(value)
-            elif key == "update_cmd":
-                return await self.bot.cmd.update_cmd(value["name"], value)
-            elif key == "delete_cmd":
-                return await self.bot.cmd.delete_cmd(value["name"])
-            elif key == "game":
-                if value["attribute"] == "status":
-                    status = True if value["status"] == 1 else False
-                    return await self.bot.gms.update_status(value["name"], status)
-            elif key == "add_game":
-                result = await self.bot.gms.add_game(value)
-                if result.get("success"):
-                    category = value["category"].lower()   
+            func = key_to_func.get(key)
+            if func:
+                return await func(value)
 
-                    if category == "rpg":
-                        return await self.bot.gms.rpg.add_rpg_profile(value['name'])
-                    elif category == "gatcha":
-                        return await self.bot.gms.add_gatcha(value)
-                else:
-                    return result
+        # If no matching key was found, return an error message
+        return {"error": "Invalid key"}
 
-            elif key == "delete_game":
-                return await self.bot.gms.delete_game_by_name(value["name"])
+    async def update_cmd_status(self, value):
+        status = True if value["status"] == 1 else False
+        return await self.bot.cmd.update_status(value["name"], status)
+
+    async def update_cmd(self, value):
+        return await self.bot.cmd.update_cmd(value["name"], value)
+
+    async def update_game_status(self, value):
+        status = True if value["status"] == 1 else False
+        return await self.bot.gms.update_status(value["name"], status)
+
+    async def add_game(self, value):
+        result = await self.bot.gms.add_game(value)
+        if result.get("success"):
+            category = value["category"].lower()
+
+            if category == "rpg":
+                rpg_result = await self.bot.gms.rpg.add_rpg_profile(value['name'])
+                if not rpg_result.get("success"):
+                    # RPG entry failed, roll back game entry
+                    await self.bot.gms.delete_game_by_name(value['name'])
+                    return rpg_result  # Return the RPG failure result
+            elif category == "gatcha":
+                return await self.bot.gms.add_gatcha(value)
+        else:
+            return result
+    
+    async def delete_game(self, value):
+        # Delete the rpg game first
+        rpg_result = await self.bot.gms.rpg.delete_rpg_profile(value)
+        if rpg_result.get("success"):
+            return await self.bot.gms.delete_game_by_name(value)
+        else:
+            return rpg_result
+        
 
     async def rpg(self, request: Request, name: str):
         message = {
@@ -396,7 +441,7 @@ class Server(Bot):
         }
 
         if request.method == "POST":
-            result = await self.bot.gms.rpg.update_rpg_profile(request.form)
+            result = await self.save_rpg_settings(request)
             status = "error" if result.get("error") else "success"
             message[status] = result.get(status)
 

@@ -159,11 +159,13 @@ class RpgCog:
         if not await self.is_id_exists(rpg.id):
             return {"error": "id not exists"}
 
+        rpg = asdict(rpg)
+
         sql_query = f"UPDATE rpg SET {', '.join(f'{key} = :{key}' for key in rpg.keys())} WHERE id = :id"
         await self.connection.execute(sql_query, rpg)
         await self.connection.commit()
 
-        return {"success": f"rpg profile {rpg.name} updated successfully"}
+        return {"success": f"rpg profile {rpg['name']} updated successfully"}
     
     async def get_rpg_profile_by_name(self, name: str) -> Rpg:
         """
@@ -215,18 +217,16 @@ class RpgCog:
             if value is None:
                 return {"error": empty_error}
             if field in [
-                "rpg_cost",
                 "rpg_success_rate",
                 "rpg_success_bonus",
                 "rpg_boss_bonus",
                 "rpg_boss_malus",
-                "rpg_timer"
             ]:
                 if not value.replace(".", "").isdigit():
                     return {"error": type_error}
-                else:
-                    if not value.isdigit():
-                        return {"error": type_error}
+            else:
+                if not value.isdigit():
+                    return {"error": type_error}
                     
         return None
     
