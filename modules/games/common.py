@@ -260,8 +260,9 @@ class GamesCog:
         -------
         None
         """
-        
 
+        if isinstance(game_name, dict):
+            game_name = game_name['name']
 
         await self.connection.execute(
             "DELETE FROM game WHERE name = ?",

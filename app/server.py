@@ -216,7 +216,6 @@ class Server(Bot):
 
         form = await request.form()
         result = await self.bot.gms.gambling.set_game(form)
-        self.bot.logger.debug(f"result: {result}")
 
         return result
     
@@ -236,7 +235,6 @@ class Server(Bot):
 
         form = await request.form()
         result = await self.bot.gms.rpg.set_rpg(form)
-        self.bot.logger.debug(f"result: {result}")
 
         return result
 
@@ -252,8 +250,6 @@ class Server(Bot):
         message["slots"] = await self.bot.gms.gambling.get_slots()
         message["roll"] = await self.bot.gms.gambling.get_roll()
         message["status"] = status
-
-        self.bot.logger.debug(f"message: {message}")
 
         return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
 
@@ -434,14 +430,18 @@ class Server(Bot):
 
     async def rpg(self, request: Request, name: str):
         message = {
-            "rpg": await self.bot.gms.rpg.get_rpg_profile_by_name(name),
             "status": "none"
         }
 
         if request.method == "POST":
             result = await self.save_rpg_settings(request)
             status = "error" if result.get("error") else "success"
-            message[status] = result.get(status)
+            message["status"] = status
+
+        message["rpg"] = await self.bot.gms.rpg.get_rpg_profile_by_name(name)
+        
+
+        self.bot.logger.debug(f"message: {message}")
 
         return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
     
