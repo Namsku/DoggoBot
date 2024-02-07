@@ -24,7 +24,29 @@
           </div>
         </div>
       </div>
-    </div> {% else %}
+    </div> 
+        <!-- If oath token has been done and message['oath'] exist -->
+        {% if 'oath' in message %}
+        <div class="row">
+          <table class="table table-sm mt-4">
+            <thead>
+              <tr>
+                <th scope="col" class="w-10">Key</th>
+                <th scope="col" class="w-10">Value</th>
+              </tr>
+            </thead>
+            <tbody class="table-group-divider">
+              {% for key, value in message['oath'].items() %}
+              <tr>
+                <td>{{ key }}</td>
+                <td>{{ value }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+        </div>
+        {% endif %}
+    {% else %}
+
     <!-- Follower Card -->
     <div class="col-xl-3 col-md-6 mb-4">
       <div class="card border-left-warning shadow h-100">
@@ -144,8 +166,8 @@
     </div>
     <script>
       window.onload = async function() {
-        await top_chatters_stats()
-        await user_stats_pie()
+        await generateTopChattersChart()
+        await generateUserStatsPieChart()
         await user_stats_stack()
       };
     </script> 

@@ -190,11 +190,9 @@
 </div>
 
 <script>
-  event_listener_switch_butons("game", "status");
-  event_listener_edit_buttons();
-  
-  form_create_game();
-  form_delete_game();
+  addFormEventListeners()
+  addSwitchButtonEventListeners("game", "status");
+  addEditButtonEventListeners();
 
   handle_submit_form('#popup-delete-form','#delete');
   handle_submit_form('#form-game','#form');

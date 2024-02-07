@@ -99,7 +99,7 @@ def create_hyperconfig() -> HyperConfig:
     """
 
     hyperconfig = HyperConfig()
-    hyperconfig.bind = ["0.0.0.0:8000"]
+    hyperconfig.bind = ["0.0.0.0:80"]
     hyperconfig.worker_class = "asyncio"
     return hyperconfig
 

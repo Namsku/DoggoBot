@@ -54,8 +54,6 @@ class Server(Bot):
         self.router.add_api_route("/sfx", self.sfx, methods=["GET"])
         self.router.add_api_route("/user/{name}", self.user, methods=["GET"])
 
-        self.router.add_api_route("/api/oath", self.get_oath, methods=["GET"])
-
         self.app.include_router(self.router)
 
     async def home(self, request: Request):
@@ -81,6 +79,17 @@ class Server(Bot):
             except Exception as e:
                 self.bot.logger.error(f"Error while initializing bot: {e}")
                 message = {"error": str(e)}
+
+        # if get request has a query parameter, show it a a dictionary
+        if request.query_params:
+            message['oath'] = request.query_params
+
+        # detect if the GET request has path started with #
+        if request.url.path.startswith("/#"):
+            # remove the # from the path 
+            # transform it to a oath dictionary
+            message['oath'] = dict([param.split('=') for param in request.url.path[2:].split('&')])
+            
 
         # if the bot is active, return the bot's status
         if self.bot.active:
@@ -446,17 +455,31 @@ class Server(Bot):
         return await self.bot.gms.update_status(value["name"], status)
 
     async def add_game(self, value):
+        
+        # first we need to create the game in the database
         result = await self.bot.gms.add_game(value)
+
+        # if the game was created successfully, we can add the game's profile
         if result.get("success"):
+
+            # we need to check the category of the game
             category = value["category"].lower()
+
+            # if the category is rpg, we need to create the rpg profile
             if category == "rpg":
+
+                # create the rpg profile
                 rpg_result = await self.bot.gms.rpg.add_rpg_profile(value['name'])
                 
+                # if the rpg profile wasn't created successfully, we need to delete the whole game
                 if not rpg_result.get("success"):
                     await self.bot.gms.delete_game_by_name(value['name'])
                     return rpg_result  # Return the RPG failure result
                 
+                # if the rpg profile was created successfully, we need to fill the default events
                 rpg_events_result = await self.bot.gms.rpg.fill_default_rpg_events(await self.bot.gms.rpg.get_last_id())
+
+                # if the default events weren't created successfully, we need to delete the whole game
                 if not rpg_events_result.get("success"):
                     await self.bot.gms.delete_game_by_name(value['name'])
                     return rpg_events_result
@@ -468,12 +491,23 @@ class Server(Bot):
             return result
     
     async def delete_game(self, value):
-        # Delete the rpg game first
+        # Delete the rpg events first
+        rpg_id = await self.bot.gms.rpg.get_rpg_profile_id(value)
+
+        rpg_events_result = await self.bot.gms.rpg.delete_all_rpg_events_by_id(rpg_id)
+
+        # If the rpg events weren't deleted successfully, return the result
+        if not rpg_events_result.get("success"):
+            return rpg_events_result
+
+        # Delete the rpg profile
         rpg_result = await self.bot.gms.rpg.delete_rpg_profile(value)
-        if rpg_result.get("success"):
-            return await self.bot.gms.delete_game_by_name(value)
-        else:
+        
+        # If the rpg profile wasn't deleted successfully, return the result
+        if not rpg_result.get("success"):
             return rpg_result
+        
+        return await self.bot.gms.delete_game_by_name(value)
 
     async def rpg(self, request: Request, name: str):
         message = {

@@ -112,6 +112,9 @@ class ChannelCog:
             with open(".env", "w") as file:
                 file.write(f"TWITCH_SECRET_TOKEN={config['secret_token']}\n")
                 file.write(f"TWITCH_CLIENT_TOKEN={config['client_token']}\n")
+                # update the environment variables
+                os.environ["TWITCH_SECRET_TOKEN"] = config["secret_token"]
+                os.environ["TWITCH_CLIENT_TOKEN"] = config["client_token"]
         except Exception as e:
             logger.error(f"Error while writing the .env file: {e}")
             exit(1)

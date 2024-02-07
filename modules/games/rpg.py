@@ -162,13 +162,17 @@ class RpgCog:
         rpg : dict
             The rpg profile.
         """
+
         if isinstance(rpg, dict):
             rpg = Rpg(**rpg)
 
         if not await self.is_id_exists(rpg.id):
             return {"error": "id not exists"}
+        
+        # put all ratio into a integer variable
+        rpg_ratio = sum(int(ratio) for ratio in [rpg.ratio_normal_event, rpg.ratio_treasure_event, rpg.ratio_monster_event, rpg.ratio_trap_event, rpg.ratio_boss_event])
+        ratio = 100 - rpg_ratio
 
-        ratio = 100 - rpg.ratio_normal_event - rpg.ratio_treasure_event - rpg.ratio_monster_event - rpg.ratio_trap_event - rpg.ratio_boss_event
         if ratio != 0:
             return {"error": "ratios must be equal to 100"}
 
@@ -257,7 +261,12 @@ class RpgCog:
             "success_bonus": form.get("rpg_success_bonus"),
             "boss_bonus": form.get("rpg_boss_bonus"),
             "boss_malus": form.get("rpg_boss_malus"),
-            "timer": form.get("rpg_timer")
+            "timer": form.get("rpg_timer"),
+            "ratio_normal_event": form.get("rpg_ratio_normal_event"),
+            "ratio_treasure_event": form.get("rpg_ratio_treasure_event"),
+            "ratio_monster_event": form.get("rpg_ratio_monster_event"),
+            "ratio_trap_event": form.get("rpg_ratio_trap_event"),
+            "ratio_boss_event": form.get("rpg_ratio_boss_event")
         }
     
     async def set_rpg(self, form) -> dict:
@@ -281,6 +290,32 @@ class RpgCog:
         
         cfg = await self.fill_cfg(form)
         return await self.update_rpg_profile(cfg)
+    
+    async def get_rpg_profile_id(self, name: str) -> int:
+        """
+        Get a rpg profile id by name from the database.
+
+        Parameters
+        ----------
+        name : str
+            The name of the rpg profile.
+
+        Returns
+        -------
+        int
+            The rpg profile id.
+        """
+
+        if isinstance(name, dict):
+            name = name.get("name")
+
+        sql_query = "SELECT id FROM rpg WHERE name = ?"
+        async with self.connection.execute(sql_query, (name,)) as cursor:
+            content = await cursor.fetchone()
+            if content:
+                return content[0]
+            else:
+                return None
     
     async def delete_rpg_profile(self, name: str) -> dict:
         """
@@ -353,7 +388,7 @@ class RpgCog:
 
         return {"success": f"rpg event {rpg_event['message']} updated successfully"}
     
-    async def delete_rpg_event(self, id: int):
+    async def delete_all_rpg_events_by_id(self, id: int):
         """
         Deletes a rpg event from the database.
 
@@ -372,6 +407,26 @@ class RpgCog:
         await self.connection.commit()
 
         return {"success": f"rpg event {id} deleted successfully"}
+    
+    async def delete_all_rpg_events_by_id(self, rpg_id: int):
+        """
+        Deletes all rpg events by id from the database.
+
+        Parameters
+        ----------
+        rpg_id : int
+            The id of the rpg.
+
+        Returns
+        -------
+        dict
+            The result.
+        """
+        sql_query = "DELETE FROM rpg_event WHERE rpg_id = ?"
+        await self.connection.execute(sql_query, (rpg_id,))
+        await self.connection.commit()
+
+        return {"success": f"all rpg events with rpg id {rpg_id} deleted successfully"}
     
     async def get_all_rpg_events_by_id(self, rpg_id: int):
         """
