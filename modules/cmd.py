@@ -295,7 +295,9 @@ class CmdCog:
             True if the table is configured, False otherwise.
         """
 
-        async with self.connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='cmd'") as cursor:
+        async with self.connection.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='cmd'"
+        ) as cursor:
             return bool(await cursor.fetchone())
 
     async def get_last_cmd(self) -> Cmd:
@@ -308,7 +310,9 @@ class CmdCog:
             The cmd object.
         """
 
-        async with self.connection.execute("SELECT * FROM cmd ORDER BY id DESC LIMIT 1") as cursor:
+        async with self.connection.execute(
+            "SELECT * FROM cmd ORDER BY id DESC LIMIT 1"
+        ) as cursor:
             cmd = await cursor.fetchone()
 
         return Cmd(cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], cmd[6], cmd[7], cmd[8])
@@ -340,7 +344,9 @@ class CmdCog:
             return {"error": "name already exists"}
 
         if not self.is_name_valid(cmd.name):
-            return {"error": f"command {cmd.name} must only contains letters or/and numbers"}
+            return {
+                "error": f"command {cmd.name} must only contains letters or/and numbers"
+            }
 
         if cmd.category == "Select category":
             return {"error": "category must be selected"}
@@ -389,7 +395,9 @@ class CmdCog:
             True if the cmd exists, False otherwise.
         """
 
-        async with self.connection.execute("SELECT name FROM cmd WHERE name = ?", (name,)) as cursor:
+        async with self.connection.execute(
+            "SELECT name FROM cmd WHERE name = ?", (name,)
+        ) as cursor:
             return bool(await cursor.fetchone())
 
     async def get_cmd(self, name: str) -> Cmd:
@@ -407,7 +415,11 @@ class CmdCog:
             The cmd object.
         """
 
-        async with self.connection.execute("SELECT * FROM cmd WHERE name = ?", (name,)) as cursor:
+        self.logger.info(f"get_cmd -> {name}")
+
+        async with self.connection.execute(
+            "SELECT * FROM cmd WHERE name = ?", (name,)
+        ) as cursor:
             cmd = await cursor.fetchone()
 
         return Cmd(
@@ -433,7 +445,9 @@ class CmdCog:
             The cmds.
         """
 
-        async with self.connection.execute("SELECT * FROM cmd WHERE dynamic = ?", (1,)) as cursor:
+        async with self.connection.execute(
+            "SELECT * FROM cmd WHERE dynamic = ?", (1,)
+        ) as cursor:
             cmds = await cursor.fetchall()
 
         return [
@@ -497,7 +511,9 @@ class CmdCog:
         None
         """
 
-        await self.connection.execute("UPDATE cmd SET description = ? WHERE name = ?", (description, name))
+        await self.connection.execute(
+            "UPDATE cmd SET description = ? WHERE name = ?", (description, name)
+        )
         await self.connection.commit()
 
     async def update_aliases(self, name: str, aliases: list) -> None:
@@ -516,7 +532,9 @@ class CmdCog:
         None
         """
 
-        await self.connection.execute("UPDATE cmd SET aliases = ? WHERE name = ?", (aliases, name))
+        await self.connection.execute(
+            "UPDATE cmd SET aliases = ? WHERE name = ?", (aliases, name)
+        )
         await self.connection.commit()
 
     async def update_category(self, name: str, category: str) -> None:
@@ -535,7 +553,9 @@ class CmdCog:
         None
         """
 
-        await self.connection.execute("UPDATE cmd SET category = ? WHERE name = ?", (category, name))
+        await self.connection.execute(
+            "UPDATE cmd SET category = ? WHERE name = ?", (category, name)
+        )
         await self.connection.commit()
 
     async def update_cost(self, name: str, cost: int) -> None:
@@ -554,7 +574,9 @@ class CmdCog:
         None
         """
 
-        await self.connection.execute("UPDATE cmd SET cost = ? WHERE name = ?", (cost, name))
+        await self.connection.execute(
+            "UPDATE cmd SET cost = ? WHERE name = ?", (cost, name)
+        )
         await self.connection.commit()
 
     async def update_status(self, name: str, status: bool) -> None:
@@ -576,7 +598,9 @@ class CmdCog:
         # Convert the status to an integer
         status = 1 if status else 0
 
-        await self.connection.execute("UPDATE cmd SET status = ? WHERE name = ?", (status, name))
+        await self.connection.execute(
+            "UPDATE cmd SET status = ? WHERE name = ?", (status, name)
+        )
 
         await self.connection.commit()
         self.logger.info(f"Updated cmd status -> {name} -> {status}.")
@@ -661,7 +685,7 @@ class CmdCog:
 
         if isinstance(name, Cmd):
             name = name.name
-        
+
         if isinstance(name, dict):
             name = name["name"]
 
@@ -680,7 +704,9 @@ class CmdCog:
             The cmds.
         """
 
-        async with self.connection.execute("SELECT * FROM cmd WHERE dynamic = ?", (0,)) as cursor:
+        async with self.connection.execute(
+            "SELECT * FROM cmd WHERE dynamic = ?", (0,)
+        ) as cursor:
             cmds = await cursor.fetchall()
 
         return [
@@ -709,7 +735,9 @@ class CmdCog:
             The cmds.
         """
 
-        async with self.connection.execute("SELECT * FROM cmd WHERE dynamic = ?", (1,)) as cursor:
+        async with self.connection.execute(
+            "SELECT * FROM cmd WHERE dynamic = ?", (1,)
+        ) as cursor:
             cmds = await cursor.fetchall()
 
         return [
@@ -743,7 +771,9 @@ class CmdCog:
             The cmd object.
         """
 
-        async with self.connection.execute("SELECT * FROM cmd WHERE aliases LIKE ?", (f"%{alias}%",)) as cursor:
+        async with self.connection.execute(
+            "SELECT * FROM cmd WHERE aliases LIKE ?", (f"%{alias}%",)
+        ) as cursor:
             cmd = await cursor.fetchone()
 
         return Cmd(
@@ -774,7 +804,9 @@ class CmdCog:
             The cmds.
         """
 
-        async with self.connection.execute("SELECT * FROM cmd WHERE aliases LIKE ?", (f"%{alias}%",)) as cursor:
+        async with self.connection.execute(
+            "SELECT * FROM cmd WHERE aliases LIKE ?", (f"%{alias}%",)
+        ) as cursor:
             cmds = await cursor.fetchall()
 
         return [
@@ -808,7 +840,9 @@ class CmdCog:
             The cmd object.
         """
 
-        async with self.connection.execute("SELECT * FROM cmd WHERE category = ?", (category,)) as cursor:
+        async with self.connection.execute(
+            "SELECT * FROM cmd WHERE category = ?", (category,)
+        ) as cursor:
             cmd = await cursor.fetchone()
 
         return Cmd(
@@ -839,7 +873,9 @@ class CmdCog:
             The cmds.
         """
 
-        async with self.connection.execute("SELECT * FROM cmd WHERE category = ?", (category,)) as cursor:
+        async with self.connection.execute(
+            "SELECT * FROM cmd WHERE category = ?", (category,)
+        ) as cursor:
             cmds = await cursor.fetchall()
 
         return [
@@ -873,7 +909,9 @@ class CmdCog:
             The cmd object.
         """
 
-        async with self.connection.execute("SELECT * FROM cmd WHERE status = ?", (status,)) as cursor:
+        async with self.connection.execute(
+            "SELECT * FROM cmd WHERE status = ?", (status,)
+        ) as cursor:
             cmd = await cursor.fetchone()
 
         return Cmd(
@@ -904,7 +942,9 @@ class CmdCog:
             The cmds.
         """
 
-        async with self.connection.execute("SELECT * FROM cmd WHERE status = ?", (status,)) as cursor:
+        async with self.connection.execute(
+            "SELECT * FROM cmd WHERE status = ?", (status,)
+        ) as cursor:
             cmds = await cursor.fetchall()
 
         return [

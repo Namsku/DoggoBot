@@ -9,6 +9,7 @@ from typing import Union
 
 import aiosqlite
 
+
 @dataclass
 class Game:
     id: int
@@ -35,7 +36,7 @@ class GamesCog:
 
         self.connection = connection
         self.logger = Logger(__name__)
-        
+
         self.rpg = RpgCog(connection)
         self.gambling = GamblingCog(connection)
 
@@ -136,7 +137,7 @@ class GamesCog:
         )
 
         await self.connection.commit()
-    
+
     async def add_game(self, game: Union[Game, dict]):
         """
         Add a game to the database.
@@ -155,44 +156,44 @@ class GamesCog:
             game = asdict(game)
 
         if isinstance(game, dict):
-            if 'id' not in game:
+            if "id" not in game:
                 ordered_game = OrderedDict()
-                ordered_game['id'] = await self.get_last_id()
-                ordered_game['name'] = game['name']
-                ordered_game['category'] = game['category']
-                ordered_game['description'] = game['description']
-                ordered_game['status'] = game['status']
+                ordered_game["id"] = await self.get_last_id() + 1
+                ordered_game["name"] = game["name"]
+                ordered_game["category"] = game["category"]
+                ordered_game["description"] = game["description"]
+                ordered_game["status"] = game["status"]
                 game = dict(ordered_game)
 
-        if game['name'] is None:
+        if game["name"] is None:
             return {"error": "name is required"}
-        
-        if game['name'] == "":
+
+        if game["name"] == "":
             return {"error": "name cannot be empty"}
-        
-        if game['name'] in [game['name'] for game in await self.get_all_games()]:
+
+        if game["name"] in [game["name"] for game in await self.get_all_games()]:
             return {"error": "name already exists"}
-        
+
         # game name must be alphanumeric with no spaces
-        if not game['name'].isalnum():
+        if not game["name"].isalnum():
             return {"error": "name must be alphanumeric"}
 
-        if game['category'] is None:
+        if game["category"] is None:
             return {"error": "category is required"}
-        
-        if game['category'] not in ['RPG', 'Gatcha']:
+
+        if game["category"] not in ["RPG", "Gatcha"]:
             return {"error": "category must be RPG or Gatcha"}
-        
-        if game['status'] is None:
+
+        if game["status"] is None:
             return {"error": "status is required"}
-        
-        if game['status'] not in ["0", "1"]:
+
+        if game["status"] not in ["0", "1"]:
             return {"error": "status must be 0 or 1"}
-        
-        if game['description'] is None:
+
+        if game["description"] is None:
             return {"error": "description is required"}
-        
-        if game['description'] == "":
+
+        if game["description"] == "":
             return {"error": "description cannot be empty"}
 
         game_attributes = [field.name for field in fields(Game)]
@@ -203,7 +204,7 @@ class GamesCog:
         await self.connection.commit()
 
         return {"success": f"game {game['name']} added successfully"}
-    
+
     async def update_game(self, game: Union[Game, dict]):
         """
         Update a game in the database.
@@ -243,15 +244,12 @@ class GamesCog:
         None
         """
 
-        await self.connection.execute(
-            "DELETE FROM game WHERE id = ?",
-            (game_id,)
-        )
+        await self.connection.execute("DELETE FROM game WHERE id = ?", (game_id,))
 
         await self.connection.commit()
 
         return {"success": f"game {game_id} deleted successfully"}
-    
+
     async def delete_game_by_name(self, game_name: str):
         """
         Delete a game from the database.
@@ -267,12 +265,9 @@ class GamesCog:
         """
 
         if isinstance(game_name, dict):
-            game_name = game_name['name']
+            game_name = game_name["name"]
 
-        await self.connection.execute(
-            "DELETE FROM game WHERE name = ?",
-            (game_name,)
-        )
+        await self.connection.execute("DELETE FROM game WHERE name = ?", (game_name,))
 
         await self.connection.commit()
         self.logger.info(f"Deleted game -> {game_name}.")
@@ -300,7 +295,7 @@ class GamesCog:
         games = [asdict(Game(*game)) for game in games]
 
         return games
-    
+
     async def update_status(self, game_name: str, status: bool):
         """
         Get the game status from the database.
@@ -320,12 +315,14 @@ class GamesCog:
 
         status = 1 if status else 0
 
-        await self.connection.execute("UPDATE game SET status = ? WHERE name = ?", (status, game_name))
+        await self.connection.execute(
+            "UPDATE game SET status = ? WHERE name = ?", (status, game_name)
+        )
 
         await self.connection.commit()
         self.logger.info(f"Updated game status -> {game_name} -> {status}.")
         return {"success": f"game {game_name} updated successfully"}
-    
+
     async def get_last_id(self) -> int:
         """
         Get the last game id from the database.
@@ -340,7 +337,9 @@ class GamesCog:
             The last game id.
         """
 
-        async with self.connection.execute("SELECT id FROM game ORDER BY id DESC LIMIT 1") as cursor:
+        async with self.connection.execute(
+            "SELECT id FROM game ORDER BY id DESC LIMIT 1"
+        ) as cursor:
             last_id = await cursor.fetchone()
 
         return last_id[0] if last_id else 0

@@ -85,7 +85,7 @@
     <div class="col-11">
     </div>  
     <div class="col-1">
-      <button type="button" id="open-form-btn" class="btn btn-primary" >
+      <button type="button" id="open-create-form-btn" class="btn btn-primary" >
         Add
       </button>
     </div>
@@ -114,7 +114,7 @@
 </div>
 
 <!-- Popup form -->
-<div id="popup-form" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="popupFormLabel" aria-hidden="true">
+<div id="popup-create-form" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="popupFormLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
@@ -123,10 +123,10 @@
       </div>
       <div class="modal-body">
         <!-- Error message display area -->
-        <div id="form-error-message" class="alert alert-danger" style="display: none;"></div>
-        <div id="form-success-message" class="alert alert-success" style="display: none;"></div>
+        <div id="create-error-message" class="alert alert-danger" style="display: none;"></div>
+        <div id="create-success-message" class="alert alert-success" style="display: none;"></div>
 
-        <form id="form-game">
+        <form id="create-game-form">
           <div class="mb-3">
             <label for="name" class="form-label">Name</label>
             <div class="input-group">
@@ -175,12 +175,12 @@
           <div id="delete-success-message" class="alert alert-success" style="display: none;"></div>
           Are you sure you want to delete this game?
         </div>
-        <form id="delete-form-command">
+        <form id="delete-game-form">
         <input type="hidden" class="form-control" id="delete-name" name="name" value="">
         <input type="hidden" class="form-control" id="update_type" name="update_type" value="delete_game">
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
-          <button type="submit" id="delete-command-form" class="btn btn-primary">Yes</button>
+          <button type="submit" id="delete-game-form" class="btn btn-primary">Yes</button>
         </div>
       </form>
     </div>
@@ -190,11 +190,10 @@
 </div>
 
 <script>
-  addFormEventListeners()
-  addSwitchButtonEventListeners("game", "status");
   addEditButtonEventListeners();
+  addSwitchButtonEventListeners("game", "status");
+  addFormEventListeners();
 
-  handle_submit_form('#popup-delete-form','#delete');
-  handle_submit_form('#form-game','#form');
+  processForms(['create','delete'], 'game');
 </script>
 

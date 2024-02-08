@@ -33,11 +33,18 @@ class Server(Bot):
 
         self.router.add_api_route("/", self.home, methods=["GET", "POST"])
 
-        self.router.add_api_route("/api/chatters_stats", self.get_top_chatter, methods=["GET"])
-        self.router.add_api_route("/api/users_stats", self.get_users_stats, methods=["GET"])
-        self.router.add_api_route("/api/rpg/events/{id}", self.get_all_rpg_events_by_id, methods=["GET"])
+        self.router.add_api_route(
+            "/api/chatters_stats", self.get_top_chatter, methods=["GET"]
+        )
+        self.router.add_api_route(
+            "/api/users_stats", self.get_users_stats, methods=["GET"]
+        )
+        self.router.add_api_route(
+            "/api/rpg/events/{id}", self.get_all_rpg_events_by_id, methods=["GET"]
+        )
         # self.router.add_api_route("/api/gatcha/events/{id}", self.get_all_gatch_events_by_id, methods=["GET"])
         self.router.add_api_route("/api/command", self.get_command, methods=["POST"])
+        self.router.add_api_route("/api/rpg", self.get_rpg_event, methods=["POST"])
         self.router.add_api_route("/api/update", self.update_database, methods=["POST"])
 
         self.router.add_api_route("/chat", self.chat, methods=["GET"])
@@ -47,7 +54,7 @@ class Server(Bot):
         self.router.add_api_route("/games", self.games, methods=["GET"])
         self.router.add_api_route("/rpg/{name}", self.rpg, methods=["GET", "POST"])
         self.router.add_api_route("/gatcha/{name}", self.gatcha, methods=["GET"])
-        
+
         self.router.add_api_route("/mods", self.mods, methods=["GET"])
         self.router.add_api_route("/overlay", self.overlay, methods=["GET"])
         self.router.add_api_route("/settings", self.settings, methods=["GET", "POST"])
@@ -82,14 +89,15 @@ class Server(Bot):
 
         # if get request has a query parameter, show it a a dictionary
         if request.query_params:
-            message['oath'] = request.query_params
+            message["oath"] = request.query_params
 
         # detect if the GET request has path started with #
         if request.url.path.startswith("/#"):
-            # remove the # from the path 
+            # remove the # from the path
             # transform it to a oath dictionary
-            message['oath'] = dict([param.split('=') for param in request.url.path[2:].split('&')])
-            
+            message["oath"] = dict(
+                [param.split("=") for param in request.url.path[2:].split("&")]
+            )
 
         # if the bot is active, return the bot's status
         if self.bot.active:
@@ -110,8 +118,10 @@ class Server(Bot):
                 }
             )
 
-        return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
-    
+        return self.templates.TemplateResponse(
+            "index.html", {"request": request, "message": message}
+        )
+
     # parse content from the twitch oath redirect
     async def get_oath(self, request: Request):
         message = {}
@@ -128,11 +138,8 @@ class Server(Bot):
         # return is a very simplistic html page
         return dumps(message, indent=4)
 
-    
     async def get_all_rpg_events_by_id(self, request: Request, id: int):
-        message = {
-            "events": await self.bot.gms.rpg.get_all_rpg_events_by_id(id)
-        }
+        message = {"events": await self.bot.gms.rpg.get_all_rpg_events_by_id(id)}
 
         self.bot.logger.debug(f"message: {message}")
 
@@ -142,7 +149,6 @@ class Server(Bot):
         for event in message:
             event.pop("id")
             event.pop("rpg_id")
-        
 
         # Return the content indent
         return dumps(message, indent=4)
@@ -163,7 +169,9 @@ class Server(Bot):
 
         message = {}
 
-        return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
+        return self.templates.TemplateResponse(
+            "index.html", {"request": request, "message": message}
+        )
 
     async def commands(self, request: Request):
         """
@@ -197,7 +205,9 @@ class Server(Bot):
         message["based"] = cmd_list
         message["dynamic"] = cdyn_list
 
-        return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
+        return self.templates.TemplateResponse(
+            "index.html", {"request": request, "message": message}
+        )
 
     async def sfx(self, request: Request):
         """
@@ -215,7 +225,9 @@ class Server(Bot):
 
         message = {}
 
-        return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
+        return self.templates.TemplateResponse(
+            "index.html", {"request": request, "message": message}
+        )
 
     async def curse(self, request: Request):
         """
@@ -233,21 +245,29 @@ class Server(Bot):
 
         message = {}
 
-        return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
+        return self.templates.TemplateResponse(
+            "index.html", {"request": request, "message": message}
+        )
 
     async def overlay(self, request: Request):
         message = {}
 
-        return self.templates.TemplateResponse("overlay.html", {"request": request, "message": message})
+        return self.templates.TemplateResponse(
+            "overlay.html", {"request": request, "message": message}
+        )
 
     async def games(self, request: Request):
         message = {}
         message["games"] = await self.bot.gms.get_all_games()
-        return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
+        return self.templates.TemplateResponse(
+            "index.html", {"request": request, "message": message}
+        )
 
     async def mods(self, request: Request):
         message = {}
-        return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
+        return self.templates.TemplateResponse(
+            "index.html", {"request": request, "message": message}
+        )
 
     async def save_gambling_settings(self, request: Request):
         """
@@ -267,7 +287,7 @@ class Server(Bot):
         result = await self.bot.gms.gambling.set_game(form)
 
         return result
-    
+
     async def save_rpg_settings(self, request: Request):
         """
         Saves the bot's settings.
@@ -300,7 +320,9 @@ class Server(Bot):
         message["roll"] = await self.bot.gms.gambling.get_roll()
         message["status"] = status
 
-        return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
+        return self.templates.TemplateResponse(
+            "index.html", {"request": request, "message": message}
+        )
 
     async def save_bot_settings(self, request: Request):
         """
@@ -367,7 +389,9 @@ class Server(Bot):
             **bot_settings,
         }
 
-        return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
+        return self.templates.TemplateResponse(
+            "index.html", {"request": request, "message": message}
+        )
 
     async def user(self, request: Request, name: str):
         message = {
@@ -375,7 +399,9 @@ class Server(Bot):
             "avatar": await self.bot.usr.get_user_avatar(name),
         }
 
-        return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
+        return self.templates.TemplateResponse(
+            "index.html", {"request": request, "message": message}
+        )
 
     async def get_top_chatter(self):
         chatters = await self.bot.usr.get_top5_chatters()
@@ -409,7 +435,7 @@ class Server(Bot):
         """Gets a command."""
 
         json = await request.json()
-        print(json)
+        self.bot.logger.debug(f"get_command -> json: {json}")
 
         for key, value in json.items():
             if key == "command":
@@ -417,6 +443,19 @@ class Server(Bot):
                 cmd = await self.bot.cmd.get_cmd(value)
 
                 return self.bot.cmd.to_dict(cmd)
+
+    async def get_rpg_event(self, request: Request) -> dict:
+        """Gets a rpg event."""
+
+        json = await request.json()
+        self.bot.logger.debug(f"get_rpg_event -> json: {json}")
+
+        for key, value in json.items():
+            if key == "rpg":
+                # convert cmd to json
+                event = await self.bot.gms.rpg.get_rpg_event_by_id(value)
+
+                return asdict(event)
 
     async def update_database(self, request: Request) -> dict:
         """Updates the database."""
@@ -455,7 +494,7 @@ class Server(Bot):
         return await self.bot.gms.update_status(value["name"], status)
 
     async def add_game(self, value):
-        
+
         # first we need to create the game in the database
         result = await self.bot.gms.add_game(value)
 
@@ -469,19 +508,21 @@ class Server(Bot):
             if category == "rpg":
 
                 # create the rpg profile
-                rpg_result = await self.bot.gms.rpg.add_rpg_profile(value['name'])
-                
+                rpg_result = await self.bot.gms.rpg.add_rpg_profile(value["name"])
+
                 # if the rpg profile wasn't created successfully, we need to delete the whole game
                 if not rpg_result.get("success"):
-                    await self.bot.gms.delete_game_by_name(value['name'])
+                    await self.bot.gms.delete_game_by_name(value["name"])
                     return rpg_result  # Return the RPG failure result
-                
+
                 # if the rpg profile was created successfully, we need to fill the default events
-                rpg_events_result = await self.bot.gms.rpg.fill_default_rpg_events(await self.bot.gms.rpg.get_last_id())
+                rpg_events_result = await self.bot.gms.rpg.fill_default_rpg_events(
+                    await self.bot.gms.rpg.get_last_id()
+                )
 
                 # if the default events weren't created successfully, we need to delete the whole game
                 if not rpg_events_result.get("success"):
-                    await self.bot.gms.delete_game_by_name(value['name'])
+                    await self.bot.gms.delete_game_by_name(value["name"])
                     return rpg_events_result
 
                 return rpg_result
@@ -489,7 +530,7 @@ class Server(Bot):
                 return await self.bot.gms.add_gatcha(value)
         else:
             return result
-    
+
     async def delete_game(self, value):
         # Delete the rpg events first
         rpg_id = await self.bot.gms.rpg.get_rpg_profile_id(value)
@@ -502,17 +543,15 @@ class Server(Bot):
 
         # Delete the rpg profile
         rpg_result = await self.bot.gms.rpg.delete_rpg_profile(value)
-        
+
         # If the rpg profile wasn't deleted successfully, return the result
         if not rpg_result.get("success"):
             return rpg_result
-        
+
         return await self.bot.gms.delete_game_by_name(value)
 
     async def rpg(self, request: Request, name: str):
-        message = {
-            "status": "none"
-        }
+        message = {"status": "none"}
 
         if request.method == "POST":
             result = await self.save_rpg_settings(request)
@@ -520,13 +559,19 @@ class Server(Bot):
             message["status"] = status
 
         message["rpg"] = await self.bot.gms.rpg.get_rpg_profile_by_name(name)
-        message["events"] = await self.bot.gms.rpg.get_all_rpg_events_by_id(message["rpg"].id)
+        message["events"] = await self.bot.gms.rpg.get_all_rpg_events_by_id(
+            message["rpg"].id
+        )
 
-        return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
-    
+        return self.templates.TemplateResponse(
+            "index.html", {"request": request, "message": message}
+        )
+
     async def gatcha(self, request: Request, name: str):
         message = {
             "gatcha": await self.bot.gms.get_gatcha(name),
         }
 
-        return self.templates.TemplateResponse("index.html", {"request": request, "message": message})
+        return self.templates.TemplateResponse(
+            "index.html", {"request": request, "message": message}
+        )

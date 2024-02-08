@@ -14,23 +14,27 @@ async function addSwitchButtonEventListeners(database_name, attribute_name) {
   });
 }
 
-async function addEditButtonEventListeners() {
+async function addEditButtonEventListeners(task) {
   const buttons = document.querySelectorAll('[id^="open-edit-form-btn-"]');
 
   buttons.forEach(button => {
-      button.addEventListener('click', handleEditButtonClick);
+    button.addEventListener('click', async function() {
+      await handleEditButtonClick(button, task);
+    });
   });
 
-  async function handleEditButtonClick(event) {
-      event.preventDefault();
+}
+
+async function handleEditButtonClick(button, task) {
       try {
-          const response = await fetch("/api/command", {
+          value = button.value;
+          const response = await fetch(`/api/${task}`, {
               method: "POST",
               headers: {
                   'Content-Type': 'application/json'
               },
               body: JSON.stringify({
-                  "command": event.target.id.split('-').pop()
+                  [task]: value
               }),
           });
 
@@ -38,24 +42,19 @@ async function addEditButtonEventListeners() {
               throw new Error(`HTTP error! status: ${response.status}`);
           }
 
-          const data = await response.json();
+        const data = await response.json();
+        const popupEditForm = document.getElementById('popup-edit-form');
 
-          const popupEditForm = document.getElementById('popup-edit-form');
-          const name = popupEditForm.querySelector('#name');
-          const category = popupEditForm.querySelector('#category');
-          const cost = popupEditForm.querySelector('#cost');
-          const description = popupEditForm.querySelector('#description');
-
-          name.value = data['name'];
-          category.value = data['category'];
-          cost.value = data['cost'];
-          description.value = data['description'];
-      } catch (error) {
-          console.error('An error occurred:', error);
-      }
+        for (let key in data) {
+            let input = popupEditForm.querySelector(`#${key}`);
+                if (input) {
+                    input.value = data[key];
+                }
+            }
+        } catch (error) {
+            console.error('An error occurred:', error);
+        }
   }
-}
-
 
 async function addEventListenerExportButton(id) {
   document.getElementById('export-btn').addEventListener('click', function() {
@@ -73,7 +72,7 @@ async function generate_events_as_json(id) {
       });
       const url = URL.createObjectURL(blob);
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const filename = `rpg_events_{{ message['rpg'].name}}-${timestamp}.json`;
+      const filename = `rpg_events_-${timestamp}.json`;
 
       createDownloadLink(url, filename);
   } catch (error) {
@@ -89,14 +88,12 @@ function createDownloadLink(url, filename) {
   a.click();
 }
 
-function initializeModalAndButtonInteraction(modalId, buttonId) {
+async function initializeModalAndButtonInteraction(modalId) {
   $(document).ready(function() {
       const popupForm = $(modalId);
       const modalContent = popupForm.find(".modal-content");
 
-      $(buttonId).click(function() {
-          popupForm.modal("show");
-      });
+      popupForm.modal("show");
 
       popupForm.on("show.bs.modal", function() {
           modalContent.css({
@@ -119,19 +116,19 @@ function initializeModalAndButtonInteraction(modalId, buttonId) {
 }
 
 async function addEventListenerModalForms(action) {
-  const buttons = document.querySelectorAll(`[id^="open-${action}-form-btn-"]`);
+  const buttons = document.querySelectorAll(`[id^="open-${action}-form-btn"]`);
   buttons.forEach(button => {
-      button.addEventListener('click', function() {
+      button.addEventListener('click', async function() {
           if (action === 'delete') {
               document.getElementById('delete-name').value = button.id.split('-').pop();
           }
-          initializeModalAndButtonInteraction(`#popup-${action}-form`, `#${button.id}`);
+          await initializeModalAndButtonInteraction(`#popup-${action}-form`);
       });
   });
 }
 
 async function addFormEventListeners() {
   for (let action of ['create', 'edit', 'delete']) {
-      addEventListenerModalForms(action);
+      await addEventListenerModalForms(action);
   }
 }

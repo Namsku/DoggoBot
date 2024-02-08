@@ -22,6 +22,7 @@ class Rpg:
     ratio_trap_event: int
     ratio_boss_event: int
 
+
 @dataclass
 class RpgEvent:
     id: int
@@ -29,7 +30,7 @@ class RpgEvent:
     message: str
     type: str
     event: str
-    
+
 
 class RpgCog:
     def __init__(self, connection: aiosqlite.Connection) -> None:
@@ -61,7 +62,7 @@ class RpgCog:
         sql_query = "SELECT * FROM rpg WHERE id = ?"
         async with self.connection.execute(sql_query, (id,)) as cursor:
             return await cursor.fetchone() is not None
-    
+
     async def is_name_exists(self, name: str) -> bool:
         """
         Checks if the name exists in the database.
@@ -79,7 +80,7 @@ class RpgCog:
         sql_query = "SELECT * FROM rpg WHERE name = ?"
         async with self.connection.execute(sql_query, (name,)) as cursor:
             return await cursor.fetchone() is not None
-        
+
     async def get_last_id(self) -> int:
         """
         Get the last id from the database.
@@ -96,13 +97,14 @@ class RpgCog:
 
         # if nothing on table ?
 
-
-        async with self.connection.execute("SELECT id FROM rpg ORDER BY id DESC LIMIT 1") as cursor:
+        async with self.connection.execute(
+            "SELECT id FROM rpg ORDER BY id DESC LIMIT 1"
+        ) as cursor:
             last_id = await cursor.fetchone()
 
         return last_id[0] if last_id else 0
 
-    async def add_rpg_profile(self, rpg : Union[Rpg, str]  = None):
+    async def add_rpg_profile(self, rpg: Union[Rpg, str] = None):
         """
         Adds a rpg profile to the database.
 
@@ -119,27 +121,27 @@ class RpgCog:
 
         if isinstance(rpg, str):
             rpg = Rpg(
-                id = await self.get_last_id() + 1,
-                name = rpg,
-                cost = 1000,
-                success_rate = 50,
-                success_bonus = 100,
-                boss_bonus = 7.777,
-                boss_malus = 6.66,
-                timer = 60,
-                ratio_normal_event = 20,
-                ratio_treasure_event = 5,
-                ratio_monster_event = 60,
-                ratio_trap_event = 5,
-                ratio_boss_event = 10
+                id=await self.get_last_id() + 1,
+                name=rpg,
+                cost=1000,
+                success_rate=50,
+                success_bonus=100,
+                boss_bonus=7.777,
+                boss_malus=6.66,
+                timer=60,
+                ratio_normal_event=20,
+                ratio_treasure_event=5,
+                ratio_monster_event=60,
+                ratio_trap_event=5,
+                ratio_boss_event=10,
             )
-    
+
         if isinstance(rpg, dict):
             rpg = Rpg(**rpg)
 
         if await self.is_name_exists(rpg.name):
             return {"error": "name already exists"}
-        
+
         rpg = asdict(rpg)
 
         sql_query = f"INSERT INTO rpg ({', '.join(rpg.keys())}) VALUES ({', '.join(':' + key for key in rpg.keys())})"
@@ -148,7 +150,7 @@ class RpgCog:
 
         return {"success": f"RPG profile {rpg['name']} added successfully"}
 
-    async def update_rpg_profile(self, rpg : Rpg):
+    async def update_rpg_profile(self, rpg: Rpg):
         """
         Updates a rpg profile in the database.
 
@@ -168,9 +170,18 @@ class RpgCog:
 
         if not await self.is_id_exists(rpg.id):
             return {"error": "id not exists"}
-        
+
         # put all ratio into a integer variable
-        rpg_ratio = sum(int(ratio) for ratio in [rpg.ratio_normal_event, rpg.ratio_treasure_event, rpg.ratio_monster_event, rpg.ratio_trap_event, rpg.ratio_boss_event])
+        rpg_ratio = sum(
+            int(ratio)
+            for ratio in [
+                rpg.ratio_normal_event,
+                rpg.ratio_treasure_event,
+                rpg.ratio_monster_event,
+                rpg.ratio_trap_event,
+                rpg.ratio_boss_event,
+            ]
+        )
         ratio = 100 - rpg_ratio
 
         if ratio != 0:
@@ -183,7 +194,7 @@ class RpgCog:
         await self.connection.commit()
 
         return {"success": f"rpg profile {rpg['name']} updated successfully"}
-    
+
     async def get_rpg_profile_by_name(self, name: str) -> Rpg:
         """
         Get a rpg profile by name from the database.
@@ -205,7 +216,31 @@ class RpgCog:
                 return Rpg(*content)
             else:
                 return None
-            
+
+    async def get_rpg_event_by_id(self, id: int) -> RpgEvent:
+        """
+        Get a rpg event by id from the database.
+
+        Parameters
+        ----------
+        id : int
+            The id of the rpg event.
+
+        Returns
+        -------
+        RpgEvent
+            The rpg event.
+        """
+
+        sql_query = "SELECT * FROM rpg_event WHERE id = ?"
+
+        async with self.connection.execute(sql_query, (id,)) as cursor:
+            content = await cursor.fetchone()
+            if content:
+                return RpgEvent(*content)
+            else:
+                return None
+
     async def validate_form_content(self, form: dict) -> dict:
         """
         Validate the form content.
@@ -222,16 +257,52 @@ class RpgCog:
         """
         fields = [
             ("rpg_cost", "The cost can't be empty", "The cost must be a number"),
-            ("rpg_success_rate", "The success rate can't be empty", "The success rate must be a number"),
-            ("rpg_success_bonus", "The success bonus can't be empty", "The success bonus must be a number"),
-            ("rpg_boss_bonus", "The boss bonus can't be empty", "The boss bonus must be a number"),
-            ("rpg_boss_malus", "The boss malus can't be empty", "The boss malus must be a number"),
+            (
+                "rpg_success_rate",
+                "The success rate can't be empty",
+                "The success rate must be a number",
+            ),
+            (
+                "rpg_success_bonus",
+                "The success bonus can't be empty",
+                "The success bonus must be a number",
+            ),
+            (
+                "rpg_boss_bonus",
+                "The boss bonus can't be empty",
+                "The boss bonus must be a number",
+            ),
+            (
+                "rpg_boss_malus",
+                "The boss malus can't be empty",
+                "The boss malus must be a number",
+            ),
             ("rpg_timer", "The timer can't be empty", "The timer must be a number"),
-            ("rpg_ratio_normal_event", "The ratio normal event can't be empty", "The ratio normal event must be a number"),
-            ("rpg_ratio_treasure_event", "The ratio treasure event can't be empty", "The ratio treasure event must be a number"),
-            ("rpg_ratio_monster_event", "The ratio monster event can't be empty", "The ratio monster event must be a number"),
-            ("rpg_ratio_trap_event", "The ratio trap event can't be empty", "The ratio trap event must be a number"),
-            ("rpg_ratio_boss_event", "The ratio boss event can't be empty", "The ratio boss event must be a number"),
+            (
+                "rpg_ratio_normal_event",
+                "The ratio normal event can't be empty",
+                "The ratio normal event must be a number",
+            ),
+            (
+                "rpg_ratio_treasure_event",
+                "The ratio treasure event can't be empty",
+                "The ratio treasure event must be a number",
+            ),
+            (
+                "rpg_ratio_monster_event",
+                "The ratio monster event can't be empty",
+                "The ratio monster event must be a number",
+            ),
+            (
+                "rpg_ratio_trap_event",
+                "The ratio trap event can't be empty",
+                "The ratio trap event must be a number",
+            ),
+            (
+                "rpg_ratio_boss_event",
+                "The ratio boss event can't be empty",
+                "The ratio boss event must be a number",
+            ),
         ]
 
         for field, empty_error, type_error in fields:
@@ -249,9 +320,9 @@ class RpgCog:
             else:
                 if not value.isdigit():
                     return {"error": type_error}
-                    
+
         return None
-    
+
     async def fill_cfg(self, form: dict) -> dict:
         return {
             "id": form.get("rpg_id"),
@@ -266,9 +337,9 @@ class RpgCog:
             "ratio_treasure_event": form.get("rpg_ratio_treasure_event"),
             "ratio_monster_event": form.get("rpg_ratio_monster_event"),
             "ratio_trap_event": form.get("rpg_ratio_trap_event"),
-            "ratio_boss_event": form.get("rpg_ratio_boss_event")
+            "ratio_boss_event": form.get("rpg_ratio_boss_event"),
         }
-    
+
     async def set_rpg(self, form) -> dict:
         """
         Set a rpg profile.
@@ -287,10 +358,10 @@ class RpgCog:
         error_form_invalid = await self.validate_form_content(form)
         if error_form_invalid:
             return error_form_invalid
-        
+
         cfg = await self.fill_cfg(form)
         return await self.update_rpg_profile(cfg)
-    
+
     async def get_rpg_profile_id(self, name: str) -> int:
         """
         Get a rpg profile id by name from the database.
@@ -316,7 +387,7 @@ class RpgCog:
                 return content[0]
             else:
                 return None
-    
+
     async def delete_rpg_profile(self, name: str) -> dict:
         """
         Delete a rpg profile from the database.
@@ -343,7 +414,7 @@ class RpgCog:
         await self.connection.commit()
 
         return {"success": f"rpg profile {name} deleted successfully"}
-    
+
     async def add_rpg_event(self, rpg_event: RpgEvent):
         """
         Adds a rpg event to the database.
@@ -365,7 +436,7 @@ class RpgCog:
         await self.connection.commit()
 
         return {"success": f"RPG event {rpg_event['message']} added successfully"}
-    
+
     async def update_rpg_event(self, rpg_event: RpgEvent):
         """
         Updates a rpg event in the database.
@@ -387,7 +458,7 @@ class RpgCog:
         await self.connection.commit()
 
         return {"success": f"rpg event {rpg_event['message']} updated successfully"}
-    
+
     async def delete_all_rpg_events_by_id(self, id: int):
         """
         Deletes a rpg event from the database.
@@ -407,7 +478,7 @@ class RpgCog:
         await self.connection.commit()
 
         return {"success": f"rpg event {id} deleted successfully"}
-    
+
     async def delete_all_rpg_events_by_id(self, rpg_id: int):
         """
         Deletes all rpg events by id from the database.
@@ -427,7 +498,7 @@ class RpgCog:
         await self.connection.commit()
 
         return {"success": f"all rpg events with rpg id {rpg_id} deleted successfully"}
-    
+
     async def get_all_rpg_events_by_id(self, rpg_id: int):
         """
         Get all rpg events by id from the database.
@@ -449,7 +520,7 @@ class RpgCog:
                 return [RpgEvent(*event) for event in content]
             else:
                 return None
-            
+
     async def fill_default_rpg_events(self, rpg_id: int):
         """
         Fill the default rpg events.
@@ -464,7 +535,7 @@ class RpgCog:
         dict
             The result.
         """
-    
+
         adventure_events = [
             ["You stumble upon a hidden chest.", "Treasure", "Success"],
             ["A group of goblins ambushes {user}.", "Monster", "Loss"],
@@ -495,7 +566,11 @@ class RpgCog:
             ["A pack of wild boars charges at {user}.", "Monster", "Tie"],
             ["You decipher an ancient inscription.", "Normal", "Success"],
             ["A swinging pendulum narrowly misses {user}.", "Trap", "Success"],
-            ["You discover a chest filled with precious jewels.", "Treasure", "Success"],
+            [
+                "You discover a chest filled with precious jewels.",
+                "Treasure",
+                "Success",
+            ],
             ["A powerful sorcerer appears before {user}.", "Boss", "Loss"],
             ["You uncover a hidden stash of gold.", "Treasure", "Success"],
             ["A swarm of spiders descends upon {user}.", "Monster", "Loss"],
@@ -515,7 +590,7 @@ class RpgCog:
             ["A hidden arrow narrowly misses {user}.", "Trap", "Success"],
             ["You unearth a chest of magical artifacts.", "Treasure", "Success"],
             ["A fearsome wyvern swoops down upon {user}.", "Boss", "Loss"],
-            ["You come across a tranquil village.", "Normal", "Success"]
+            ["You come across a tranquil village.", "Normal", "Success"],
         ]
 
         for event in adventure_events:
@@ -525,13 +600,13 @@ class RpgCog:
                 "rpg_id": rpg_id,
                 "message": event[0],
                 "type": event[1],
-                "event": event[2]
+                "event": event[2],
             }
 
             await self.add_rpg_event(RpgEvent(**event))
 
         return {"success": "default rpg events added successfully"}
-    
+
     async def get_last_event_id(self) -> int:
         """
         Get the last event id from the database.
@@ -545,7 +620,9 @@ class RpgCog:
         int
             The last event id.
         """
-        async with self.connection.execute("SELECT id FROM rpg_event ORDER BY id DESC LIMIT 1") as cursor:
+        async with self.connection.execute(
+            "SELECT id FROM rpg_event ORDER BY id DESC LIMIT 1"
+        ) as cursor:
             last_id = await cursor.fetchone()
 
         return last_id[0] if last_id else 0

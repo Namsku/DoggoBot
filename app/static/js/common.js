@@ -1,6 +1,6 @@
 
 
-async function handle_submit_form(form_id, message_id) {
+async function processFormSubmission(form_id, message_id) {
   // Select all forms with the class "form-command"
   let forms = document.querySelectorAll(form_id);
 
@@ -58,41 +58,11 @@ async function handle_submit_form(form_id, message_id) {
   });
 }
 
-async function handle_event(form_id=None, name=None) {
-    if (form_id) {
-        await handle_submit_form(form_id, '/api/update');
-    }
-
-      // Send the form data to the API
-      const response = await fetch('/api/update', {
-        method: 'POST',
-        body: formData
-      });
-  
-      return response.json();
-}
-
-async function update_user_command_table() {
-    const user_table = document.getElementById('user-commands');
-    const response = await fetch('/api/commands');
-    const json = await response.json();
-
-    json.forEach((item) => {
-      const row = document.createElement('tr');
-      const nameCell = document.createElement('td');
-      const emailCell = document.createElement('td');
-
-      nameCell.textContent = item.name;
-      emailCell.textContent = item.email;
-
-      row.appendChild(nameCell);
-      row.appendChild(emailCell);
-
-      user_table.appendChild(row);
+async function processForms(actions, id) {
+  actions.forEach(action => {
+      processFormSubmission(`#${action}-${id}-form`, `#${action}`);
     });
 }
-
-
 
 async function fadeOutAlert() {
   window.setTimeout(function() {
