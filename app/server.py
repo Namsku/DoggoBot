@@ -50,6 +50,7 @@ class Server(Bot):
         self.router.add_api_route("/api/command", self.get_command, methods=["POST"])
         self.router.add_api_route("/api/rpg", self.get_rpg_event, methods=["POST"])
         self.router.add_api_route("/api/update", self.update_database, methods=["POST"])
+        self.router.add_api_route("/api/events/{type}/{id}", self.get_events, methods=["GET"])
 
         self.router.add_api_route("/chat", self.chat, methods=["GET"])
         self.router.add_api_route("/commands", self.commands, methods=["GET"])
@@ -125,6 +126,26 @@ class Server(Bot):
         return self.templates.TemplateResponse(
             "index.html", {"request": request, "message": message}
         )
+
+    async def get_events(self, request: Request, type: str, id: str):
+        type_to_function = {
+            "type": self.bot.gms.rpg.get_rpg_types_stats,
+            "actions": self.bot.gms.rpg.get_rpg_actions_stats,
+            "normal": self.bot.gms.rpg.get_rpg_normal_actions_stats,
+            "treasure": self.bot.gms.rpg.get_rpg_treasure_actions_stats,
+            "trap": self.bot.gms.rpg.get_rpg_trap_actions_stats,
+            "monster": self.bot.gms.rpg.get_rpg_monster_actions_stats,
+            "boss": self.bot.gms.rpg.get_rpg_boss_actions_stats
+        }
+
+        func = type_to_function.get(type)
+        if func:
+            result = await func(id)
+            return dumps(result)
+        else:
+            return json.dumps({})
+
+
 
     # parse content from the twitch oath redirect
     async def get_oath(self, request: Request):

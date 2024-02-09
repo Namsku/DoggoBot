@@ -68,62 +68,49 @@ async function generateTopChattersChart() {
     chart.canvas.parentNode.style.margin = '0 auto';
 }
 
-async function generateUserStatsPieChart() {
-    var ctx = document.getElementById('user-chart').getContext('2d');
-    _labels = JSON.parse(await sendJsonRequest('/api/users_stats'));
+
+async function generateChart(elementId, apiEndpoint, chartType, chartTitle) {
+    var ctx = document.getElementById(elementId).getContext('2d');
+    _labels = JSON.parse(await sendJsonRequest(apiEndpoint));
+
+    // Map labels to colors
+    var colors = {
+        'Win': '#59a14f', // Soft green
+        'Tie': '#FFEB3B', // Soft yellow
+        'Loss': '#e15759' // Soft red
+    };
+
+    // Fallback colors
+    var fallbackColors = ['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f'];
+
     var chart = new Chart(ctx, {
-        type: 'pie',
+        type: chartType,
         data: {
             labels: Object.keys(_labels),
             datasets: [{
-                label: 'Pie Chart',
+                label: 'Users',
                 data: Object.values(_labels),
-                backgroundColor: ['#990011', '#FFA351', '#2BAE66', '#D9E5D6'],
+                backgroundColor: Object.keys(_labels).map((key, index) => colors[key] || fallbackColors[index % fallbackColors.length]),
+                borderColor: '#ffffff',
+                borderWidth: 1,
             }]
         },
         options: {
+            responsive: true,
             title: {
                 display: true,
-                text: 'User Stats'
+                text: chartTitle,
+                fontColor: '#333333',
+                fontSize: 16
             },
-            labelsPosition: 'outside',
+            indexAxis: chartType === 'bar' ? 'y' : undefined,
+            maintainAspectRatio: false,
             plugins: {
                 datalabels: {
-                    formatter: function(value, context) {
-                        return value + '%';
-                    }
-                }
-                
-            }
-        }
-    });
-
-    chart.canvas.parentNode.style.width = '250px';
-    chart.canvas.parentNode.style.height = '250px';
-    chart.canvas.parentNode.style.margin = '0 auto';
-}
-
-async function generateEventsStatsPieChart(id) {
-    var ctx = document.getElementById('events-chart').getContext('2d');
-    _labels = JSON.parse(await sendJsonRequest(`/api/events_stats/${id}`));
-    var chart = new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels: Object.keys(_labels),
-            datasets: [{
-                label: 'Pie Chart',
-                data: Object.values(_labels),
-                backgroundColor: ['#990011', '#FFA351', '#2BAE66', '#D9E5D6'],
-            }]
-        },
-        options: {
-            title: {
-                display: true,
-                text: 'Events Stats'
-            },
-            labelsPosition: 'outside',
-            plugins: {
-                datalabels: {
+                    color: '#333333',
+                    font: {
+                        size: 14
+                    },
                     formatter: function(value, context) {
                         return value + '%';
                     }
@@ -132,7 +119,7 @@ async function generateEventsStatsPieChart(id) {
         }
     });
 
-    chart.canvas.parentNode.style.width = '250px';
-    chart.canvas.parentNode.style.height = '250px';
+    chart.canvas.parentNode.style.width = '100%';
+    chart.canvas.parentNode.style.height = 'auto';
     chart.canvas.parentNode.style.margin = '0 auto';
 }

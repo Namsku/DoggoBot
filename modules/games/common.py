@@ -124,15 +124,6 @@ class GamesCog:
                 event TEXT,
                 FOREIGN KEY(rpg_id) REFERENCES rpg(id)
             );            
-
-            CREATE TABLE IF NOT EXISTS gatcha (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                game_id INTEGER NOT NULL,
-                cost INTEGER NOT NULL,
-                text TEXT NOT NULL,
-                rarity INTEGER NOT NULL,
-                time INTEGER NOT NULL
-            );
         """
         )
 

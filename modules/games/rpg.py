@@ -445,7 +445,6 @@ class RpgCog:
             rpg_event = RpgEvent(**ordered_dict)
 
         rpg_event = asdict(rpg_event)
-        self.logger.info(f"add_rpg_event: {rpg_event}")
 
         sql_query = f"INSERT INTO rpg_event ({', '.join(rpg_event.keys())}) VALUES ({', '.join(':' + key for key in rpg_event.keys())})"
         await self.connection.execute(sql_query, rpg_event)
@@ -492,7 +491,6 @@ class RpgCog:
             The result.
         """
 
-        self.logger.info(f"delete_rpg_event_by_id: {id} {type(id)}")
 
         if isinstance(id, dict):
             id = id.get("name")
@@ -543,7 +541,6 @@ class RpgCog:
         list
             The list of rpg events.
         """
-        self.logger.info(f"get_all_rpg_events_by_id: {rpg_id} {type(rpg_id)}")
 
         sql_query = "SELECT * FROM rpg_event WHERE rpg_id = ?"
         async with self.connection.execute(sql_query, (rpg_id,)) as cursor:
@@ -658,3 +655,200 @@ class RpgCog:
             last_id = await cursor.fetchone()
 
         return last_id[0] if last_id else 0
+
+    async def get_rpg_types_stats(self, rpg_id: int) -> dict:
+        """
+        Get the rpg types stats.
+
+        Parameters
+        ----------
+        rpg_id : int
+            The id of the rpg.
+
+        Returns
+        -------
+        dict
+            The rpg types stats.
+            {
+                "type1": count,
+                "type2": count,
+                "type3": count,
+            }
+        """
+
+        sql_query = "SELECT type, COUNT(*) FROM rpg_event WHERE rpg_id = ? GROUP BY type"
+        async with self.connection.execute(sql_query, (rpg_id,)) as cursor:
+            content = await cursor.fetchall()
+            if content:
+                return {event_type: count for event_type, count in content}
+            else:
+                return {}
+            
+    async def get_rpg_actions_stats(self, rpg_id: int) -> dict:
+        """
+        Get the rpg actions stats.
+
+        Parameters
+        ----------
+        rpg_id : int
+            The id of the rpg.
+
+        Returns
+        -------
+        dict
+            The rpg actions stats.
+            {
+                "action1": count,
+                "action2": count,
+                "action3": count,
+            }
+        """
+
+        sql_query = "SELECT event, COUNT(*) FROM rpg_event WHERE rpg_id = ? GROUP BY event"
+        async with self.connection.execute(sql_query, (rpg_id,)) as cursor:
+            content = await cursor.fetchall()
+            if content:
+                return {event: count for event, count in content}
+            else:
+                return {}
+            
+    async def get_rpg_normal_actions_stats(self, rpg_id: int) -> dict:
+        """
+        Get the rpg normal actions stats.
+
+        Parameters
+        ----------
+        rpg_id : int
+            The id of the rpg.
+
+        Returns
+        -------
+        dict
+            The rpg normal actions stats.
+            {
+                "action1": count,
+                "action2": count,
+                "action3": count,
+            }
+        """
+
+        sql_query = "SELECT event, COUNT(*) FROM rpg_event WHERE rpg_id = ? AND type = 'Normal' GROUP BY event"
+        async with self.connection.execute(sql_query, (rpg_id,)) as cursor:
+            content = await cursor.fetchall()
+            if content:
+                return {event: count for event, count in content}
+            else:
+                return {}
+            
+    async def get_rpg_treasure_actions_stats(self, rpg_id: int) -> dict:
+        """
+        Get the rpg treasure actions stats.
+
+        Parameters
+        ----------
+        rpg_id : int
+            The id of the rpg.
+
+        Returns
+        -------
+        dict
+            The rpg treasure actions stats.
+            {
+                "action1": count,
+                "action2": count,
+                "action3": count,
+            }
+        """
+
+        sql_query = "SELECT event, COUNT(*) FROM rpg_event WHERE rpg_id = ? AND type = 'Treasure' GROUP BY event"
+        async with self.connection.execute(sql_query, (rpg_id,)) as cursor:
+            content = await cursor.fetchall()
+            if content:
+                return {event: count for event, count in content}
+            else:
+                return {}
+    
+    async def get_rpg_monster_actions_stats(self, rpg_id: int) -> dict:
+        """
+        Get the rpg monster actions stats.
+
+        Parameters
+        ----------
+        rpg_id : int
+            The id of the rpg.
+
+        Returns
+        -------
+        dict
+            The rpg monster actions stats.
+            {
+                "action1": count,
+                "action2": count,
+                "action3": count,
+            }
+        """
+
+        sql_query = "SELECT event, COUNT(*) FROM rpg_event WHERE rpg_id = ? AND type = 'Monster' GROUP BY event"
+        async with self.connection.execute(sql_query, (rpg_id,)) as cursor:
+            content = await cursor.fetchall()
+            if content:
+                return {event: count for event, count in content}
+            else:
+                return {}
+    
+    async def get_rpg_trap_actions_stats(self, rpg_id: int) -> dict:
+        """
+        Get the rpg trap actions stats.
+
+        Parameters
+        ----------
+        rpg_id : int
+            The id of the rpg.
+
+        Returns
+        -------
+        dict
+            The rpg trap actions stats.
+            {
+                "action1": count,
+                "action2": count,
+                "action3": count,
+            }
+        """
+
+        sql_query = "SELECT event, COUNT(*) FROM rpg_event WHERE rpg_id = ? AND type = 'Trap' GROUP BY event"
+        async with self.connection.execute(sql_query, (rpg_id,)) as cursor:
+            content = await cursor.fetchall()
+            if content:
+                return {event: count for event, count in content}
+            else:
+                return {}
+    
+    async def get_rpg_boss_actions_stats(self, rpg_id: int) -> dict:
+        """
+        Get the rpg boss actions stats.
+
+        Parameters
+        ----------
+        rpg_id : int
+            The id of the rpg.
+
+        Returns
+        -------
+        dict
+            The rpg boss actions stats.
+            {
+                "action1": count,
+                "action2": count,
+                "action3": count,
+            }
+        """
+
+        sql_query = "SELECT event, COUNT(*) FROM rpg_event WHERE rpg_id = ? AND type = 'Boss' GROUP BY event"
+        async with self.connection.execute(sql_query, (rpg_id,)) as cursor:
+            content = await cursor.fetchall()
+            if content:
+                return {event: count for event, count in content}
+            else:
+                return {}
+    
