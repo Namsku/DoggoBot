@@ -1,4 +1,33 @@
-<!-- CONTENT SIDE -->
+<style>
+  .nav-tabs .nav-link {
+      border: 1px solid transparent;
+      border-radius: 12px 12px 0 0; /* Rounded corners on the upper left and right */
+      color: #495057;
+      background-color: rgb(224, 219, 219); /* Light grey background */
+      margin-right: 1px;
+      transition: all 0.3s ease;
+  }
+  
+  .nav-tabs .nav-link:hover {
+      border: 1px solid #dee2e6;
+      border-bottom-color: transparent;
+      color: #495057;
+      background-color: #e9ecef;
+  }
+  
+  .nav-tabs .nav-link.active {
+      color: #fff; /* White text */
+      background-color: #007bff; /* Blue background */
+      border-color: #dee2e6 #dee2e6 #0b0b0b;
+  }
+  </style>
+  
+  <!-- Your tablist HTML goes here -->
+  
+  <!-- Your tablist HTML goes here -->
+  
+  <!-- Your tablist HTML goes here -->
+
 {% macro generate_buttons(id) %}
 <button type="button" id="open-edit-form-btn-{{id}}" value="{{id}}" class="btn btn-primary" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pen" viewBox="0 0 16 16">
@@ -111,7 +140,7 @@
                         <path d="M4 2.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5zm0 4a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z"></path>
                       </svg>
                     </span>
-                    <input type="text" class="form-control" id="rpg_success_rate" name="rpg_success_rate" value="{{ message['rpg'].success_rate }}" placeholder="" required>
+                    <input type="text" class="form-control" id="rpg_win_rate" name="rpg_win_rate" value="{{ message['rpg'].win_rate }}" placeholder="" required>
                   </div>
                 </div>
               </div>
@@ -140,7 +169,7 @@
                         <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M9.283 4.002H7.971L6.072 5.385v1.271l1.834-1.318h.065V12h1.312z"></path>
                       </svg>
                     </span>
-                    <input type="text" class="form-control" id="rpg_success_bonus" name="rpg_success_bonus" value="{{ message['rpg'].success_bonus }}" placeholder="" required>
+                    <input type="text" class="form-control" id="rpg_win_bonus" name="rpg_win_bonus" value="{{ message['rpg'].win_bonus }}" placeholder="" required>
                   </div>
                 </div>
               </div>
@@ -260,6 +289,58 @@
     </div>
   </div>
 
+  <div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <ul class="nav nav-tabs" id="myTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link active" id="statistics-tab" data-bs-toggle="tab" href="#statistics" role="tab" aria-controls="statistics" aria-selected="true">Statistics</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="normal-events-tab" data-bs-toggle="tab" href="#normal-events" role="tab" aria-controls="normal-events" aria-selected="false">Normal events</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="treasure-events-tab" data-bs-toggle="tab" href="#treasure-events" role="tab" aria-controls="treasure-events" aria-selected="false">Treasure events</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="trap-events-tab" data-bs-toggle="tab" href="#trap-events" role="tab" aria-controls="trap-events" aria-selected="false">Trap events</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="monster-events-tab" data-bs-toggle="tab" href="#monster-events" role="tab" aria-controls="monster-events" aria-selected="false">Monster events</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="boss-events-tab" data-bs-toggle="tab" href="#boss-events" role="tab" aria-controls="boss-events" aria-selected="false">Boss events</a>
+                </li>
+            </ul>
+            <div class="tab-content" id="myTabContent">
+                <div class="tab-pane fade show active" id="statistics" role="tabpanel" aria-labelledby="statistics-tab">
+                    <div class="row mt-2">
+                        <div class="col-md-6">
+                          <div class="card-body">
+                            <div class="pie-chart-container">
+                              <canvas id="user-chart">LOL</canvas>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-6">
+                          <div class="card-body">
+                            <div class="pie-chart-container">
+                              <canvas id="user-chart">LOL</canvas>
+                            </div>
+                          </div>
+                        </div>
+                    </div> 
+                </div>
+                <div class="tab-pane fade" id="normal-events" role="tabpanel" aria-labelledby="normal-events-tab">Normal events content...</div>
+                <div class="tab-pane fade" id="treasure-events" role="tabpanel" aria-labelledby="treasure-events-tab">Treasure events content...</div>
+                <div class="tab-pane fade" id="trap-events" role="tabpanel" aria-labelledby="trap-events-tab">Trap events content...</div>
+                <div class="tab-pane fade" id="monster-events" role="tabpanel" aria-labelledby="monster-events-tab">Monster events content...</div>
+                <div class="tab-pane fade" id="boss-events" role="tabpanel" aria-labelledby="boss-events-tab">Boss events content...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Container Fluid 2 - rpg -->
 <div class="container">
   <div class="col-12 mt-4">
@@ -269,11 +350,11 @@
       </div>
       <div class="col  d-flex justify-content-end mb-4">
         <!-- Make a add command button on the right side of the div class -->
-        <button type="button" id="open-form-btn" class="btn btn-primary me-3" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
+        <button type="button" id="open-create-form-btn" class="btn btn-primary me-3" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
             Add event 
         </button>
 
-        <button type="button" id="open-form-btn" class="btn btn-primary me-3" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
+        <button type="button" id="open-import-form-btn" class="btn btn-primary me-3" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
             Import events 
         </button>
 
@@ -319,45 +400,37 @@
         <div id="create-success-message" class="alert alert-success" style="display: none;"></div>
 
         <form id="create-event-form">
+
+          <input type="hidden" class="form-control" id="update_type" name="update_type" value="add_event">
+          <input type="hidden" class="form-control" id="rpg_id" name="rpg_id" value="{{ message['rpg'].id }}">
+
           <div class="mb-3">
-            <label for="name" class="form-label">Name</label>
-            <div class="input-group">
-              <span class="input-group-text">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-terminal-fill" viewBox="0 0 16 16">
-                  <path d="M0 3a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3zm9.5 5.5h-3a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1zm-6.354-.354a.5.5 0 1 0 .708.708l2-2a.5.5 0 0 0 0-.708l-2-2a.5.5 0 1 0-.708.708L4.793 6.5 3.146 8.146z" />
-                </svg>
-              </span>
-              <input type="hidden" class="form-control" id="update_type" name="update_type" value="add_cmd">
-              <input type="text" class="form-control" id="name" name="name">
-            </div>
+            <label for="message" class="form-label">Message</label>
+            <textarea class="form-control" id="message" name="message" rows="3"></textarea>
           </div>
+
           <div class="mb-3">
-            <label for="category" class="form-label">Category</label>
-            <select class="form-select" id="category" name="category" aria-label="Default select example">
-              <option selected>Select category</option>
-              <option value="bot">Bot</option>
-              <option value="economy">Economy</option>
-              <option value="finance">Finance</option>
-              <option value="games">Games</option>
-              <option value="social">Social</option>
-              <option value="stream">Stream</option>
+            <label for="type" class="form-label">Type</label>
+            <select class="form-select" id="type" name="type" aria-label="Default select example">
+              <option selected>Select type</option>
+              <option value="Normal">Normal</option>
+              <option value="Treasure">Treasure</option>
+              <option value="Trap">Trap</option>
+              <option value="Monster">Monster</option>
+              <option value="Boss">Boss</option>
             </select>
           </div>
+
           <div class="mb-3">
-            <label for="cost" class="form-label">Cost</label>
-            <div class="input-group">
-              <span class="input-group-text">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bank" viewBox="0 0 16 16">
-                  <path d="m8 0 6.61 3h.89a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H15v7a.5.5 0 0 1 .485.38l.5 2a.498.498 0 0 1-.485.62H.5a.498.498 0 0 1-.485-.62l.5-2A.501.501 0 0 1 1 13V6H.5a.5.5 0 0 1-.5-.5v-2A.5.5 0 0 1 .5 3h.89L8 0ZM3.777 3h8.447L8 1 3.777 3ZM2 6v7h1V6H2Zm2 0v7h2.5V6H4Zm3.5 0v7h1V6h-1Zm2 0v7H12V6H9.5ZM13 6v7h1V6h-1Zm2-1V4H1v1h14Zm-.39 9H1.39l-.25 1h13.72l-.25-1Z"></path>
-                </svg>
-              </span>
-              <input type="cost" class="form-control" id="cost" name="cost">
-            </div>
+            <label for="event" class="form-label"></label>
+            <select class="form-select" id="event" name="event" aria-label="Default select example">
+              <option selected>Select event</option>
+              <option value="Win">Win</option>
+              <option value="Tie">Tie</option>
+              <option value="Loss">Loss</option>
+            </select>
           </div>
-          <div class="mb-3">
-            <label for="description" class="form-label">Message</label>
-            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
-          </div>
+
           <button type="submit" id="create-event-form" class="btn btn-primary">Submit</button>
         </form>
       </div>
@@ -381,45 +454,39 @@
         <div id="edit-success-message" class="alert alert-success" style="display: none;"></div>
 
         <form id="edit-event-form">
+
+          <input type="hidden" class="form-control" id="update_type" name="update_type" value="update_event">
+
+          <input type="hidden" class="form-control" id="id" name="id" value="">
+          <input type="hidden" class="form-control" id="rpg_id" name="rpg_id" value="{{ message['events'].rpg_id }}">
+
           <div class="mb-3">
-            <label for="name" class="form-label">Name</label>
-            <div class="input-group">
-              <span class="input-group-text">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-terminal-fill" viewBox="0 0 16 16">
-                  <path d="M0 3a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3zm9.5 5.5h-3a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1zm-6.354-.354a.5.5 0 1 0 .708.708l2-2a.5.5 0 0 0 0-.708l-2-2a.5.5 0 1 0-.708.708L4.793 6.5 3.146 8.146z" />
-                </svg>
-              </span>
-              <input type="hidden" class="form-control" id="update_type" name="update_type" value="update_event">
-              <input type="text" class="form-control" id="name" name="name" readonly>
-            </div>
+            <label for="message" class="form-label">Message</label>
+            <textarea class="form-control" id="message" name="message" rows="3"></textarea>
           </div>
+
           <div class="mb-3">
-            <label for="category" class="form-label">Category</label>
-            <select class="form-select" id="category" name="category" aria-label="Default select example">
-              <option selected>Select category</option>
-              <option value="bot">Bot</option>
-              <option value="economy">Economy</option>
-              <option value="finance">Finance</option>
-              <option value="games">Games</option>
-              <option value="social">Social</option>
-              <option value="stream">Stream</option>
+            <label for="type" class="form-label">Type</label>
+            <select class="form-select" id="type" name="type" aria-label="Default select example">
+              <option selected>Select type</option>
+              <option value="Normal">Normal</option>
+              <option value="Treasure">Treasure</option>
+              <option value="Trap">Trap</option>
+              <option value="Monster">Monster</option>
+              <option value="Boss">Boss</option>
             </select>
           </div>
+
           <div class="mb-3">
-            <label for="cost" class="form-label">Cost</label>
-            <div class="input-group">
-              <span class="input-group-text">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bank" viewBox="0 0 16 16">
-                  <path d="m8 0 6.61 3h.89a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H15v7a.5.5 0 0 1 .485.38l.5 2a.498.498 0 0 1-.485.62H.5a.498.498 0 0 1-.485-.62l.5-2A.501.501 0 0 1 1 13V6H.5a.5.5 0 0 1-.5-.5v-2A.5.5 0 0 1 .5 3h.89L8 0ZM3.777 3h8.447L8 1 3.777 3ZM2 6v7h1V6H2Zm2 0v7h2.5V6H4Zm3.5 0v7h1V6h-1Zm2 0v7H12V6H9.5ZM13 6v7h1V6h-1Zm2-1V4H1v1h14Zm-.39 9H1.39l-.25 1h13.72l-.25-1Z"></path>
-                </svg>
-              </span>
-              <input type="cost" class="form-control" id="cost" name="cost">
-            </div>
+            <label for="event" class="form-label">Event</label>
+            <select class="form-select" id="event" name="event" aria-label="Default select example">
+              <option selected>Select event</option>
+              <option value="Win">Win</option>
+              <option value="Tie">Tie</option>
+              <option value="Loss">Loss</option>
+            </select>
           </div>
-          <div class="mb-3">
-            <label for="description" class="form-label">Message</label>
-            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
-          </div>
+
           <button type="submit" id="add-event-form" class="btn btn-primary">Submit</button>
         </form>
       </div>
@@ -429,6 +496,7 @@
     </div>
   </div>
 </div>
+
 
 <div class="modal fade" id="popup-delete-form" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
   <div class="modal-dialog">
@@ -445,7 +513,7 @@
         </div>
         <form id="delete-event-form">
         <input type="hidden" class="form-control" id="delete-name" name="name" value="">
-        <input type="hidden" class="form-control" id="update_type" name="update_type" value="delete_cmd">
+        <input type="hidden" class="form-control" id="update_type" name="update_type" value="delete_event">
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
           <button type="submit" id="delete-event-form" class="btn btn-primary">Yes</button>
@@ -455,6 +523,64 @@
   </div>
 </div>
 
+
+<div id="popup-import-form" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="popupFormLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="popupFormLabel">Import events</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Error message display area -->
+        <div id="import-error-message" class="alert alert-danger" style="display: none;"></div>
+        <div id="import-success-message" class="alert alert-success" style="display: none;"></div>
+        <!-- Red bold text to warn that if them submit the import list, it will erase the current list forever -->
+        <p class="text-danger">Warning: Importing a new list will erase the current list forever.</p>
+
+        <!-- Open file -->
+        <form id="import-event-form" enctype="multipart/form-data">
+          <input type="hidden" class="form-control" id="update_type" name="update_type" value="import_event">
+          <input type="hidden" class="form-control" id="rpg_id" name="rpg_id" value="{{ message['rpg'].id }}">
+          <div class="mb-3">
+            <label for="import-file" class="form-label">Import file</label>
+            <input class="form-control" type="file" id="import-file" name="import-file" required>
+            <div class="col-12 mb-4 mt-4">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th scope="col" class="w-70">Infos</th>
+                    <th scope="col" class="w-30">Value</th>
+                  </tr>
+                </thead>
+                <tbody id="user-commands" class="table-group-divider"> 
+                  <tr>
+                    <td>Json file</td>
+                    <td id="json-file-state">-</td>
+                  </tr>
+                  <tr>
+                    <td>Events</td>
+                    <td id="events-count">-</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Make a javascript code that will check if the file is a valid json file -->
+          
+
+          <button type="submit" id="import-event-form-btn" class="btn btn-primary" disabled>Submit</button>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
 <script>
     const rpg = new URL(window.location.href).pathname.split('/')[1];
     let rpgIdValue = document.querySelector('input[name="rpg_id"]').value;
@@ -462,8 +588,14 @@
     addEditButtonEventListeners(rpg);
     addFormEventListeners();
     addEventListenerExportButton(rpgIdValue);
+    addImportEventListeners();
 
     // Process forms for create, edit, and delete actions
-    processForms(['create','edit', 'delete'], 'event');
+    processForms(['create','edit', 'delete', 'import'], 'event');
     fadeOutAlert();
+
+    window.onload = async function() {
+        await generateUserStatsPieChart()
+        await user_stats_stack()
+      };
 </script>

@@ -1,7 +1,10 @@
+from collections import OrderedDict
 from dataclasses import asdict
 from modules.bot import Bot
 from modules.cmd import Cmd
 from modules.channel import Channel
+from modules.logger import Logger   
+
 
 import os
 import arel
@@ -18,6 +21,7 @@ class Server(Bot):
     def __init__(self, bot: Bot, app: FastAPI):
         self.bot = bot
         self.app = app
+        self.logger = Logger(__name__)
         self.templates = Jinja2Templates(directory="app/templates")
 
         if _debug := os.getenv("DOGGOBOT_SERVER_DBG"):
@@ -461,17 +465,26 @@ class Server(Bot):
         """Updates the database."""
 
         json = await request.json()
-        self.bot.logger.debug(f"json: {json}")
+        self.logger.debug(f"json: {json}")
 
         # Define a dictionary to map keys to functions
         key_to_func = {
             "add_cmd": self.bot.cmd.add_cmd,
             "add_game": self.add_game,
+            "add_event": self.bot.gms.rpg.add_rpg_event,
+
             "cmd": self.update_cmd_status,
+            
             "delete_game": self.delete_game,
             "delete_cmd": self.bot.cmd.delete_cmd,
+            "delete_event": self.bot.gms.rpg.delete_rpg_event_by_id,
+            
             "game": self.update_game_status,
+
+            "import_event": self.import_events,
+
             "update_cmd": self.update_cmd,
+            "update_event": self.update_event,
         }
 
         for key, value in json.items():
@@ -488,10 +501,14 @@ class Server(Bot):
 
     async def update_cmd(self, value):
         return await self.bot.cmd.update_cmd(value["name"], value)
-
+    
     async def update_game_status(self, value):
         status = True if value["status"] == 1 else False
         return await self.bot.gms.update_status(value["name"], status)
+    
+    async def update_event(self, value):
+        self.logger.info(f"update_event -> value: {value}")
+        return await self.bot.gms.rpg.update_rpg_event(value)
 
     async def add_game(self, value):
 
@@ -551,13 +568,15 @@ class Server(Bot):
         return await self.bot.gms.delete_game_by_name(value)
 
     async def rpg(self, request: Request, name: str):
-        message = {"status": "none"}
+        message = {}
+        status = "none"
 
         if request.method == "POST":
             result = await self.save_rpg_settings(request)
             status = "error" if result.get("error") else "success"
-            message["status"] = status
+            message[status] = result.get(status)
 
+        message["status"] = status
         message["rpg"] = await self.bot.gms.rpg.get_rpg_profile_by_name(name)
         message["events"] = await self.bot.gms.rpg.get_all_rpg_events_by_id(
             message["rpg"].id
@@ -575,3 +594,30 @@ class Server(Bot):
         return self.templates.TemplateResponse(
             "index.html", {"request": request, "message": message}
         )
+
+    async def import_events(self, value):
+        self.logger.debug(value)
+        result = await self.bot.gms.rpg.delete_all_rpg_events_by_id(value["rpg_id"])
+
+        self.logger.debug('Result -> {}'.format(result))
+        if result.get("error"):
+            return result
+
+        for event in value["import-file"]:
+            ordered_dict = OrderedDict()
+            ordered_dict["rpg_id"] = value["rpg_id"]
+            ordered_dict["message"] = event["message"]
+            ordered_dict["type"] = event["type"]
+            ordered_dict["event"] = event["event"]
+
+            # convert the ordered_dict to a regular dict
+            event = dict(ordered_dict)
+
+            self.logger.debug(f'Event -> {event}')
+            result = await self.bot.gms.rpg.add_rpg_event(event)
+
+            self.logger.debug('Result -> {}'.format(result))
+            if result.get("error"):
+                return result
+        
+        return {"success": "Events imported successfully."}

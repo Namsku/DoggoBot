@@ -128,7 +128,44 @@ async function addEventListenerModalForms(action) {
 }
 
 async function addFormEventListeners() {
-  for (let action of ['create', 'edit', 'delete']) {
+  for (let action of ['create', 'edit', 'delete', 'import']) {
       await addEventListenerModalForms(action);
   }
+}
+
+async function addImportEventListeners() {
+    document.addEventListener('DOMContentLoaded', (event) => {
+        document.getElementById('import-file').addEventListener('change', function(e) {
+            var file = e.target.files[0];
+            if (!file) return;
+    
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var contents = e.target.result;
+                try {
+                    var data = JSON.parse(contents);
+                    if (Array.isArray(data)) {
+                        var jsonFileState = document.querySelector("#json-file-state")
+                        jsonFileState.innerText = "Yes";
+                        jsonFileState.style.color = "green";
+                        jsonFileState.style.fontWeight = "bold";
+    
+                        document.querySelector("#events-count").innerText = data.length;
+                        document.querySelector("#import-event-form-btn").disabled = false;
+                    } else {
+                        throw new Error("Invalid JSON file. Expected an array of events.");
+                    }
+                } catch (err) {
+                    var jsonFileState = document.querySelector("#json-file-state")
+                    jsonFileState.innerText = "No";
+                    jsonFileState.style.color = "red";
+                    jsonFileState.style.fontWeight = "bold";
+    
+                    document.querySelector("#events-count").innerText = 0;
+                    document.querySelector("#import-event-form-btn").disabled = true;
+            }
+            };
+            reader.readAsText(file);
+        });
+    });
 }

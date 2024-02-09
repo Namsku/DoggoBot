@@ -102,3 +102,37 @@ async function generateUserStatsPieChart() {
     chart.canvas.parentNode.style.height = '250px';
     chart.canvas.parentNode.style.margin = '0 auto';
 }
+
+async function generateEventsStatsPieChart(id) {
+    var ctx = document.getElementById('events-chart').getContext('2d');
+    _labels = JSON.parse(await sendJsonRequest(`/api/events_stats/${id}`));
+    var chart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: Object.keys(_labels),
+            datasets: [{
+                label: 'Pie Chart',
+                data: Object.values(_labels),
+                backgroundColor: ['#990011', '#FFA351', '#2BAE66', '#D9E5D6'],
+            }]
+        },
+        options: {
+            title: {
+                display: true,
+                text: 'Events Stats'
+            },
+            labelsPosition: 'outside',
+            plugins: {
+                datalabels: {
+                    formatter: function(value, context) {
+                        return value + '%';
+                    }
+                }
+            }
+        }
+    });
+
+    chart.canvas.parentNode.style.width = '250px';
+    chart.canvas.parentNode.style.height = '250px';
+    chart.canvas.parentNode.style.margin = '0 auto';
+}

@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from modules.logger import Logger
 
 from dataclasses import asdict, dataclass
@@ -11,8 +12,8 @@ class Rpg:
     id: int
     name: str
     cost: int
-    success_rate: int
-    success_bonus: float
+    win_rate: int
+    win_bonus: float
     boss_bonus: float
     boss_malus: float
     timer: int
@@ -124,8 +125,8 @@ class RpgCog:
                 id=await self.get_last_id() + 1,
                 name=rpg,
                 cost=1000,
-                success_rate=50,
-                success_bonus=100,
+                win_rate=50,
+                win_bonus=100,
                 boss_bonus=7.777,
                 boss_malus=6.66,
                 timer=60,
@@ -258,12 +259,12 @@ class RpgCog:
         fields = [
             ("rpg_cost", "The cost can't be empty", "The cost must be a number"),
             (
-                "rpg_success_rate",
+                "rpg_win_rate",
                 "The success rate can't be empty",
                 "The success rate must be a number",
             ),
             (
-                "rpg_success_bonus",
+                "rpg_win_bonus",
                 "The success bonus can't be empty",
                 "The success bonus must be a number",
             ),
@@ -310,10 +311,15 @@ class RpgCog:
             if value is None:
                 return {"error": empty_error}
             if field in [
-                "rpg_success_rate",
-                "rpg_success_bonus",
+                "rpg_win_rate",
+                "rpg_win_bonus",
                 "rpg_boss_bonus",
                 "rpg_boss_malus",
+                "rpg_ratio_normal_event",
+                "rpg_ratio_treasure_event",
+                "rpg_ratio_monster_event",
+                "rpg_ratio_trap_event",
+                "rpg_ratio_boss_event",
             ]:
                 if not value.replace(".", "").isdigit():
                     return {"error": type_error}
@@ -328,8 +334,8 @@ class RpgCog:
             "id": form.get("rpg_id"),
             "name": form.get("rpg_name"),
             "cost": form.get("rpg_cost"),
-            "success_rate": form.get("rpg_success_rate"),
-            "success_bonus": form.get("rpg_success_bonus"),
+            "win_rate": form.get("rpg_win_rate"),
+            "win_bonus": form.get("rpg_win_bonus"),
             "boss_bonus": form.get("rpg_boss_bonus"),
             "boss_malus": form.get("rpg_boss_malus"),
             "timer": form.get("rpg_timer"),
@@ -429,13 +435,23 @@ class RpgCog:
         dict
             The result.
         """
+        if isinstance(rpg_event, dict):
+            ordered_dict = OrderedDict()
+            ordered_dict["id"] = await self.get_last_event_id() + 1
+            ordered_dict["rpg_id"] = rpg_event.get("rpg_id")
+            ordered_dict["message"] = rpg_event.get("message")
+            ordered_dict["type"] = rpg_event.get("type")
+            ordered_dict["event"] = rpg_event.get("event")
+            rpg_event = RpgEvent(**ordered_dict)
+
         rpg_event = asdict(rpg_event)
+        self.logger.info(f"add_rpg_event: {rpg_event}")
 
         sql_query = f"INSERT INTO rpg_event ({', '.join(rpg_event.keys())}) VALUES ({', '.join(':' + key for key in rpg_event.keys())})"
         await self.connection.execute(sql_query, rpg_event)
         await self.connection.commit()
 
-        return {"success": f"RPG event {rpg_event['message']} added successfully"}
+        return {"success": f"RPG event {rpg_event['id']} added successfully"}
 
     async def update_rpg_event(self, rpg_event: RpgEvent):
         """
@@ -451,15 +467,17 @@ class RpgCog:
         dict
             The result.
         """
-        rpg_event = asdict(rpg_event)
+
+        if isinstance(rpg_event, RpgEvent):
+            rpg_event = asdict(rpg_event)
 
         sql_query = f"UPDATE rpg_event SET {', '.join(f'{key} = :{key}' for key in rpg_event.keys())} WHERE id = :id"
         await self.connection.execute(sql_query, rpg_event)
         await self.connection.commit()
 
-        return {"success": f"rpg event {rpg_event['message']} updated successfully"}
+        return {"success": f"rpg event {rpg_event['id']} updated successfully"}
 
-    async def delete_all_rpg_events_by_id(self, id: int):
+    async def delete_rpg_event_by_id(self, id: int):
         """
         Deletes a rpg event from the database.
 
@@ -473,6 +491,18 @@ class RpgCog:
         dict
             The result.
         """
+
+        self.logger.info(f"delete_rpg_event_by_id: {id} {type(id)}")
+
+        if isinstance(id, dict):
+            id = id.get("name")
+        
+        if isinstance(id, str):
+            id = int(id)
+        
+        if isinstance(id, RpgEvent):
+            id = id.id
+
         sql_query = "DELETE FROM rpg_event WHERE id = ?"
         await self.connection.execute(sql_query, (id,))
         await self.connection.commit()
@@ -513,13 +543,15 @@ class RpgCog:
         list
             The list of rpg events.
         """
+        self.logger.info(f"get_all_rpg_events_by_id: {rpg_id} {type(rpg_id)}")
+
         sql_query = "SELECT * FROM rpg_event WHERE rpg_id = ?"
         async with self.connection.execute(sql_query, (rpg_id,)) as cursor:
             content = await cursor.fetchall()
             if content:
                 return [RpgEvent(*event) for event in content]
             else:
-                return None
+                return {}
 
     async def fill_default_rpg_events(self, rpg_id: int):
         """
@@ -537,60 +569,60 @@ class RpgCog:
         """
 
         adventure_events = [
-            ["You stumble upon a hidden chest.", "Treasure", "Success"],
+            ["You stumble upon a hidden chest.", "Treasure", "Win"],
             ["A group of goblins ambushes {user}.", "Monster", "Loss"],
-            ["You decipher an ancient script.", "Normal", "Success"],
+            ["You decipher an ancient script.", "Normal", "Win"],
             ["A massive dragon confronts {user}.", "Boss", "Loss"],
             ["You trigger a hidden trap.", "Trap", "Loss"],
-            ["You discover a pile of gold coins.", "Treasure", "Success"],
+            ["You discover a pile of gold coins.", "Treasure", "Win"],
             ["A bandit attacks {user} unexpectedly.", "Monster", "Tie"],
-            ["You uncover a magical amulet.", "Treasure", "Success"],
+            ["You uncover a magical amulet.", "Treasure", "Win"],
             ["A terrifying demon blocks {user}'s path.", "Boss", "Loss"],
-            ["You solve a complex puzzle.", "Normal", "Success"],
+            ["You solve a complex puzzle.", "Normal", "Win"],
             ["A hidden snare traps {user}.", "Trap", "Loss"],
-            ["You find a chest filled with gems.", "Treasure", "Success"],
+            ["You find a chest filled with gems.", "Treasure", "Win"],
             ["A pack of wolves surrounds {user}.", "Monster", "Tie"],
-            ["You acquire a legendary sword.", "Treasure", "Success"],
+            ["You acquire a legendary sword.", "Treasure", "Win"],
             ["A mighty ogre challenges {user} to a duel.", "Boss", "Loss"],
-            ["You discover a hidden passage.", "Normal", "Success"],
+            ["You discover a hidden passage.", "Normal", "Win"],
             ["A pit trap catches {user} off guard.", "Trap", "Loss"],
-            ["You unearth a trove of ancient artifacts.", "Treasure", "Success"],
+            ["You unearth a trove of ancient artifacts.", "Treasure", "Win"],
             ["A horde of orcs ambushes {user}.", "Monster", "Loss"],
-            ["You decipher an old map.", "Normal", "Success"],
-            ["A poison dart narrowly misses {user}.", "Trap", "Success"],
-            ["You find a chest filled with rare treasures.", "Treasure", "Success"],
+            ["You decipher an old map.", "Normal", "Win"],
+            ["A poison dart narrowly misses {user}.", "Trap", "Win"],
+            ["You find a chest filled with rare treasures.", "Treasure", "Win"],
             ["A fearsome troll blocks {user}'s way.", "Boss", "Loss"],
-            ["You stumble upon an abandoned campsite.", "Normal", "Success"],
-            ["A falling boulder narrowly misses {user}.", "Trap", "Success"],
-            ["You unearth a valuable gemstone.", "Treasure", "Success"],
+            ["You stumble upon an abandoned campsite.", "Normal", "Win"],
+            ["A falling boulder narrowly misses {user}.", "Trap", "Win"],
+            ["You unearth a valuable gemstone.", "Treasure", "Win"],
             ["A pack of wild boars charges at {user}.", "Monster", "Tie"],
-            ["You decipher an ancient inscription.", "Normal", "Success"],
-            ["A swinging pendulum narrowly misses {user}.", "Trap", "Success"],
+            ["You decipher an ancient inscription.", "Normal", "Win"],
+            ["A swinging pendulum narrowly misses {user}.", "Trap", "Win"],
             [
                 "You discover a chest filled with precious jewels.",
                 "Treasure",
-                "Success",
+                "Win",
             ],
             ["A powerful sorcerer appears before {user}.", "Boss", "Loss"],
-            ["You uncover a hidden stash of gold.", "Treasure", "Success"],
+            ["You uncover a hidden stash of gold.", "Treasure", "Win"],
             ["A swarm of spiders descends upon {user}.", "Monster", "Loss"],
-            ["You navigate through a dark maze.", "Normal", "Success"],
+            ["You navigate through a dark maze.", "Normal", "Win"],
             ["A trapdoor opens beneath {user}.", "Trap", "Loss"],
-            ["You unearth a legendary artifact.", "Treasure", "Success"],
+            ["You unearth a legendary artifact.", "Treasure", "Win"],
             ["A ferocious bear confronts {user}.", "Monster", "Tie"],
-            ["You solve a challenging riddle.", "Normal", "Success"],
-            ["A dart trap narrowly misses {user}.", "Trap", "Success"],
-            ["You discover a chest of ancient relics.", "Treasure", "Success"],
+            ["You solve a challenging riddle.", "Normal", "Win"],
+            ["A dart trap narrowly misses {user}.", "Trap", "Win"],
+            ["You discover a chest of ancient relics.", "Treasure", "Win"],
             ["A menacing minotaur stands in {user}'s way.", "Boss", "Loss"],
-            ["You find a hidden cave entrance.", "Normal", "Success"],
+            ["You find a hidden cave entrance.", "Normal", "Win"],
             ["A pressure plate triggers beneath {user}.", "Trap", "Loss"],
-            ["You uncover a chest of enchanted treasures.", "Treasure", "Success"],
+            ["You uncover a chest of enchanted treasures.", "Treasure", "Win"],
             ["A pack of hungry wolves surrounds {user}.", "Monster", "Tie"],
-            ["You decipher a cryptic message.", "Normal", "Success"],
-            ["A hidden arrow narrowly misses {user}.", "Trap", "Success"],
-            ["You unearth a chest of magical artifacts.", "Treasure", "Success"],
+            ["You decipher a cryptic message.", "Normal", "Win"],
+            ["A hidden arrow narrowly misses {user}.", "Trap", "Win"],
+            ["You unearth a chest of magical artifacts.", "Treasure", "Win"],
             ["A fearsome wyvern swoops down upon {user}.", "Boss", "Loss"],
-            ["You come across a tranquil village.", "Normal", "Success"],
+            ["You come across a tranquil village.", "Normal", "Win"],
         ]
 
         for event in adventure_events:

@@ -18,7 +18,25 @@ async function processFormSubmission(form_id, message_id) {
 
       for (let [key, value] of formData.entries()) {
         if (key !== 'update_type') {
-          object[key] = value;
+          if (key === 'import-file') {
+            // Parse the file and convert it to a JSON object
+            value = await new Promise((resolve, reject) => {
+              let reader = new FileReader();;
+              reader.onload = function(e) {
+                try {
+                  let json = JSON.parse(e.target.result);
+                  resolve(json);
+                } catch (err) {
+                  reject(err);
+                }
+              };
+              reader.onerror = reject;
+              reader.readAsText(value);
+            });
+            object[key] = value;
+          } else {
+            object[key] = value;
+          }
         } else {
           o_key = value;
         }
@@ -54,6 +72,7 @@ async function processFormSubmission(form_id, message_id) {
       } catch (error) {
         console.error('An error occurred:', error);
       }
+      event.preventDefault();
     });
   });
 }
