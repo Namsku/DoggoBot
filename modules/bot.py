@@ -1,21 +1,18 @@
-from modules.logger import Logger
-from modules.user import UserCog
-from modules.sfx import SFXCog
 from modules.channel import ChannelCog
-from modules.message import MessageCog
 from modules.cmd import CmdCog, Cmd
 from modules.games.common import GamesCog
-
-import aiosqlite
+from modules.logger import Logger
+from modules.message import MessageCog
+from modules.sfx import SFXCog
+from modules.user import UserCog
 
 from twitchio import ChannelFollowerEvent, Message
-from twitchio.ext import commands
 from twitchio.channel import Channel
+from twitchio.ext import commands
 from twitchio.user import User
 
-# from twitchio.ext import eventsub
-
 import os
+import aiosqlite
 
 
 class Bot(commands.Bot):
@@ -74,23 +71,6 @@ class Bot(commands.Bot):
         await self._ainit_env()
         await self._ainit_user_commands()
 
-    async def __aclose__(self) -> None:
-        """
-        Closes the bot object.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
-        """
-
-        await self.connection_channel.close()
-        await self.connection_user.close()
-        await self.connection_sfx.close()
-
     async def _ainit_database_conn(self, channel: ChannelCog) -> None:
         """
         Initializes the database connection.
@@ -106,7 +86,9 @@ class Bot(commands.Bot):
         """
         self.connection_channel = channel.connection
         self.connection_cmd = await aiosqlite.connect("data/database/cmd.sqlite")
-        self.connection_message = await aiosqlite.connect("data/database/message.sqlite")
+        self.connection_message = await aiosqlite.connect(
+            "data/database/message.sqlite"
+        )
         self.connection_user = await aiosqlite.connect("data/database/user.sqlite")
         self.connection_sfx = await aiosqlite.connect("data/database/sfx.sqlite")
         self.connection_games = await aiosqlite.connect("data/database/games.sqlite")
@@ -151,8 +133,26 @@ class Bot(commands.Bot):
         await self.usr.create_table()
         await self.sfx.create_table()
         await self.gms.create_table()
+
         await self.gms.gambling.__ainit__()
         self.logger.debug("Tables created.")
+
+    async def __aclose__(self) -> None:
+        """
+        Closes the bot object.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+
+        await self.connection_channel.close()
+        await self.connection_user.close()
+        await self.connection_sfx.close()
 
     async def _ainit_user_commands(self) -> None:
         """
@@ -328,7 +328,9 @@ class Bot(commands.Bot):
         self.logger.info(f"{name} -> {message.content}")
         return await super().event_message(message)
 
-    async def event_command_error(self, ctx: commands.Context, error: Exception) -> None:
+    async def event_command_error(
+        self, ctx: commands.Context, error: Exception
+    ) -> None:
         """
         Event called when a command error occurs.
 
@@ -413,7 +415,9 @@ class Bot(commands.Bot):
         None
         """
         your_channel: [User] = await self.fetch_users([self.channel_id])
-        followers: [ChannelFollowerEvent] = await your_channel[0].fetch_channel_followers(self.token)
+        followers: [ChannelFollowerEvent] = await your_channel[
+            0
+        ].fetch_channel_followers(self.token)
 
         self.channel_members = [follower.user.name.lower() for follower in followers]
 
@@ -474,10 +478,14 @@ class Bot(commands.Bot):
 
         if result["status"]:
             await self.usr.update_user_balance(user, result["amount"])
-            await ctx.send(f"{' '.join(result['spin'])} | {user} won {result['amount']} {self.coin_name}!")
+            await ctx.send(
+                f"{' '.join(result['spin'])} | {user} won {result['amount']} {self.coin_name}!"
+            )
         else:
             await self.usr.update_user_balance(user, -result["amount"])
-            await ctx.send(f"{' '.join(result['spin'])} | {user} lost {result['amount']} {self.coin_name}!")
+            await ctx.send(
+                f"{' '.join(result['spin'])} | {user} lost {result['amount']} {self.coin_name}!"
+            )
 
     @commands.command(name="gamble")
     async def gamble(self, ctx: commands.Context) -> None:
@@ -520,11 +528,15 @@ class Bot(commands.Bot):
             return
 
         if self.gms.roll.maximum_bet < amount:
-            await ctx.send(f"{user} cannot bet more than {self.gms.roll.maximum_bet} coins.")
+            await ctx.send(
+                f"{user} cannot bet more than {self.gms.roll.maximum_bet} coins."
+            )
             return
 
         if self.gms.roll.minimum_bet > amount:
-            await ctx.send(f"{user} cannot bet less than {self.gms.roll.minimum_bet} coins.")
+            await ctx.send(
+                f"{user} cannot bet less than {self.gms.roll.minimum_bet} coins."
+            )
             return
 
         rng = self.gms.get_roll_number()
@@ -536,11 +548,15 @@ class Bot(commands.Bot):
             amount = int(-amount)
 
             await self.usr.update_user_balance(user, amount)
-            await ctx.send(f"{user} rolled an awful {rng} and lost {amount} {self.coin_name}!")
+            await ctx.send(
+                f"{user} rolled an awful {rng} and lost {amount} {self.coin_name}!"
+            )
         elif rng == 100:
             amount = int(self.gms.roll.reward_critical_success * amount)
             await self.usr.update_user_balance(user, amount)
-            await ctx.send(f"{user} rolled a perfect {rng} and won {amount} {self.coin_name}!")
+            await ctx.send(
+                f"{user} rolled a perfect {rng} and won {amount} {self.coin_name}!"
+            )
         elif rng < 50:
             await self.usr.update_user_balance(user, -amount)
             await ctx.send(f"{user} rolled a {rng} and lost {amount} {self.coin_name}.")

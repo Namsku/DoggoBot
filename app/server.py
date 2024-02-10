@@ -3,7 +3,7 @@ from dataclasses import asdict
 from modules.bot import Bot
 from modules.cmd import Cmd
 from modules.channel import Channel
-from modules.logger import Logger   
+from modules.logger import Logger
 
 
 import os
@@ -50,7 +50,9 @@ class Server(Bot):
         self.router.add_api_route("/api/command", self.get_command, methods=["POST"])
         self.router.add_api_route("/api/rpg", self.get_rpg_event, methods=["POST"])
         self.router.add_api_route("/api/update", self.update_database, methods=["POST"])
-        self.router.add_api_route("/api/events/{type}/{id}", self.get_events, methods=["GET"])
+        self.router.add_api_route(
+            "/api/events/{type}/{id}", self.get_events, methods=["GET"]
+        )
 
         self.router.add_api_route("/chat", self.chat, methods=["GET"])
         self.router.add_api_route("/commands", self.commands, methods=["GET"])
@@ -135,7 +137,7 @@ class Server(Bot):
             "treasure": self.bot.gms.rpg.get_rpg_treasure_actions_stats,
             "trap": self.bot.gms.rpg.get_rpg_trap_actions_stats,
             "monster": self.bot.gms.rpg.get_rpg_monster_actions_stats,
-            "boss": self.bot.gms.rpg.get_rpg_boss_actions_stats
+            "boss": self.bot.gms.rpg.get_rpg_boss_actions_stats,
         }
 
         func = type_to_function.get(type)
@@ -144,8 +146,6 @@ class Server(Bot):
             return dumps(result)
         else:
             return json.dumps({})
-
-
 
     # parse content from the twitch oath redirect
     async def get_oath(self, request: Request):
@@ -365,24 +365,29 @@ class Server(Bot):
 
         form = await request.form()
 
-        cfg = {
-            "secret_token": form.get("secret_token"),
-            "client_token": form.get("client_token"),
-            "bot_name": form.get("bot_name"),
-            "streamer_channel": form.get("streamer_channel"),
-            "prefix": form.get("prefix"),
-            "coin_name": form.get("coin_name"),
-            "default_income": int(form.get("default_income")),
-            "default_timeout": int(form.get("default_timeout")),
-        }
+        self.bot.channel.update_environment_variables(
+            {
+                "secret_token": form.get("secret_token"),
+                "client_token": form.get("client_token"),
+            }
+        )
 
-        self.bot.channel.set_env(cfg)
-        await self.bot.channel.set_channel(cfg)
+        await self.bot.channel.update_channel(
+            {
+                "id": "1",
+                "bot_name": form.get("bot_name"),
+                "streamer_channel": form.get("streamer_channel"),
+                "prefix": form.get("prefix"),
+                "coin_name": form.get("coin_name"),
+                "default_income": int(form.get("default_income")),
+                "default_timeout": int(form.get("default_timeout")),
+            }
+        )
 
     async def get_bot_settings(self, channel: Channel) -> Optional[dict]:
         """Gets the bot's settings."""
 
-        bot_env = await self.bot.channel.get_env()
+        bot_env = await self.bot.channel.get_environment_variables()
         if bot_env is None:
             return None
 
@@ -493,17 +498,12 @@ class Server(Bot):
             "add_cmd": self.bot.cmd.add_cmd,
             "add_game": self.add_game,
             "add_event": self.bot.gms.rpg.add_rpg_event,
-
             "cmd": self.update_cmd_status,
-            
             "delete_game": self.delete_game,
             "delete_cmd": self.bot.cmd.delete_cmd,
             "delete_event": self.bot.gms.rpg.delete_rpg_event_by_id,
-            
             "game": self.update_game_status,
-
             "import_event": self.import_events,
-
             "update_cmd": self.update_cmd,
             "update_event": self.update_event,
         }
@@ -522,11 +522,11 @@ class Server(Bot):
 
     async def update_cmd(self, value):
         return await self.bot.cmd.update_cmd(value["name"], value)
-    
+
     async def update_game_status(self, value):
         status = True if value["status"] == 1 else False
         return await self.bot.gms.update_status(value["name"], status)
-    
+
     async def update_event(self, value):
         self.logger.info(f"update_event -> value: {value}")
         return await self.bot.gms.rpg.update_rpg_event(value)
@@ -620,7 +620,7 @@ class Server(Bot):
         self.logger.debug(value)
         result = await self.bot.gms.rpg.delete_all_rpg_events_by_id(value["rpg_id"])
 
-        self.logger.debug('Result -> {}'.format(result))
+        self.logger.debug("Result -> {}".format(result))
         if result.get("error"):
             return result
 
@@ -634,11 +634,11 @@ class Server(Bot):
             # convert the ordered_dict to a regular dict
             event = dict(ordered_dict)
 
-            self.logger.debug(f'Event -> {event}')
+            self.logger.debug(f"Event -> {event}")
             result = await self.bot.gms.rpg.add_rpg_event(event)
 
-            self.logger.debug('Result -> {}'.format(result))
+            self.logger.debug("Result -> {}".format(result))
             if result.get("error"):
                 return result
-        
+
         return {"success": "Events imported successfully."}

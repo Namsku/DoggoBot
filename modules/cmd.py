@@ -7,6 +7,7 @@ import re
 
 from typing import Union
 
+
 @dataclasses.dataclass
 class Cmd:
     name: str
@@ -37,7 +38,7 @@ class CmdCog:
         self.logger = Logger(__name__)
 
     async def __ainit__(self) -> None:
-        if not await self.is_table_configured():
+        if not await self.is_single_row_table():
             await self.fill_default_table()
 
     def __str__(self) -> str:
@@ -46,7 +47,6 @@ class CmdCog:
         """
 
         return f"Cmd(name={self.name}, description={self.description}, usage={self.usage}, used={self.used}, cost={self.cost}, status={self.status}, aliases={self.aliases}, category={self.category})"
-
 
     def validate_cmd_name(name: str) -> bool:
         """
@@ -66,7 +66,6 @@ class CmdCog:
         pattern = r"^[a-zA-Z0-9]+$"
         return bool(re.match(pattern, name))
 
-
     async def fill_default_table(self) -> None:
         """
         Fills the table with default values.
@@ -82,24 +81,167 @@ class CmdCog:
 
         default_cmds = [
             ("about", "Information about the bot", "", 0, 0, 1, "", "bot", 0, None),
-            ("balance", "Get the current balance of the user", "", 0, 0, 1, "", "economy", 0, None),
-            ("clip", "Create a clip of the current streaming actions...", "", 0, 0, 1, "", "stream", 0, None),
-            ("followage", "Get the timelapse since the user is following you", "", 0, 0, 1, "", "stream", 0, ""),
-            ("followdate", "Get the date where the user decided to follow you", "", 0, 0, 1, "", "stream", 0, None),
-            ("gamble", "Gamble your coin with the bot", "", 0, 0, 1, "", "games", 0, None),
-            ("gatcha", "Play a gatcha game with the bot", "", 0, 0, 1, "", "games", 0, None),
-            ("help", "Get the current active commands that the user can execute", "", 0, 0, 1, "", "bot", 0, ""),
-            ("mods", "Get the mods that you are playing or you played", "", 0, 0, 1, "", "games", 0, None),
+            (
+                "balance",
+                "Get the current balance of the user",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "economy",
+                0,
+                None,
+            ),
+            (
+                "clip",
+                "Create a clip of the current streaming actions...",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "stream",
+                0,
+                None,
+            ),
+            (
+                "followage",
+                "Get the timelapse since the user is following you",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "stream",
+                0,
+                "",
+            ),
+            (
+                "followdate",
+                "Get the date where the user decided to follow you",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "stream",
+                0,
+                None,
+            ),
+            (
+                "gamble",
+                "Gamble your coin with the bot",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "games",
+                0,
+                None,
+            ),
+            (
+                "gatcha",
+                "Play a gatcha game with the bot",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "games",
+                0,
+                None,
+            ),
+            (
+                "help",
+                "Get the current active commands that the user can execute",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "bot",
+                0,
+                "",
+            ),
+            (
+                "mods",
+                "Get the mods that you are playing or you played",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "games",
+                0,
+                None,
+            ),
             ("ping", "Simple Ping/Pong request", "", 0, 0, 1, "", "bot", 0, None),
-            ("schedule", "Get the current schedule of your stream", "", 0, 0, 1, "", "stream", 0, None),
+            (
+                "schedule",
+                "Get the current schedule of your stream",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "stream",
+                0,
+                None,
+            ),
             ("rpg", "Play a RPG game with the bot", "", 0, 0, 1, "", "games", 0, None),
-            ("shoutout", "Give a shoutout to a specific user", "", 0, 0, 1, "", "social", 0, None),
+            (
+                "shoutout",
+                "Give a shoutout to a specific user",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "social",
+                0,
+                None,
+            ),
             ("sfx", "Get the list of SFX commands", "", 0, 0, 1, "", "bot", 0, None),
-            ("slots", "Play a slots game with the bot", "", 0, 0, 1, "", "games", 0, None),
-            ("topchatter", "Get the top chatter of your stream", "", 0, 0, 1, "", "bot", 0, None),
-            ("watchtime", "Since how many time are you streaming today", "", 0, 0, 1, "", "stream", 0, None),
+            (
+                "slots",
+                "Play a slots game with the bot",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "games",
+                0,
+                None,
+            ),
+            (
+                "topchatter",
+                "Get the top chatter of your stream",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "bot",
+                0,
+                None,
+            ),
+            (
+                "watchtime",
+                "Since how many time are you streaming today",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "stream",
+                0,
+                None,
+            ),
         ]
-        
+
         for entry in default_cmds:
             cmd = Cmd(*entry)
             await self.add_cmd(cmd)
@@ -147,7 +289,7 @@ class CmdCog:
         async with self.connection.execute("SELECT * FROM cmd") as cursor:
             return not bool(await cursor.fetchone())
 
-    async def is_table_configured(self) -> bool:
+    async def is_single_row_table(self) -> bool:
         """
         Checks if the table is configured.
 
@@ -849,7 +991,6 @@ class CmdCog:
             "text": cmd.text,
         }
 
-    
     @commands.command(name="ping")
     async def ping(self, ctx: commands.Context) -> None:
         """
@@ -888,7 +1029,8 @@ class CmdCog:
         user = ctx.content.split()[1].lower().replace("@", "")
 
         await ctx.send(
-            f" 📢 Please give a look to our >>> {user} <<<, " f"Take a look at his twitch channel (twitch.tv/{str.lower(user)})"
+            f" 📢 Please give a look to our >>> {user} <<<, "
+            f"Take a look at his twitch channel (twitch.tv/{str.lower(user)})"
         )
 
     @commands.command(name="topchatter")
@@ -931,7 +1073,9 @@ class CmdCog:
         -------
         None
         """
-        await ctx.send("📢 If you search a list of good mods/tools for RE, everything is on my discord (!socials for more info)")
+        await ctx.send(
+            "📢 If you search a list of good mods/tools for RE, everything is on my discord (!socials for more info)"
+        )
 
     @commands.command(name="balance")
     async def balance(self, ctx: commands.Context) -> None:
@@ -958,7 +1102,9 @@ class CmdCog:
             await ctx.send(f"{user} is not following the channel.")
             return
 
-        await ctx.send(f"{user} has {await self.usr.get_balance(user)} {self.coin_name}")
+        await ctx.send(
+            f"{user} has {await self.usr.get_balance(user)} {self.coin_name}"
+        )
 
     @commands.command(name="schedule")
     async def schedule(self, ctx: commands.Context):
@@ -1060,7 +1206,9 @@ class CmdCog:
             await ctx.send(f"{user} is not following the channel.")
             return
 
-        await ctx.send(f"{user} has been following the channel since {await self.usr.get_followdate(user)}")
+        await ctx.send(
+            f"{user} has been following the channel since {await self.usr.get_followdate(user)}"
+        )
 
     @commands.command(name="about")
     async def about_bot(self, ctx: commands.Context):
@@ -1078,7 +1226,9 @@ class CmdCog:
         """
 
         link = "discord.gg/SjGyhS9T"
-        await ctx.send(f"DoggoBot has been created by Fumi - If you want more info ping him on his Discord ({link})")
+        await ctx.send(
+            f"DoggoBot has been created by Fumi - If you want more info ping him on his Discord ({link})"
+        )
 
     @commands.command(name="followage")
     async def followage(self, ctx: commands.Context) -> None:
@@ -1105,7 +1255,9 @@ class CmdCog:
             await ctx.send(f"{user} is not following the channel.")
             return
 
-        await ctx.send(f"{user} has been following the channel for {await self.usr.get_followage(user)}")
+        await ctx.send(
+            f"{user} has been following the channel for {await self.usr.get_followage(user)}"
+        )
 
     @commands.command(name="watchtime")
     async def watchtime(self, ctx: commands.Context) -> None:
@@ -1132,4 +1284,6 @@ class CmdCog:
             await ctx.send(f"{user} is not following the channel.")
             return
 
-        await ctx.send(f"{user} has been watching the channel for {await self.usr.get_watchtime(user)}")
+        await ctx.send(
+            f"{user} has been watching the channel for {await self.usr.get_watchtime(user)}"
+        )
