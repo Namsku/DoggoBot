@@ -18,6 +18,42 @@ class Channel:
 
 
 class ChannelCog:
+    """
+    The channel cog class.
+
+    Attributes
+    ----------
+    channel : Channel
+        The channel object.
+    connection : aiosqlite.Connection
+        The connection to the database.
+    logger : Logger
+        The logger object.
+
+    Methods
+    -------
+    __ainit__()
+        Initializes the channel cog object.
+    create_table()
+        Creates the table if it does not exist.
+    get_environment_variables()
+        Gets the environment variables.
+    get_last_channel()
+        Gets the last channel from the database.
+    update_channel(channel: Union[Channel, dict])
+        Updates the channel with the given values.
+    update_environment_variables(config: dict)
+        Update the environment variables.
+    _add_channel(channel: Channel)
+        Adds a new channel to the database.
+    _get_default_config()
+        Gets the default config values.
+    _is_single_row_table()
+        Checks if the table is having one row.
+    __str__()
+        Returns the string representation of the channel object.
+    """
+
     def __init__(self, connection: aiosqlite.Connection) -> None:
         """
         Initializes a new channel cog object.
@@ -49,79 +85,11 @@ class ChannelCog:
         None
         """
 
-        if not await self.is_single_row_table():
-            self.channel = self.get_default_config()
-            await self.add_channel(self.channel)
+        if not await self._is_single_row_table():
+            self.channel = self._get_default_config()
+            await self._add_channel(self.channel)
         else:
             self.channel = await self.get_last_channel()
-
-    def __str__(self) -> str:
-        """
-        Returns the string representation of the channel object.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        str
-            The string representation of the channel object.
-        """
-
-        return f"Channel(bot_name={self.bot_name}, streamer_channel={self.streamer_channel}, prefix={self.prefix}, coin_name={self.coin_name}, income={self.income}, timeout={self.timeout})"
-
-    def update_environment_variables(self, config: dict) -> None:
-        """
-        Update the environment variables.
-
-        Parameters
-        ----------
-        config : dict
-            The environment variables.
-
-        Returns
-        -------
-        None
-        """
-
-        try:
-            # file is created at the root of the project
-            with open(".env", "w") as file:
-                file.write(f"TWITCH_SECRET_TOKEN={config.get('secret_token')}\n")
-                file.write(f"TWITCH_CLIENT_TOKEN={config.get('client_token')}\n")
-            # update the environment variables
-            os.environ["TWITCH_SECRET_TOKEN"] = config.get("secret_token")
-            os.environ["TWITCH_CLIENT_TOKEN"] = config.get("client_token")
-        except Exception as e:
-            self.logger.error(f"Error while writing the .env file: {e}")
-            exit(1)
-
-        self.logger.info("Environment variables updated successfully.")
-
-    def get_default_config(self) -> Channel:
-        """
-        Gets the default config values.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        config : Channel
-            The default config values.
-        """
-
-        return Channel(
-            1,
-            "your_amazing_bot_name",
-            "your_amazing_streamer_channel_name",
-            "!",
-            "DoggoCoin(s)",
-            10000,
-            5,
-        )
 
     async def create_table(self):
         """
@@ -152,9 +120,9 @@ class ChannelCog:
 
         await self.connection.commit()
 
-    async def is_single_row_table(self) -> bool:
+    async def get_environment_variables(self) -> dict:
         """
-        Checks if the table is having one row.
+        Gets the environment variables.
 
         Parameters
         ----------
@@ -162,39 +130,17 @@ class ChannelCog:
 
         Returns
         -------
-        bool
-            True if the table is having one row, False otherwise.
+        cfg : dict
+            The environment variables.
         """
 
-        async with self.connection.execute(
-            """
-            SELECT COUNT(*) FROM channel
-            """
-        ) as cursor:
-            result = await cursor.fetchone()
+        cfg = {}
+        keys = ["TWITCH_SECRET_TOKEN", "TWITCH_CLIENT_TOKEN"]
 
-        return result[0] == 1
+        for key in keys:
+            cfg[key] = os.getenv(key, "")
 
-    async def update_channel(self, channel: Union[Channel, dict]) -> None:
-        """
-        Updates the channel with the given values.
-
-        Parameters
-        ----------
-        channel : Union[Channel, dict]
-            The channel to be updated.
-
-        Returns
-        -------
-        None
-        """
-
-        if isinstance(channel, Channel):
-            channel = dataclasses.asdict(channel)
-
-        sql_query = f"UPDATE channel SET {', '.join(f'{key} = :{key}' for key in channel.keys())} WHERE id = :id"
-        await self.connection.execute(sql_query, channel)
-        await self.connection.commit()
+        return cfg
 
     async def get_last_channel(self) -> Channel:
         """
@@ -222,7 +168,56 @@ class ChannelCog:
 
         return Channel(*result)
 
-    async def add_channel(self, channel: Channel) -> None:
+    async def update_channel(self, channel: Union[Channel, dict]) -> None:
+        """
+        Updates the channel with the given values.
+
+        Parameters
+        ----------
+        channel : Union[Channel, dict]
+            The channel to be updated.
+
+        Returns
+        -------
+        None
+        """
+
+        if isinstance(channel, Channel):
+            channel = dataclasses.asdict(channel)
+
+        sql_query = f"UPDATE channel SET {', '.join(f'{key} = :{key}' for key in channel.keys())} WHERE id = :id"
+        await self.connection.execute(sql_query, channel)
+        await self.connection.commit()
+
+    def update_environment_variables(self, config: dict) -> None:
+        """
+        Update the environment variables.
+
+        Parameters
+        ----------
+        config : dict
+            The environment variables.
+
+        Returns
+        -------
+        None
+        """
+
+        try:
+            # file is created at the root of the project
+            with open(".env", "w") as file:
+                file.write(f"TWITCH_SECRET_TOKEN={config.get('secret_token')}\n")
+                file.write(f"TWITCH_CLIENT_TOKEN={config.get('client_token')}\n")
+            # update the environment variables
+            os.environ["TWITCH_SECRET_TOKEN"] = config.get("secret_token")
+            os.environ["TWITCH_CLIENT_TOKEN"] = config.get("client_token")
+        except Exception as e:
+            self.logger.error(f"Error while writing the .env file: {e}")
+            exit(1)
+
+        self.logger.info("Environment variables updated successfully.")
+
+    async def _add_channel(self, channel: Channel) -> None:
         """
         Adds a new channel to the database.
 
@@ -258,9 +253,9 @@ class ChannelCog:
             self.logger.error(f"Error while adding the channel: {e}")
             raise
 
-    async def get_environment_variables(self) -> dict:
+    def _get_default_config(self) -> Channel:
         """
-        Gets the environment variables.
+        Gets the default config values.
 
         Parameters
         ----------
@@ -268,14 +263,55 @@ class ChannelCog:
 
         Returns
         -------
-        cfg : dict
-            The environment variables.
+        config : Channel
+            The default config values.
         """
 
-        cfg = {}
-        keys = ["TWITCH_SECRET_TOKEN", "TWITCH_CLIENT_TOKEN"]
+        return Channel(
+            1,
+            "your_amazing_bot_name",
+            "your_amazing_streamer_channel_name",
+            "!",
+            "DoggoCoin(s)",
+            10000,
+            5,
+        )
 
-        for key in keys:
-            cfg[key] = os.getenv(key, "")
+    async def _is_single_row_table(self) -> bool:
+        """
+        Checks if the table is having one row.
 
-        return cfg
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        bool
+            True if the table is having one row, False otherwise.
+        """
+
+        async with self.connection.execute(
+            """
+            SELECT COUNT(*) FROM channel
+            """
+        ) as cursor:
+            result = await cursor.fetchone()
+
+        return result[0] == 1
+
+    def __str__(self) -> str:
+        """
+        Returns the string representation of the channel object.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        str
+            The string representation of the channel object.
+        """
+
+        return f"Channel: {self.channel}"
