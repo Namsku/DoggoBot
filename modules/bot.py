@@ -112,7 +112,7 @@ class Bot(commands.Bot):
         self.usr = UserCog(channel, self.connection_user)
         self.sfx = SFXCog(self.connection_sfx)
         self.gms = GamesCog(self.connection_games)
-        self.logger.debug("Database classes initialized.")
+        self.logger.info("Database classes initialized.")
 
     async def _ainit_database_tables(self) -> None:
         """
@@ -128,7 +128,6 @@ class Bot(commands.Bot):
         """
         await self.channel.create_table()
         await self.cmd.create_table()
-        await self.cmd.fill_default_table()
         await self.msg.create_table()
         await self.usr.create_table()
         await self.sfx.create_table()

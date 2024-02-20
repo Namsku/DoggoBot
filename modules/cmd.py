@@ -1,11 +1,11 @@
 from modules.logger import Logger
+
 from twitchio.ext import commands
-
-import dataclasses
-import aiosqlite
-import re
-
 from typing import Union
+
+import aiosqlite
+import dataclasses
+import re
 
 
 @dataclasses.dataclass
@@ -24,229 +24,42 @@ class Cmd:
 
 class CmdCog:
     def __init__(self, connection: aiosqlite.Connection) -> None:
-        self.connection = connection
-        self.name = None
-        self.description = None
-        self.usage = None
-        self.used = None
-        self.cost = None
-        self.status = None
-        self.aliases = None
-        self.category = None
-        self.dynamic = None
-        self.text = None
-        self.logger = Logger(__name__)
-
-    async def __ainit__(self) -> None:
-        if not await self.is_single_row_table():
-            await self.fill_default_table()
-
-    def __str__(self) -> str:
         """
-        Returns the string representation of the cmd object.
-        """
-
-        return f"Cmd(name={self.name}, description={self.description}, usage={self.usage}, used={self.used}, cost={self.cost}, status={self.status}, aliases={self.aliases}, category={self.category})"
-
-    def validate_cmd_name(name: str) -> bool:
-        """
-        Validates the command name.
+        Initializes a new cmd cog object.
 
         Parameters
         ----------
-        name : str
-            The command name.
-
-        Returns
-        -------
-        bool
-            True if the name is valid, False otherwise.
-        """
-
-        pattern = r"^[a-zA-Z0-9]+$"
-        return bool(re.match(pattern, name))
-
-    async def fill_default_table(self) -> None:
-        """
-        Fills the table with default values.
+        connection : aiosqlite.Connection
+            The connection to the database.
+        command : Cmd
+            The command object.
+        logger : Logger
+            The logger object.
 
         Returns
         -------
         None
         """
 
-        # if table is not empty, quit
-        if not await self.is_table_empty():
-            return
+        self.connection = connection
+        self.command = None
+        self.logger = Logger(__name__)
 
-        default_cmds = [
-            ("about", "Information about the bot", "", 0, 0, 1, "", "bot", 0, None),
-            (
-                "balance",
-                "Get the current balance of the user",
-                "",
-                0,
-                0,
-                1,
-                "",
-                "economy",
-                0,
-                None,
-            ),
-            (
-                "clip",
-                "Create a clip of the current streaming actions...",
-                "",
-                0,
-                0,
-                1,
-                "",
-                "stream",
-                0,
-                None,
-            ),
-            (
-                "followage",
-                "Get the timelapse since the user is following you",
-                "",
-                0,
-                0,
-                1,
-                "",
-                "stream",
-                0,
-                "",
-            ),
-            (
-                "followdate",
-                "Get the date where the user decided to follow you",
-                "",
-                0,
-                0,
-                1,
-                "",
-                "stream",
-                0,
-                None,
-            ),
-            (
-                "gamble",
-                "Gamble your coin with the bot",
-                "",
-                0,
-                0,
-                1,
-                "",
-                "games",
-                0,
-                None,
-            ),
-            (
-                "gatcha",
-                "Play a gatcha game with the bot",
-                "",
-                0,
-                0,
-                1,
-                "",
-                "games",
-                0,
-                None,
-            ),
-            (
-                "help",
-                "Get the current active commands that the user can execute",
-                "",
-                0,
-                0,
-                1,
-                "",
-                "bot",
-                0,
-                "",
-            ),
-            (
-                "mods",
-                "Get the mods that you are playing or you played",
-                "",
-                0,
-                0,
-                1,
-                "",
-                "games",
-                0,
-                None,
-            ),
-            ("ping", "Simple Ping/Pong request", "", 0, 0, 1, "", "bot", 0, None),
-            (
-                "schedule",
-                "Get the current schedule of your stream",
-                "",
-                0,
-                0,
-                1,
-                "",
-                "stream",
-                0,
-                None,
-            ),
-            ("rpg", "Play a RPG game with the bot", "", 0, 0, 1, "", "games", 0, None),
-            (
-                "shoutout",
-                "Give a shoutout to a specific user",
-                "",
-                0,
-                0,
-                1,
-                "",
-                "social",
-                0,
-                None,
-            ),
-            ("sfx", "Get the list of SFX commands", "", 0, 0, 1, "", "bot", 0, None),
-            (
-                "slots",
-                "Play a slots game with the bot",
-                "",
-                0,
-                0,
-                1,
-                "",
-                "games",
-                0,
-                None,
-            ),
-            (
-                "topchatter",
-                "Get the top chatter of your stream",
-                "",
-                0,
-                0,
-                1,
-                "",
-                "bot",
-                0,
-                None,
-            ),
-            (
-                "watchtime",
-                "Since how many time are you streaming today",
-                "",
-                0,
-                0,
-                1,
-                "",
-                "stream",
-                0,
-                None,
-            ),
-        ]
+    async def __ainit__(self) -> None:
+        """
+        Initializes the cmd cog object.
 
-        for entry in default_cmds:
-            cmd = Cmd(*entry)
-            await self.add_cmd(cmd)
+        Parameters
+        ----------
+        None
 
-        self.logger.info("Filled default cmds.")
+        Returns
+        -------
+        None
+        """
+
+        if not await self._is_single_row_table():
+            self.command = await self._fill_default_table()
 
     async def create_table(self) -> None:
         """
@@ -289,7 +102,7 @@ class CmdCog:
         async with self.connection.execute("SELECT * FROM cmd") as cursor:
             return not bool(await cursor.fetchone())
 
-    async def is_single_row_table(self) -> bool:
+    async def _is_single_row_table(self) -> bool:
         """
         Checks if the table is configured.
 
@@ -303,23 +116,6 @@ class CmdCog:
             "SELECT name FROM sqlite_master WHERE type='table' AND name='cmd'"
         ) as cursor:
             return bool(await cursor.fetchone())
-
-    async def get_last_cmd(self) -> Cmd:
-        """
-        Gets the last cmd.
-
-        Returns
-        -------
-        Cmd
-            The cmd object.
-        """
-
-        async with self.connection.execute(
-            "SELECT * FROM cmd ORDER BY id DESC LIMIT 1"
-        ) as cursor:
-            cmd = await cursor.fetchone()
-
-        return Cmd(cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], cmd[6], cmd[7], cmd[8])
 
     async def add_cmd(self, cmd: Union[Cmd, dict]) -> dict:
         """
@@ -499,90 +295,6 @@ class CmdCog:
             for cmd in cmds
         ]
 
-    async def update_description(self, name: str, description: str) -> None:
-        """
-        Updates a cmd description.
-
-        Parameters
-        ----------
-        name : str
-            The cmd name.
-        description : str
-            The cmd description.
-
-        Returns
-        -------
-        None
-        """
-
-        await self.connection.execute(
-            "UPDATE cmd SET description = ? WHERE name = ?", (description, name)
-        )
-        await self.connection.commit()
-
-    async def update_aliases(self, name: str, aliases: list) -> None:
-        """
-        Updates a cmd aliases.
-
-        Parameters
-        ----------
-        name : str
-            The cmd name.
-        aliases : list
-            The cmd aliases.
-
-        Returns
-        -------
-        None
-        """
-
-        await self.connection.execute(
-            "UPDATE cmd SET aliases = ? WHERE name = ?", (aliases, name)
-        )
-        await self.connection.commit()
-
-    async def update_category(self, name: str, category: str) -> None:
-        """
-        Updates a cmd category.
-
-        Parameters
-        ----------
-        name : str
-            The cmd name.
-        category : str
-            The cmd category.
-
-        Returns
-        -------
-        None
-        """
-
-        await self.connection.execute(
-            "UPDATE cmd SET category = ? WHERE name = ?", (category, name)
-        )
-        await self.connection.commit()
-
-    async def update_cost(self, name: str, cost: int) -> None:
-        """
-        Updates a cmd cost.
-
-        Parameters
-        ----------
-        name : str
-            The cmd name.
-        cost : int
-            The cmd cost.
-
-        Returns
-        -------
-        None
-        """
-
-        await self.connection.execute(
-            "UPDATE cmd SET cost = ? WHERE name = ?", (cost, name)
-        )
-        await self.connection.commit()
-
     async def update_status(self, name: str, status: bool) -> None:
         """
         Updates a cmd status.
@@ -760,236 +472,25 @@ class CmdCog:
             for cmd in cmds
         ]
 
-    async def get_cmd_by_alias(self, alias: str) -> Cmd:
+    @commands.command(name="about")
+    async def about_bot(self, ctx: commands.Context):
         """
-        Gets a cmd by alias.
+        About the bot.
 
         Parameters
         ----------
-        alias : str
-            The cmd alias.
+        ctx : twitchio.Context
+            The context object.
 
         Returns
         -------
-        Cmd
-            The cmd object.
+        None
         """
 
-        async with self.connection.execute(
-            "SELECT * FROM cmd WHERE aliases LIKE ?", (f"%{alias}%",)
-        ) as cursor:
-            cmd = await cursor.fetchone()
-
-        return Cmd(
-            cmd[1],
-            cmd[2],
-            cmd[3],
-            cmd[4],
-            cmd[5],
-            cmd[6],
-            cmd[7],
-            cmd[8],
-            cmd[9],
-            cmd[10],
+        link = "discord.gg/SjGyhS9T"
+        await ctx.send(
+            f"DoggoBot has been created by Fumi - If you want more info ping him on his Discord ({link})"
         )
-
-    async def get_all_cmds_by_alias(self, alias: str) -> list:
-        """
-        Gets all cmds by alias.
-
-        Parameters
-        ----------
-        alias : str
-            The cmd alias.
-
-        Returns
-        -------
-        list
-            The cmds.
-        """
-
-        async with self.connection.execute(
-            "SELECT * FROM cmd WHERE aliases LIKE ?", (f"%{alias}%",)
-        ) as cursor:
-            cmds = await cursor.fetchall()
-
-        return [
-            Cmd(
-                cmd[1],
-                cmd[2],
-                cmd[3],
-                cmd[4],
-                cmd[5],
-                cmd[6],
-                cmd[7],
-                cmd[8],
-                cmd[9],
-                cmd[10],
-            )
-            for cmd in cmds
-        ]
-
-    async def get_cmd_by_category(self, category: str) -> Cmd:
-        """
-        Gets a cmd by category.
-
-        Parameters
-        ----------
-        category : str
-            The cmd category.
-
-        Returns
-        -------
-        Cmd
-            The cmd object.
-        """
-
-        async with self.connection.execute(
-            "SELECT * FROM cmd WHERE category = ?", (category,)
-        ) as cursor:
-            cmd = await cursor.fetchone()
-
-        return Cmd(
-            cmd[1],
-            cmd[2],
-            cmd[3],
-            cmd[4],
-            cmd[5],
-            cmd[6],
-            cmd[7],
-            cmd[8],
-            cmd[9],
-            cmd[10],
-        )
-
-    async def get_all_cmds_by_category(self, category: str) -> list:
-        """
-        Gets all cmds by category.
-
-        Parameters
-        ----------
-        category : str
-            The cmd category.
-
-        Returns
-        -------
-        list
-            The cmds.
-        """
-
-        async with self.connection.execute(
-            "SELECT * FROM cmd WHERE category = ?", (category,)
-        ) as cursor:
-            cmds = await cursor.fetchall()
-
-        return [
-            Cmd(
-                cmd[1],
-                cmd[2],
-                cmd[3],
-                cmd[4],
-                cmd[5],
-                cmd[6],
-                cmd[7],
-                cmd[8],
-                cmd[9],
-                cmd[10],
-            )
-            for cmd in cmds
-        ]
-
-    async def get_cmd_by_status(self, status: bool) -> Cmd:
-        """
-        Gets a cmd by status.
-
-        Parameters
-        ----------
-        status : bool
-            The cmd status.
-
-        Returns
-        -------
-        Cmd
-            The cmd object.
-        """
-
-        async with self.connection.execute(
-            "SELECT * FROM cmd WHERE status = ?", (status,)
-        ) as cursor:
-            cmd = await cursor.fetchone()
-
-        return Cmd(
-            cmd[1],
-            cmd[2],
-            cmd[3],
-            cmd[4],
-            cmd[5],
-            cmd[6],
-            cmd[7],
-            cmd[8],
-            cmd[9],
-            cmd[10],
-        )
-
-    async def get_all_cmds_by_status(self, status: bool) -> list:
-        """
-        Gets all cmds by status.
-
-        Parameters
-        ----------
-        status : bool
-            The cmd status.
-
-        Returns
-        -------
-        list
-            The cmds.
-        """
-
-        async with self.connection.execute(
-            "SELECT * FROM cmd WHERE status = ?", (status,)
-        ) as cursor:
-            cmds = await cursor.fetchall()
-
-        return [
-            Cmd(
-                cmd[1],
-                cmd[2],
-                cmd[3],
-                cmd[4],
-                cmd[5],
-                cmd[6],
-                cmd[7],
-                cmd[8],
-                cmd[9],
-                cmd[10],
-            )
-            for cmd in cmds
-        ]
-
-    # convert Cmd to dict or list[dict]
-    def to_dict(self, cmd) -> dict:
-        """
-        Converts the cmd object to a dict.
-
-        Returns
-        -------
-        dict
-            The cmd object as a dict.
-        """
-
-        return {
-            "name": cmd.name,
-            "description": cmd.description,
-            "usage": cmd.usage,
-            "used": cmd.used,
-            "cost": cmd.cost,
-            "status": cmd.status,
-            "aliases": cmd.aliases,
-            "category": cmd.category,
-            "dynamic": cmd.dynamic,
-            "text": cmd.text,
-        }
 
     @commands.command(name="ping")
     async def ping(self, ctx: commands.Context) -> None:
@@ -1210,26 +711,6 @@ class CmdCog:
             f"{user} has been following the channel since {await self.usr.get_followdate(user)}"
         )
 
-    @commands.command(name="about")
-    async def about_bot(self, ctx: commands.Context):
-        """
-        About the bot.
-
-        Parameters
-        ----------
-        ctx : twitchio.Context
-            The context object.
-
-        Returns
-        -------
-        None
-        """
-
-        link = "discord.gg/SjGyhS9T"
-        await ctx.send(
-            f"DoggoBot has been created by Fumi - If you want more info ping him on his Discord ({link})"
-        )
-
     @commands.command(name="followage")
     async def followage(self, ctx: commands.Context) -> None:
         """
@@ -1287,3 +768,197 @@ class CmdCog:
         await ctx.send(
             f"{user} has been watching the channel for {await self.usr.get_watchtime(user)}"
         )
+
+    async def _fill_default_table(self) -> None:
+        """
+        Fills the table with default values.
+
+        Returns
+        -------
+        None
+        """
+
+        # if table is not empty, quit
+        if not await self.is_table_empty():
+            return
+
+        default_cmds = [
+            ("about", "Information about the bot", "", 0, 0, 1, "", "bot", 0, None),
+            (
+                "balance",
+                "Get the current balance of the user",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "economy",
+                0,
+                None,
+            ),
+            (
+                "clip",
+                "Create a clip of the current streaming actions...",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "stream",
+                0,
+                None,
+            ),
+            (
+                "followage",
+                "Get the timelapse since the user is following you",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "stream",
+                0,
+                "",
+            ),
+            (
+                "followdate",
+                "Get the date where the user decided to follow you",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "stream",
+                0,
+                None,
+            ),
+            (
+                "gamble",
+                "Gamble your coin with the bot",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "games",
+                0,
+                None,
+            ),
+            (
+                "gatcha",
+                "Play a gatcha game with the bot",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "games",
+                0,
+                None,
+            ),
+            (
+                "help",
+                "Get the current active commands that the user can execute",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "bot",
+                0,
+                "",
+            ),
+            (
+                "mods",
+                "Get the mods that you are playing or you played",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "games",
+                0,
+                None,
+            ),
+            ("ping", "Simple Ping/Pong request", "", 0, 0, 1, "", "bot", 0, None),
+            (
+                "schedule",
+                "Get the current schedule of your stream",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "stream",
+                0,
+                None,
+            ),
+            ("rpg", "Play a RPG game with the bot", "", 0, 0, 1, "", "games", 0, None),
+            (
+                "shoutout",
+                "Give a shoutout to a specific user",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "social",
+                0,
+                None,
+            ),
+            ("sfx", "Get the list of SFX commands", "", 0, 0, 1, "", "bot", 0, None),
+            (
+                "slots",
+                "Play a slots game with the bot",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "games",
+                0,
+                None,
+            ),
+            (
+                "topchatter",
+                "Get the top chatter of your stream",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "bot",
+                0,
+                None,
+            ),
+            (
+                "watchtime",
+                "Since how many time are you streaming today",
+                "",
+                0,
+                0,
+                1,
+                "",
+                "stream",
+                0,
+                None,
+            ),
+        ]
+
+        for entry in default_cmds:
+            cmd = Cmd(*entry)
+            await self.add_cmd(cmd)
+
+        self.logger.info("Filled default cmds.")
+
+    def __str__(self) -> str:
+        """
+        Returns the string representation of the cmd object.
+
+        Returns
+        -------
+        str
+            The string representation of the cmd object.
+        """
+
+        return f"CmdCog -> {self.command}"

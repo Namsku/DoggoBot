@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from dataclasses import asdict
+import dataclasses
 from modules.bot import Bot
 from modules.cmd import Cmd
 from modules.channel import Channel
@@ -219,12 +220,12 @@ class Server(Bot):
 
         # Classic commands (The one created by defaults)
         for cmd in cmds:
-            cmd_list.append(self.bot.cmd.to_dict(cmd))
+            cmd_list.append(dataclasses.asdict(cmd))
 
         # Dynamic commands (The one created by users)
         cdyn: Cmd = await self.bot.cmd.get_all_dynamic_cmds()
         for cmd in cdyn:
-            cdyn_list.append(self.bot.cmd.to_dict(cmd))
+            cdyn_list.append(dataclasses.asdict(cmd))
 
         message["prefix"] = self.bot.channel.prefix
         message["based"] = cmd_list
@@ -472,7 +473,7 @@ class Server(Bot):
                 # convert cmd to json
                 cmd = await self.bot.cmd.get_cmd(value)
 
-                return self.bot.cmd.to_dict(cmd)
+                return dataclasses.asdict(cmd)
 
     async def get_rpg_event(self, request: Request) -> dict:
         """Gets a rpg event."""
