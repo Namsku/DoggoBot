@@ -16,13 +16,13 @@ import aiosqlite
 
 
 class Bot(commands.Bot):
-    def __init__(self, channel: ChannelCog) -> None:
+    def __init__(self, channel_cog: ChannelCog) -> None:
         """
         Initializes a new bot object.
 
         Parameters
         ----------
-        channel : ChannelCog
+        channel_cog : ChannelCog
             The channel object.
 
         Returns
@@ -31,8 +31,8 @@ class Bot(commands.Bot):
         """
 
         self.token = self.get_twitch_secret_token()
-        self.channel_id = channel.streamer_channel
-        self.prefix = channel.prefix
+        self.channel_id = channel_cog.channel.streamer_channel
+        self.prefix = channel_cog.channel.prefix
 
         super().__init__(
             token=self.token,
@@ -43,16 +43,16 @@ class Bot(commands.Bot):
         self.active = False
         self.initialized = False
 
-        self.bot_name = channel.bot_name
+        self.bot_name = channel_cog.channel.bot_name
         self.user_bots = None
         self.client_id = self.get_twitch_client_token()
 
         self.channel_members = None
-        self.coin_name = channel.coin_name
+        self.coin_name = channel_cog.channel.coin_name
         self.logger = Logger(__name__)
         self.server = None
 
-    async def __ainit__(self, channel: ChannelCog) -> None:
+    async def __ainit__(self, channel_cog: ChannelCog) -> None:
         """
         Initializes the bot object.
 
@@ -65,13 +65,13 @@ class Bot(commands.Bot):
         -------
         None
         """
-        await self._ainit_database_conn(channel)
-        await self._ainit_database_classes(channel)
+        await self._ainit_database_conn(channel_cog)
+        await self._ainit_database_classes(channel_cog)
         await self._ainit_database_tables()
         await self._ainit_env()
         await self._ainit_user_commands()
 
-    async def _ainit_database_conn(self, channel: ChannelCog) -> None:
+    async def _ainit_database_conn(self, channel_cog: ChannelCog) -> None:
         """
         Initializes the database connection.
 
@@ -84,7 +84,7 @@ class Bot(commands.Bot):
         -------
         None
         """
-        self.connection_channel = channel.connection
+        self.connection_channel = channel_cog.connection
         self.connection_cmd = await aiosqlite.connect("data/database/cmd.sqlite")
         self.connection_message = await aiosqlite.connect(
             "data/database/message.sqlite"
@@ -94,7 +94,7 @@ class Bot(commands.Bot):
         self.connection_games = await aiosqlite.connect("data/database/games.sqlite")
         self.logger.debug("Database connection established.")
 
-    async def _ainit_database_classes(self, channel: ChannelCog) -> None:
+    async def _ainit_database_classes(self, channel_cog: ChannelCog) -> None:
         """
         Initializes the database classes.
 
@@ -106,10 +106,10 @@ class Bot(commands.Bot):
         -------
         None
         """
-        self.channel = channel
+        self.channel = channel_cog
         self.cmd = CmdCog(self.connection_cmd)
         self.msg = MessageCog(self.connection_message)
-        self.usr = UserCog(channel, self.connection_user)
+        self.usr = UserCog(channel_cog, self.connection_user)
         self.sfx = SFXCog(self.connection_sfx)
         self.gms = GamesCog(self.connection_games)
         self.logger.info("Database classes initialized.")

@@ -28,7 +28,7 @@ class MessageCog:
         """
         self.connection = connection
         self.logger = Logger(__name__)
-        self.message = Msg()
+        self.message = None  # Msg
 
     async def set(self, message: TwitchMessage, bot) -> None:
         """

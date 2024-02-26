@@ -227,7 +227,7 @@ class Server(Bot):
         for cmd in cdyn:
             cdyn_list.append(dataclasses.asdict(cmd))
 
-        message["prefix"] = self.bot.channel.prefix
+        message["prefix"] = self.bot.channel.channel.prefix
         message["based"] = cmd_list
         message["dynamic"] = cdyn_list
 
@@ -246,7 +246,7 @@ class Server(Bot):
         Returns
         -------
         message : dict
-            A dictionary containing the sfx's settings.
+            A dictionary containing the sfx's setting
         """
 
         message = {}
