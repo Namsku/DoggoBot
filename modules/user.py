@@ -1,6 +1,9 @@
 from modules.logger import Logger
 from modules.channel import ChannelCog
 
+from twitchio.ext import commands
+
+import os
 import aiohttp
 import aiosqlite
 from dataclasses import dataclass
@@ -32,7 +35,7 @@ class User:
     warning: int
 
 
-class UserCog:
+class UserCog(commands.Cog):
     def __init__(self, channel: ChannelCog, connection: aiosqlite.Connection):
         self.bots = []
         self.mods = []
@@ -216,6 +219,11 @@ class UserCog:
             return None
 
         return [User(*user) for user in result]
+    
+    async def get_balance(self, username: str) -> int:
+        user = await self.get_user(username)
+        self.logger.debug(f"User balance: {user.income} - type({type(user.income)})")
+        return user.income
 
     async def get_followers(self) -> list[User]:
         async with self.connection.execute(
@@ -398,6 +406,12 @@ class UserCog:
         self.logger.debug(f"Updated {username} to mod: {mod}")
 
     async def update_user_income(self, username: str, income: int) -> None:
+        balance = await self.get_balance(username)
+        income += balance
+
+        if income < 0:
+            income = 0
+
         await self.connection.execute(
             """
             UPDATE users SET income = ? WHERE username = ?
@@ -553,10 +567,52 @@ class UserCog:
             The followage of the user.
         """
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://beta.decapi.me/twitch/followage/{self.channel.streamer_channel}/{username}") as response:
+            async with session.get(f"https://beta.decapi.me/twitch/followage/{self.channel.channel.streamer_channel}/{username}?token={os.getenv('DECAPI_SECRET_TOKEN')}") as response:
                 followage = await response.text()
 
+
         return followage
+    
+    async def get_followdate(self, username: str) -> str:
+        """
+        Gets the followdate of a user.
+
+        Parameters
+        ----------
+        username : str
+            The username to check.
+
+        Returns
+        -------
+        str
+            The followdate of the user.
+        """
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"https://decapi.me/twitch/followed/{self.channel.channel.streamer_channel}/{username}?token={os.getenv('DECAPI_SECRET_TOKEN')}") as response:
+                followdate = await response.text()
+
+        return followdate
+
+    async def get_last_game(self, username: str) -> str:
+        '''
+        Get the last game played by the user.
+        
+        Parameters
+        ----------
+        username : str
+            The username to check.
+        
+        Returns
+        -------
+        str
+            The last game played by the user.
+        '''
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"https://decapi.me/twitch/game/{username}") as response:
+                game = await response.text()
+
+        return game
 
     async def get_top_chatter(self) -> str:
         """

@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from modules.logger import Logger
+from twitchio.ext import commands
 
 from dataclasses import asdict, dataclass
 import aiosqlite
@@ -33,7 +34,7 @@ class RpgEvent:
     event: str
 
 
-class RpgCog:
+class RpgCog(commands.Cog):
     def __init__(self, connection: aiosqlite.Connection) -> None:
         """
         Initializes the RpgCog class.

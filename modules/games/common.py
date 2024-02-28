@@ -3,6 +3,8 @@ from modules.logger import Logger
 from modules.games.gambling import GamblingCog
 from modules.games.rpg import RpgCog
 
+from twitchio.ext import commands
+
 from dataclasses import asdict, dataclass, fields
 from typing import Union
 
@@ -19,8 +21,8 @@ class Game:
     status: int
 
 
-class GamesCog:
-    def __init__(self, connection: aiosqlite.Connection):
+class GamesCog(commands.Cog):
+    def __init__(self, connection: aiosqlite.Connection, bot) -> None:
         """
         Initialize the GamesCog class.
 
@@ -36,9 +38,10 @@ class GamesCog:
 
         self.connection = connection
         self.logger = Logger(__name__)
+        self.bot = bot
 
         self.rpg = RpgCog(connection)
-        self.gambling = GamblingCog(connection)
+        self.gambling = GamblingCog(connection, self.bot)
 
     async def __ainit__(self) -> None:
         """

@@ -1,5 +1,6 @@
 from typing import Union
 from modules.logger import Logger
+from twitchio.ext import commands
 
 import aiosqlite
 import dataclasses
@@ -17,7 +18,7 @@ class Channel:
     timeout: int
 
 
-class ChannelCog:
+class ChannelCog(commands.Cog):
     """
     The channel cog class.
 
@@ -135,7 +136,7 @@ class ChannelCog:
         """
 
         cfg = {}
-        keys = ["TWITCH_SECRET_TOKEN", "TWITCH_CLIENT_TOKEN"]
+        keys = ["TWITCH_SECRET_TOKEN", "TWITCH_CLIENT_TOKEN", "DECAPI_SECRET_TOKEN"]
 
         for key in keys:
             cfg[key] = os.getenv(key, "")
@@ -315,3 +316,4 @@ class ChannelCog:
         """
 
         return f"Channel: {self.channel}"
+

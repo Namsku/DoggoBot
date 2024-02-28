@@ -33,8 +33,8 @@ class Slots:
     time: int
 
 
-class GamblingCog:
-    def __init__(self, connection: aiosqlite.Connection):
+class GamblingCog(commands.Cog):
+    def __init__(self, connection: aiosqlite.Connection, bot):
         """
         Initialize the GamesCog class.
 
@@ -50,6 +50,7 @@ class GamblingCog:
 
         self.logger = Logger(__name__)
         self.connection = connection
+        self.bot = bot
         self.roll = None  # type: Roll
         self.slots = None  # type: Slots
 
@@ -623,7 +624,7 @@ class GamblingCog:
         }
 
     @commands.command(name="slots")
-    async def slots(self, ctx: commands.Context) -> None:
+    async def throw_slots(self, ctx: commands.Context) -> None:
         """
         Slots game.
 
@@ -638,23 +639,29 @@ class GamblingCog:
         """
 
         user = ctx.author.name.lower()
-        amount = ctx.content.split()[1]
 
-        if await self.usr.get_balance(user) < amount:
+        if user not in self.bot.channel_members:
+            await ctx.send(f"{user} is not following the channel.")
+            return
+
+        if await self.bot.usr.get_balance(user) < self.slots.cost:
             await ctx.send(f"{user} does not have enough coins.")
             return
 
-        result = self.gms.get_slots_result()
+        result = await self.get_spin_result()
+
+        if result["reward"] == 0:
+            result["reward"] = -self.slots.cost
 
         if result["status"]:
-            await self.usr.update_user_balance(user, result["amount"])
+            await self.bot.usr.update_user_income(user, result["reward"])
             await ctx.send(
-                f"{' '.join(result['spin'])} | {user} won {result['amount']} {self.coin_name}!"
+                f"{' '.join(result['spin'])} | {user} won {result['reward']} {self.bot.channel.channel.coin_name}!"
             )
         else:
-            await self.usr.update_user_balance(user, -result["amount"])
+            await self.bot.usr.update_user_income(user, -result["reward"])
             await ctx.send(
-                f"{' '.join(result['spin'])} | {user} lost {result['amount']} {self.coin_name}!"
+                f"{' '.join(result['spin'])} | {user} lost {result['reward']} {self.bot.channel.channel.coin_name}!"
             )
 
     @commands.command(name="gamble")
@@ -672,67 +679,67 @@ class GamblingCog:
         None
         """
 
-        if len(ctx.content.split()) != 2:
+        if len(ctx.message.content.split()) != 2:
             await ctx.send("Usage: !gamble <amount>")
             return
 
         user = ctx.author.name.lower()
-        amount = ctx.content.split()[1]
+        amount = ctx.message.content.split()[1]
 
         if not amount.isdigit():
             await ctx.send("Usage: !gamble <amount>")
             return
 
-        amount = int(amount)
+        amount = int(amount, 10)
 
         if amount < 1:
             await ctx.send("Usage: !gamble <amount>")
             return
 
-        if user not in self.channel_members:
+        if user not in self.bot.channel_members:
             await ctx.send(f"{user} is not following the channel.")
             return
 
-        if await self.usr.get_balance(user) < amount:
+        if await self.bot.usr.get_balance(user) < amount:
             await ctx.send(f"{user} does not have enough coins.")
             return
 
-        if self.gms.roll.maximum_bet < amount:
+        if self.roll.maximum_bet < amount:
             await ctx.send(
-                f"{user} cannot bet more than {self.gms.roll.maximum_bet} coins."
+                f"{user} cannot bet more than {self.roll.maximum_bet} coins."
             )
             return
 
-        if self.gms.roll.minimum_bet > amount:
+        if self.roll.minimum_bet > amount:
             await ctx.send(
-                f"{user} cannot bet less than {self.gms.roll.minimum_bet} coins."
+                f"{user} cannot bet less than {self.roll.minimum_bet} coins."
             )
             return
 
-        rng = self.gms.get_roll_number()
+        rng = self.generate_random_number()
 
         # Critical Failure
         if rng == 0:
             # change amount has negative be sure it's integer without decimals
-            amount = self.gms.roll.reward_critical_failure * amount
+            amount = self.roll.reward_critical_failure * amount
             amount = int(-amount)
 
-            await self.usr.update_user_balance(user, amount)
+            await self.bot.usr.update_user_income(user, amount)
             await ctx.send(
-                f"{user} rolled an awful {rng} and lost {amount} {self.coin_name}!"
+                f"{user} rolled an awful {rng} and lost {amount} {self.bot.channel.channel.coin_name}!"
             )
         elif rng == 100:
-            amount = int(self.gms.roll.reward_critical_success * amount)
-            await self.usr.update_user_balance(user, amount)
+            amount = int(self.roll.reward_critical_success * amount)
+            await self.bot.usr.update_user_income(user, amount)
             await ctx.send(
-                f"{user} rolled a perfect {rng} and won {amount} {self.coin_name}!"
+                f"{user} rolled a perfect {rng} and won {amount} {self.bot.channel.channel.coin_name}!"
             )
         elif rng < 50:
-            await self.usr.update_user_balance(user, -amount)
-            await ctx.send(f"{user} rolled a {rng} and lost {amount} {self.coin_name}.")
+            await self.bot.usr.update_user_income(user, -amount)
+            await ctx.send(f"{user} rolled a {rng} and lost {amount} {self.bot.channel.channel.coin_name}.")
         elif rng == 50:
             await ctx.send(f"{user} rolled a {rng} and nothing happened.")
         else:
             amount = int(2 * amount)
-            await self.usr.update_user_balance(user, amount)
-            await ctx.send(f"{user} rolled a {rng} and won {amount} {self.coin_name}!")
+            await self.bot.usr.update_user_income(user, amount)
+            await ctx.send(f"{user} rolled a {rng} and won {amount} {self.bot.channel.channel.coin_name}!")

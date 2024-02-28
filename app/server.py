@@ -373,6 +373,7 @@ class Server(Bot):
             {
                 "secret_token": form.get("secret_token"),
                 "client_token": form.get("client_token"),
+                "decapi_secret_token": form.get("decapi_secret_token"),
             }
         )
 
@@ -398,6 +399,7 @@ class Server(Bot):
         return {
             "secret_token": bot_env["TWITCH_SECRET_TOKEN"],
             "client_token": bot_env["TWITCH_CLIENT_TOKEN"],
+            "decapi_secret_token": bot_env["DECAPI_SECRET_TOKEN"],
             "bot_name": channel.bot_name,
             "streamer_channel": channel.streamer_channel,
             "prefix": channel.prefix,

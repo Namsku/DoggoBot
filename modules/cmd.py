@@ -22,8 +22,8 @@ class Cmd:
     text: str
 
 
-class CmdCog:
-    def __init__(self, connection: aiosqlite.Connection) -> None:
+class CmdCog(commands.Cog):
+    def __init__(self, connection: aiosqlite.Connection, bot) -> None:
         """
         Initializes a new cmd cog object.
 
@@ -41,6 +41,7 @@ class CmdCog:
         None
         """
 
+        self.bot = bot
         self.connection = connection
         self.command = None
         self.logger = Logger(__name__)
@@ -422,7 +423,7 @@ class CmdCog:
 
         link = "discord.gg/SjGyhS9T"
         await ctx.send(
-            f"DoggoBot has been created by Fumi - If you want more info ping him on his Discord ({link})"
+            f"DoggoBot has been created by Fumi/Namsku - If you want more info ping him on his Discord ({link})"
         )
 
     @commands.command(name="ping")
@@ -439,7 +440,7 @@ class CmdCog:
         -------
         None
         """
-        await ctx.send(f"Pong! {round(self.latency*1000)}ms")
+        await ctx.send(f"Pong!")
 
     @commands.command(name="shoutout", aliases=["so"])
     async def shoutout(self, ctx: commands.Context) -> None:
@@ -460,38 +461,14 @@ class CmdCog:
             await ctx.send("Usage: !so <user>")
             return
 
-        user = ctx.content.split()[1].lower().replace("@", "")
+        user = ctx.message.content.split()[1].lower().replace("@", "")
+        game = await self.bot.usr.get_last_game(user)
 
         await ctx.send(
-            f" 📢 Please give a look to our >>> {user} <<<, "
-            f"Take a look at his twitch channel (twitch.tv/{str.lower(user)})"
+            f" 📢 Please give a look to our >>> {user} <<< "
+            f"Take a look at his twitch channel (twitch.tv/{str.lower(user)}) | Last stream was about {game}"
         )
 
-    @commands.command(name="topchatter")
-    async def topchatter(self, ctx: commands.Context) -> None:
-        """
-        Gets the top chatter.
-
-        Parameters
-        ----------
-        ctx : twitchio.Context
-            The context object.
-
-        Returns
-        -------
-        None
-        """
-
-        if len(ctx.message.content.split()) != 1:
-            await ctx.send("Usage: !topchatter")
-            return
-
-        user = await self.usr.get_top_chatter()
-
-        if user:
-            await ctx.send(f"The top chatter is {user}")
-        else:
-            await ctx.send("No top chatter found.")
 
     @commands.command(name="mods")
     async def info_mods(self, ctx: commands.Context):
@@ -511,35 +488,6 @@ class CmdCog:
             "📢 If you search a list of good mods/tools for RE, everything is on my discord (!socials for more info)"
         )
 
-    @commands.command(name="balance")
-    async def balance(self, ctx: commands.Context) -> None:
-        """
-        Gets the balance of a user.
-
-        Parameters
-        ----------
-        ctx : twitchio.Context
-            The context object.
-
-        Returns
-        -------
-        None
-        """
-
-        if len(ctx.message.content.split()) != 1:
-            await ctx.send("Usage: !balance")
-            return
-
-        user = ctx.author.name.lower()
-
-        if user not in self.channel_members:
-            await ctx.send(f"{user} is not following the channel.")
-            return
-
-        await ctx.send(
-            f"{user} has {await self.usr.get_balance(user)} {self.coin_name}"
-        )
-
     @commands.command(name="schedule")
     async def schedule(self, ctx: commands.Context):
         """
@@ -555,7 +503,7 @@ class CmdCog:
         None
         """
 
-        await ctx.send("WORK IN PROGRESS")
+        await ctx.send("📢 The schedule is on the discord (!socials for more info)")
 
     @commands.command(name="help")
     async def help(self, ctx: commands.Context):
@@ -572,8 +520,11 @@ class CmdCog:
         None
         """
 
+        # give the full list of commands that are currently available from the bot
+        cmd_list = list(sorted([f"!{cmd}" for cmd in self.commands.keys()]))
+
         await ctx.send(
-            "📢 available commands: !about !followage !followdate !gamble !help !income !mods !rpg !schedule !sfx !slots !so !socials !roll"
+            f"📢 available commands: {' '.join(cmd_list)}"
         )
 
     @commands.command(name="sfx")
@@ -612,95 +563,8 @@ class CmdCog:
             await ctx.send("Usage: !clip")
             return
 
-        await ctx.send("Creating clip...")
-        await ctx.channel.create_clip()
-
-    @commands.command(name="followdate")
-    async def followdate(self, ctx: commands.Context) -> None:
-        """
-        Gets the followdate of a user.
-
-        Parameters
-        ----------
-        ctx : twitchio.Context
-            The context object.
-
-        Returns
-        -------
-        None
-        """
-
-        if len(ctx.message.content.split()) != 1:
-            await ctx.send("Usage: !followdate")
-            return
-
-        user = ctx.author.name.lower()
-
-        if user not in self.channel_members:
-            await ctx.send(f"{user} is not following the channel.")
-            return
-
-        await ctx.send(
-            f"{user} has been following the channel since {await self.usr.get_followdate(user)}"
-        )
-
-    @commands.command(name="followage")
-    async def followage(self, ctx: commands.Context) -> None:
-        """
-        Gets the followage of a user.
-
-        Parameters
-        ----------
-        ctx : twitchio.Context
-            The context object.
-
-        Returns
-        -------
-        None
-        """
-
-        if len(ctx.message.content.split()) != 1:
-            await ctx.send("Usage: !followage")
-            return
-
-        user = ctx.author.name.lower()
-
-        if user not in self.channel_members:
-            await ctx.send(f"{user} is not following the channel.")
-            return
-
-        await ctx.send(
-            f"{user} has been following the channel for {await self.usr.get_followage(user)}"
-        )
-
-    @commands.command(name="watchtime")
-    async def watchtime(self, ctx: commands.Context) -> None:
-        """
-        Gets the watchtime of a user.
-
-        Parameters
-        ----------
-        ctx : twitchio.Context
-            The context object.
-
-        Returns
-        -------
-        None
-        """
-
-        if len(ctx.message.content.split()) != 1:
-            await ctx.send("Usage: !watchtime")
-            return
-
-        user = ctx.author.name.lower()
-
-        if user not in self.channel_members:
-            await ctx.send(f"{user} is not following the channel.")
-            return
-
-        await ctx.send(
-            f"{user} has been watching the channel for {await self.usr.get_watchtime(user)}"
-        )
+        dict = await self.bot.user.create_clip(token=self.bot.token)
+        self.logger.info(f"Clip created -> {dict}")
 
     async def _fill_default_table(self) -> None:
         """

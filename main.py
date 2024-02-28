@@ -131,6 +131,8 @@ async def main() -> None:
 
     if not (os.getenv("TWITCH_SECRET_TOKEN") and os.getenv("TWITCH_CLIENT_TOKEN")):
         logger.warning("Twitch tokens not found. Bot is not executed. Please add them on .env file or directly on the webapp.")
+    elif not (os.getenv("DECAPI_SECRET_TOKEN")):
+        logger.warning("DecAPI token not found. Please add it on .env file or directly on the webapp.")
     elif bot.initialized is False:
         logger.warning("Bot is not initialized. Please add the correct values on the webapp.")
     else:

@@ -1,13 +1,14 @@
 from modules.logger import Logger
 
 from twitchio import Message as TwitchMessage
+from twitchio.ext import commands
 
 import aiosqlite
 import dataclasses
 
 
 @dataclasses.dataclass
-class Msg:
+class Msg(commands.Cog):
     id: int
     author: str
     content: str
@@ -21,7 +22,7 @@ class Msg:
     is_turbo: bool
 
 
-class MessageCog:
+class MessageCog(commands.Cog):
     def __init__(self, connection: aiosqlite.Connection) -> None:
         """
         Initializes the message object.
@@ -44,7 +45,9 @@ class MessageCog:
         None
         """
 
+        # Automatically set the message object with the new ID
         self.message = Msg(
+            id = await self.get_last_id() + 1,
             author=(
                 message.author.name.lower() if message.author else bot.bot_name.lower()
             ),
@@ -92,7 +95,7 @@ class MessageCog:
             """
         )
 
-    async def add_message(self, message: TwitchMessage) -> None:
+    async def add_message(self, message: TwitchMessage, bot) -> None:
         """
         Adds a message to the database.
 
@@ -106,7 +109,7 @@ class MessageCog:
         None
         """
 
-        await self.set(message)
+        await self.set(message, bot)
 
         await self.connection.execute(
             """
@@ -136,18 +139,37 @@ class MessageCog:
             )
             """,
             {
-                "author": self.author,
-                "content": self.content,
-                "timestamp": self.timestamp,
-                "channel": self.channel,
-                "is_bot": self.is_bot,
-                "is_command": self.is_command,
-                "is_subscriber": self.is_subscriber,
-                "is_vip": self.is_vip,
-                "is_mod": self.is_mod,
-                "is_turbo": self.is_turbo,
+                "author": self.message.author,
+                "content": self.message.content,
+                "timestamp": self.message.timestamp,
+                "channel": self.message.channel,
+                "is_bot": self.message.is_bot,
+                "is_command": self.message.is_command,
+                "is_subscriber": self.message.is_subscriber,
+                "is_vip": self.message.is_vip,
+                "is_mod": self.message.is_mod,
+                "is_turbo": self.message.is_turbo,
             },
         )
+
+    async def get_last_id(self) -> int:
+        """
+        Returns the last message ID.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        int
+            The last message ID.
+        """
+
+        result = await self.connection.execute("SELECT MAX(id) FROM message")
+        row = await result.fetchone()
+        return row[0] if row[0] else 0
+
 
     def __str__(self) -> str:
         """

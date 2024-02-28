@@ -1,10 +1,14 @@
 import hashlib
 import zipfile
 import aiosqlite
+
 from pathlib import Path
-from dataclasses import dataclass
-from twitchio.ext import sounds, commands
 from contextlib import closing
+from dataclasses import dataclass
+
+from twitchio.ext import sounds, commands
+
+
 
 
 @dataclass
@@ -17,7 +21,7 @@ class SFX:
     cooldown: int
 
 
-class SFXCog:
+class SFXCog(commands.Cog):
     def __init__(self, connection: aiosqlite.Connection):
         self.connection = connection
         self.sfx = {}

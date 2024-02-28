@@ -31,6 +31,7 @@ class Bot(commands.Bot):
         """
 
         self.token = self.get_twitch_secret_token()
+        self.decapi_token = self.get_decapi_secret_token()
         self.channel_id = channel_cog.channel.streamer_channel
         self.prefix = channel_cog.channel.prefix
 
@@ -44,6 +45,7 @@ class Bot(commands.Bot):
         self.initialized = False
 
         self.bot_name = channel_cog.channel.bot_name
+        self.user = None
         self.user_bots = None
         self.client_id = self.get_twitch_client_token()
 
@@ -67,6 +69,7 @@ class Bot(commands.Bot):
         """
         await self._ainit_database_conn(channel_cog)
         await self._ainit_database_classes(channel_cog)
+        await self._ainit_cogs()
         await self._ainit_database_tables()
         await self._ainit_env()
         await self._ainit_user_commands()
@@ -107,12 +110,32 @@ class Bot(commands.Bot):
         None
         """
         self.channel = channel_cog
-        self.cmd = CmdCog(self.connection_cmd)
+        self.cmd = CmdCog(self.connection_cmd, self)
         self.msg = MessageCog(self.connection_message)
         self.usr = UserCog(channel_cog, self.connection_user)
         self.sfx = SFXCog(self.connection_sfx)
-        self.gms = GamesCog(self.connection_games)
+        self.gms = GamesCog(self.connection_games, self)
         self.logger.info("Database classes initialized.")
+
+    async def _ainit_cogs(self) -> None:
+        """
+        Adds the Cog classes to the bot.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+        self.add_cog(self.cmd)
+        self.add_cog(self.msg)
+        self.add_cog(self.usr)
+        self.add_cog(self.sfx)
+        self.add_cog(self.gms)
+        self.add_cog(self.gms.gambling)
+        self.logger.info("Cogs added to the bot.")
 
     async def _ainit_database_tables(self) -> None:
         """
@@ -236,6 +259,20 @@ class Bot(commands.Bot):
             await self._update_user_database()
 
             self.initialized = True
+
+    def get_decapi_secret_token(self) -> str:
+        """
+        Gets the DecAPI secret token from the environment variables.
+        
+        Returns
+        -------
+        str
+            The DecAPI secret token.
+        """
+        token = os.getenv("DECAPI_SECRET_TOKEN")
+        if token is None:
+            raise RuntimeError("DECAPI_SECRET_TOKEN environment variable is not set.")
+        return token
 
     def get_twitch_secret_token(self) -> str:
         """
@@ -418,6 +455,8 @@ class Bot(commands.Bot):
             0
         ].fetch_channel_followers(self.token)
 
+        self.user = await self.fetch_users([self.channel_id])
+        self.user = self.user[0]
         self.channel_members = [follower.user.name.lower() for follower in followers]
 
     async def get_top_chatter(self) -> str:
@@ -570,3 +609,187 @@ class Bot(commands.Bot):
 
         content = cmd.description
         await ctx.send(f"{content}")
+
+    
+    @commands.command(name="balance")
+    async def balance(self, ctx: commands.Context) -> None:
+        """
+        Gets the balance of a user.
+
+        Parameters
+        ----------
+        ctx : twitchio.Context
+            The context object.
+
+        Returns
+        -------
+        None
+        """
+
+        if len(ctx.message.content.split()) != 1:
+            await ctx.send("Usage: !balance")
+            return
+
+        user = ctx.author.name.lower()
+
+        if user not in self.channel_members:
+            await ctx.send(f"{user} is not following the channel.")
+            return
+
+        await ctx.send(
+            f"{user} has {await self.usr.get_balance(user)} {self.coin_name}"
+        )
+
+    @commands.command(name="followdate")
+    async def followdate(self, ctx: commands.Context) -> None:
+        """
+        Gets the followdate of a user.
+
+        Parameters
+        ----------
+        ctx : twitchio.Context
+            The context object.
+
+        Returns
+        -------
+        None
+        """
+
+        if len(ctx.message.content.split()) != 1:
+            await ctx.send("Usage: !followdate")
+            return
+
+        user = ctx.author.name.lower()
+
+        if user not in self.channel_members:
+            await ctx.send(f"{user} is not following the channel.")
+            return
+
+        await ctx.send(
+            f"{user} has been following the channel since {await self.usr.get_followdate(user)}"
+        )
+
+    @commands.command(name="followage")
+    async def followage(self, ctx: commands.Context) -> None:
+        """
+        Gets the followage of a user.
+
+        Parameters
+        ----------
+        ctx : twitchio.Context
+            The context object.
+
+        Returns
+        -------
+        None
+        """
+
+        if len(ctx.message.content.split()) != 1:
+            await ctx.send("Usage: !followage")
+            return
+
+        user = ctx.author.name.lower()
+
+        if user not in self.channel_members:
+            await ctx.send(f"{user} is not following the channel.")
+            return
+
+        await ctx.send(
+            f"{user} has been following the channel for {await self.usr.get_followage(user)}"
+        )
+
+
+    @commands.command(name="topchatter")
+    async def topchatter(self, ctx: commands.Context) -> None:
+        """
+        Gets the top chatter.
+
+        Parameters
+        ----------
+        ctx : twitchio.Context
+            The context object.
+
+        Returns
+        -------
+        None
+        """
+
+        if len(ctx.message.content.split()) != 1:
+            await ctx.send("Usage: !topchatter")
+            return
+
+        user = await self.get_top_chatter()
+
+        if user:
+            await ctx.send(f"The top chatter is {user}")
+        else:
+            await ctx.send("No top chatter found.")
+
+    @commands.command(name="watchtime")
+    async def watchtime(self, ctx: commands.Context) -> None:
+        """
+        Gets the watchtime of a user.
+
+        Parameters
+        ----------
+        ctx : twitchio.Context
+            The context object.
+
+        Returns
+        -------
+        None
+        """
+
+        if len(ctx.message.content.split()) != 1:
+            await ctx.send("Usage: !watchtime")
+            return
+
+        user = ctx.author.name.lower()
+
+        if user not in self.channel_members:
+            await ctx.send(f"{user} is not following the channel.")
+            return
+
+        await ctx.send(
+            f"{user} has been watching the channel for {await self.usr.get_watchtime(user)}"
+        )
+
+    @commands.command(name="add")
+    async def add(self, ctx: commands.Context) -> None:
+        """
+        Adds two numbers together.
+
+        Parameters
+        ----------
+        ctx : twitchio.Context
+            The context object.
+
+        Returns
+        -------
+        None
+        """
+        if ctx.author.name.lower() != self.channel.channel.streamer_channel:
+            await ctx.send("You do not have permission to use this command.")
+            return
+
+        if len(ctx.message.content.split()) != 3:
+            await ctx.send("Usage: !add <user> <number>")
+            return
+
+        try:
+            user = ctx.message.content.split()[1].replace("@", "").lower()
+            # check user exists
+            if user not in self.channel_members:
+                await ctx.send(f"{user} is not following the channel.")
+                return
+
+            num = int(ctx.message.content.split()[2])
+            
+            if num < 0:
+                await ctx.send("Usage: !add <user> <number>")
+                return
+
+            await self.usr.update_user_income(user, num)
+            await ctx.send(f"{user} has been awarded {num} {self.coin_name}")
+        except ValueError:
+            await ctx.send("Usage: !add <user> <number>")
