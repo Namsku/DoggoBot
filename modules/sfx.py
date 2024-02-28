@@ -21,7 +21,7 @@ class SFXCog:
     def __init__(self, connection: aiosqlite.Connection):
         self.connection = connection
         self.sfx = {}
-        self.load_sfx()
+        # self.load_sfx()
 
         # init the sounds extension
         self.player = sounds.AudioPlayer(callback=self.reset_player)
@@ -42,10 +42,10 @@ class SFXCog:
             await self.connection.commit()
 
     def add_sfx_command(self, sfx: SFX):
-        @commands.command(name=sfx.name)
-        async def sfx_command(ctx):
-            # Play the sound effect
-            await self.player.play(sfx.path)
+        super().add_command(self.play_sfx, name=sfx.name, aliases=[sfx.name.lower()])
+
+    def remove_sfx_command(self, sfx: SFX):
+        super().remove_command(sfx.name)
 
     async def load_sfx(self):
         query = "SELECT * FROM sfx"

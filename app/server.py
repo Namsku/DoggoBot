@@ -66,7 +66,10 @@ class Server(Bot):
         self.router.add_api_route("/mods", self.mods, methods=["GET"])
         self.router.add_api_route("/overlay", self.overlay, methods=["GET"])
         self.router.add_api_route("/settings", self.settings, methods=["GET", "POST"])
-        self.router.add_api_route("/sfx", self.sfx, methods=["GET"])
+
+        self.router.add_api_route("/sounds", self.sfx, methods=["GET"])
+        self.router.add_api_route("/sfx/{name}", self.sfx, methods=["GET"])
+
         self.router.add_api_route("/user/{name}", self.user, methods=["GET"])
 
         self.app.include_router(self.router)

@@ -1,7 +1,7 @@
-
 from modules.logger import Logger
 
 from dataclasses import asdict, dataclass, fields
+from twitchio.ext import commands
 
 import aiosqlite
 import random
@@ -244,10 +244,10 @@ class GamblingCog:
 
         async with self.connection.execute("SELECT * FROM roll") as cursor:
             roll_row = await cursor.fetchone()
-        
+
         if roll_row is None:
             return None
-        
+
         roll_attributes = [field.name for field in fields(Roll)]
         roll = Roll(**dict(zip(roll_attributes, roll_row)))
 
@@ -338,7 +338,9 @@ class GamblingCog:
         """
 
         roll_dict = asdict(self.roll)
-        sql_query = "UPDATE roll SET " + ", ".join(f"{key} = ?" for key in roll_dict.keys())
+        sql_query = "UPDATE roll SET " + ", ".join(
+            f"{key} = ?" for key in roll_dict.keys()
+        )
         parameters = tuple(roll_dict.values())
 
         await self.connection.execute(sql_query, parameters)
@@ -361,7 +363,9 @@ class GamblingCog:
         """
 
         slots_dict = asdict(self.slots)
-        sql_query = "UPDATE slots SET " + ", ".join(f"{key} = ?" for key in slots_dict.keys())
+        sql_query = "UPDATE slots SET " + ", ".join(
+            f"{key} = ?" for key in slots_dict.keys()
+        )
         parameters = tuple(slots_dict.values())
 
         await self.connection.execute(sql_query, parameters)
@@ -369,7 +373,9 @@ class GamblingCog:
 
         self.logger.info("Database info - Slots updated.")
 
-    async def validate_value(self, value, value_type, name, min_value=None, max_value=None) -> dict:
+    async def validate_value(
+        self, value, value_type, name, min_value=None, max_value=None
+    ) -> dict:
         if not isinstance(value, value_type):
             return {"error": f"The {name} must be a {value_type.__name__}."}
 
@@ -480,8 +486,12 @@ class GamblingCog:
                 "type": game_type,
                 "minimum_bet": int(form.get(f"{game_type}_minimum_bet")),
                 "maximum_bet": int(form.get(f"{game_type}_maximum_bet")),
-                "reward_critical_success": float(form.get(f"{game_type}_reward_critical_success")),
-                "reward_critical_failure": float(form.get(f"{game_type}_reward_critical_failure")),
+                "reward_critical_success": float(
+                    form.get(f"{game_type}_reward_critical_success")
+                ),
+                "reward_critical_failure": float(
+                    form.get(f"{game_type}_reward_critical_failure")
+                ),
                 "time": int(form.get(f"{game_type}_time")),
             }
         elif game_type == "slots":
@@ -532,7 +542,12 @@ class GamblingCog:
         self.roll.time = int(cfg["time"])
 
         for key, value in cfg.items():
-            error = await self.validate_value(value, int if key in ["minimum_bet", "maximum_bet", "time"] else float, key, 0)
+            error = await self.validate_value(
+                value,
+                int if key in ["minimum_bet", "maximum_bet", "time"] else float,
+                key,
+                0,
+            )
             if error and key != "type":
                 return error
 
@@ -606,3 +621,118 @@ class GamblingCog:
             "spin": spin,
             "reward": reward,
         }
+
+    @commands.command(name="slots")
+    async def slots(self, ctx: commands.Context) -> None:
+        """
+        Slots game.
+
+        Parameters
+        ----------
+        ctx : twitchio.Context
+            The context object.
+
+        Returns
+        -------
+        None
+        """
+
+        user = ctx.author.name.lower()
+        amount = ctx.content.split()[1]
+
+        if await self.usr.get_balance(user) < amount:
+            await ctx.send(f"{user} does not have enough coins.")
+            return
+
+        result = self.gms.get_slots_result()
+
+        if result["status"]:
+            await self.usr.update_user_balance(user, result["amount"])
+            await ctx.send(
+                f"{' '.join(result['spin'])} | {user} won {result['amount']} {self.coin_name}!"
+            )
+        else:
+            await self.usr.update_user_balance(user, -result["amount"])
+            await ctx.send(
+                f"{' '.join(result['spin'])} | {user} lost {result['amount']} {self.coin_name}!"
+            )
+
+    @commands.command(name="gamble")
+    async def gamble(self, ctx: commands.Context) -> None:
+        """
+        Gambles a certain amount of coins.
+
+        Parameters
+        ----------
+        ctx : twitchio.Context
+            The context object.
+
+        Returns
+        -------
+        None
+        """
+
+        if len(ctx.content.split()) != 2:
+            await ctx.send("Usage: !gamble <amount>")
+            return
+
+        user = ctx.author.name.lower()
+        amount = ctx.content.split()[1]
+
+        if not amount.isdigit():
+            await ctx.send("Usage: !gamble <amount>")
+            return
+
+        amount = int(amount)
+
+        if amount < 1:
+            await ctx.send("Usage: !gamble <amount>")
+            return
+
+        if user not in self.channel_members:
+            await ctx.send(f"{user} is not following the channel.")
+            return
+
+        if await self.usr.get_balance(user) < amount:
+            await ctx.send(f"{user} does not have enough coins.")
+            return
+
+        if self.gms.roll.maximum_bet < amount:
+            await ctx.send(
+                f"{user} cannot bet more than {self.gms.roll.maximum_bet} coins."
+            )
+            return
+
+        if self.gms.roll.minimum_bet > amount:
+            await ctx.send(
+                f"{user} cannot bet less than {self.gms.roll.minimum_bet} coins."
+            )
+            return
+
+        rng = self.gms.get_roll_number()
+
+        # Critical Failure
+        if rng == 0:
+            # change amount has negative be sure it's integer without decimals
+            amount = self.gms.roll.reward_critical_failure * amount
+            amount = int(-amount)
+
+            await self.usr.update_user_balance(user, amount)
+            await ctx.send(
+                f"{user} rolled an awful {rng} and lost {amount} {self.coin_name}!"
+            )
+        elif rng == 100:
+            amount = int(self.gms.roll.reward_critical_success * amount)
+            await self.usr.update_user_balance(user, amount)
+            await ctx.send(
+                f"{user} rolled a perfect {rng} and won {amount} {self.coin_name}!"
+            )
+        elif rng < 50:
+            await self.usr.update_user_balance(user, -amount)
+            await ctx.send(f"{user} rolled a {rng} and lost {amount} {self.coin_name}.")
+        elif rng == 50:
+            await ctx.send(f"{user} rolled a {rng} and nothing happened.")
+        else:
+            amount = int(2 * amount)
+            await self.usr.update_user_balance(user, amount)
+            await ctx.send(f"{user} rolled a {rng} and won {amount} {self.coin_name}!")

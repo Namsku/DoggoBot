@@ -222,18 +222,7 @@ class CmdCog:
         ) as cursor:
             cmd = await cursor.fetchone()
 
-        return Cmd(
-            cmd[1],
-            cmd[2],
-            cmd[3],
-            cmd[4],
-            cmd[5],
-            cmd[6],
-            cmd[7],
-            cmd[8],
-            cmd[9],
-            cmd[10],
-        )
+        return Cmd(*cmd[1:])
 
     async def get_user_cmds(self) -> list[Cmd]:
         """
@@ -250,21 +239,7 @@ class CmdCog:
         ) as cursor:
             cmds = await cursor.fetchall()
 
-        return [
-            Cmd(
-                cmd[1],
-                cmd[2],
-                cmd[3],
-                cmd[4],
-                cmd[5],
-                cmd[6],
-                cmd[7],
-                cmd[8],
-                cmd[9],
-                cmd[10],
-            )
-            for cmd in cmds
-        ]
+        return [Cmd(*cmd[1:]) for cmd in cmds]
 
     async def get_all_cmds(self) -> list[Cmd]:
         """
@@ -279,21 +254,7 @@ class CmdCog:
         async with self.connection.execute("SELECT * FROM cmd") as cursor:
             cmds = await cursor.fetchall()
 
-        return [
-            Cmd(
-                cmd[1],
-                cmd[2],
-                cmd[3],
-                cmd[4],
-                cmd[5],
-                cmd[6],
-                cmd[7],
-                cmd[8],
-                cmd[9],
-                cmd[10],
-            )
-            for cmd in cmds
-        ]
+        return [Cmd(*cmd[1:]) for cmd in cmds]
 
     async def update_status(self, name: str, status: bool) -> None:
         """
@@ -425,21 +386,7 @@ class CmdCog:
         ) as cursor:
             cmds = await cursor.fetchall()
 
-        return [
-            Cmd(
-                cmd[1],
-                cmd[2],
-                cmd[3],
-                cmd[4],
-                cmd[5],
-                cmd[6],
-                cmd[7],
-                cmd[8],
-                cmd[9],
-                cmd[10],
-            )
-            for cmd in cmds
-        ]
+        return [Cmd(*cmd[1:]) for cmd in cmds]
 
     async def get_all_dynamic_cmds(self) -> list:
         """
@@ -456,21 +403,7 @@ class CmdCog:
         ) as cursor:
             cmds = await cursor.fetchall()
 
-        return [
-            Cmd(
-                cmd[1],
-                cmd[2],
-                cmd[3],
-                cmd[4],
-                cmd[5],
-                cmd[6],
-                cmd[7],
-                cmd[8],
-                cmd[9],
-                cmd[10],
-            )
-            for cmd in cmds
-        ]
+        return [Cmd(*cmd[1:]) for cmd in cmds]
 
     @commands.command(name="about")
     async def about_bot(self, ctx: commands.Context):

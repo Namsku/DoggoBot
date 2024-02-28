@@ -451,121 +451,6 @@ class Bot(commands.Bot):
             The user object.
         """
 
-    @commands.command(name="slots")
-    async def slots(self, ctx: commands.Context) -> None:
-        """
-        Slots game.
-
-        Parameters
-        ----------
-        ctx : twitchio.Context
-            The context object.
-
-        Returns
-        -------
-        None
-        """
-
-        user = ctx.author.name.lower()
-        amount = ctx.content.split()[1]
-
-        if await self.usr.get_balance(user) < amount:
-            await ctx.send(f"{user} does not have enough coins.")
-            return
-
-        result = self.gms.get_slots_result()
-
-        if result["status"]:
-            await self.usr.update_user_balance(user, result["amount"])
-            await ctx.send(
-                f"{' '.join(result['spin'])} | {user} won {result['amount']} {self.coin_name}!"
-            )
-        else:
-            await self.usr.update_user_balance(user, -result["amount"])
-            await ctx.send(
-                f"{' '.join(result['spin'])} | {user} lost {result['amount']} {self.coin_name}!"
-            )
-
-    @commands.command(name="gamble")
-    async def gamble(self, ctx: commands.Context) -> None:
-        """
-        Gambles a certain amount of coins.
-
-        Parameters
-        ----------
-        ctx : twitchio.Context
-            The context object.
-
-        Returns
-        -------
-        None
-        """
-
-        if len(ctx.content.split()) != 2:
-            await ctx.send("Usage: !gamble <amount>")
-            return
-
-        user = ctx.author.name.lower()
-        amount = ctx.content.split()[1]
-
-        if not amount.isdigit():
-            await ctx.send("Usage: !gamble <amount>")
-            return
-
-        amount = int(amount)
-
-        if amount < 1:
-            await ctx.send("Usage: !gamble <amount>")
-            return
-
-        if user not in self.channel_members:
-            await ctx.send(f"{user} is not following the channel.")
-            return
-
-        if await self.usr.get_balance(user) < amount:
-            await ctx.send(f"{user} does not have enough coins.")
-            return
-
-        if self.gms.roll.maximum_bet < amount:
-            await ctx.send(
-                f"{user} cannot bet more than {self.gms.roll.maximum_bet} coins."
-            )
-            return
-
-        if self.gms.roll.minimum_bet > amount:
-            await ctx.send(
-                f"{user} cannot bet less than {self.gms.roll.minimum_bet} coins."
-            )
-            return
-
-        rng = self.gms.get_roll_number()
-
-        # Critical Failure
-        if rng == 0:
-            # change amount has negative be sure it's integer without decimals
-            amount = self.gms.roll.reward_critical_failure * amount
-            amount = int(-amount)
-
-            await self.usr.update_user_balance(user, amount)
-            await ctx.send(
-                f"{user} rolled an awful {rng} and lost {amount} {self.coin_name}!"
-            )
-        elif rng == 100:
-            amount = int(self.gms.roll.reward_critical_success * amount)
-            await self.usr.update_user_balance(user, amount)
-            await ctx.send(
-                f"{user} rolled a perfect {rng} and won {amount} {self.coin_name}!"
-            )
-        elif rng < 50:
-            await self.usr.update_user_balance(user, -amount)
-            await ctx.send(f"{user} rolled a {rng} and lost {amount} {self.coin_name}.")
-        elif rng == 50:
-            await ctx.send(f"{user} rolled a {rng} and nothing happened.")
-        else:
-            amount = int(2 * amount)
-            await self.usr.update_user_balance(user, amount)
-            await ctx.send(f"{user} rolled a {rng} and won {amount} {self.coin_name}!")
-
     # get all commands names
     async def get_all_commands(self) -> [Cmd]:
         """
@@ -607,7 +492,7 @@ class Bot(commands.Bot):
             The command object.
 
         Returns
-        -------
+        -------±
         None
         """
         await self.cmd.add_cmd(cmd)
