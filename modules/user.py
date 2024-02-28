@@ -335,7 +335,7 @@ class UserCog:
         """,
             (
                 username,
-                self.channel.income,
+                self.channel.channel.income,
             ),
         )
         await self.connection.commit()
