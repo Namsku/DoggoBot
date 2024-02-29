@@ -316,4 +316,3 @@ class ChannelCog(commands.Cog):
         """
 
         return f"Channel: {self.channel}"
-

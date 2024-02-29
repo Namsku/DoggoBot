@@ -10,6 +10,7 @@ from typing import Union
 
 
 import aiosqlite
+import random
 
 
 @dataclass
@@ -41,6 +42,8 @@ class GamesCog(commands.Cog):
         self.bot = bot
 
         self.rpg = RpgCog(connection)
+        self.rpg_games = # TODO
+
         self.gambling = GamblingCog(connection, self.bot)
 
     async def __ainit__(self) -> None:
@@ -337,3 +340,46 @@ class GamesCog(commands.Cog):
             last_id = await cursor.fetchone()
 
         return last_id[0] if last_id else 0
+    
+    @commands.command(name="rpg")
+    async def launch_rpg_game(self, ctx: commands.Context):
+        """
+        RPG command.
+
+        Parameters
+        ----------
+        ctx : twitchio.Context
+            The context of the command.
+
+        Returns
+        -------
+        None
+        """
+        
+
+        _rpg : RpgCog = random.choice(self.rpg_games)
+        user = ctx.author.name.lower()
+
+        if user not in self.bot.channel_members:
+            await ctx.send(f"{user} is not following the channel.")
+            return
+
+        if await self.bot.usr.get_balance(user) < _rpg.cost:
+            await ctx.send(f"{user} does not have enough coins.")
+            return
+
+        result = await self.get_spin_result()
+
+        if result["reward"] == 0:
+            result["reward"] = -_rpg.cost
+
+        if result["status"]:
+            await self.bot.usr.update_user_income(user, result["reward"])
+            await ctx.send(
+                f"{' '.join(result['spin'])} | {user} won {result['reward']} {self.bot.channel.channel.coin_name}!"
+            )
+        else:
+            await self.bot.usr.update_user_income(user, -result["reward"])
+            await ctx.send(
+                f"{' '.join(result['spin'])} | {user} lost {result['reward']} {self.bot.channel.channel.coin_name}!"
+            )

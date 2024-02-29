@@ -9,8 +9,6 @@ from dataclasses import dataclass
 from twitchio.ext import sounds, commands
 
 
-
-
 @dataclass
 class SFX:
     id: int
@@ -19,6 +17,15 @@ class SFX:
     volume: int
     cost: int
     cooldown: int
+    soundcard: str
+
+
+class SFXGroup:
+    id: int
+    name: str
+    category: str
+    description: str
+    status: bool
 
 
 class SFXCog(commands.Cog):
@@ -38,7 +45,8 @@ class SFXCog(commands.Cog):
             path TEXT NOT NULL,
             volume INTEGER NOT NULL,
             cost INTEGER NOT NULL,
-            cooldown INTEGER NOT NULL
+            cooldown INTEGER NOT NULL,
+            soundcard TEXT NOT NULL
         )
         """
         async with self.connection.cursor() as cursor:
@@ -132,13 +140,14 @@ class SFXCog(commands.Cog):
                 if line:
                     values = line.split(",")
                     await cursor.execute(
-                        "INSERT INTO sfx (name, path, volume, cost, cooldown) VALUES (?, ?, ?, ?, ?)",
+                        "INSERT INTO sfx (name, path, volume, cost, cooldown, soundcard) VALUES (?, ?, ?, ?, ?, ?)",
                         (
                             values[1],
                             values[2],
                             int(values[3]),
                             int(values[4]),
                             int(values[5]),
+                            values[6],
                         ),
                     )
             await self.connection.commit()

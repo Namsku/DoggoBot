@@ -736,10 +736,14 @@ class GamblingCog(commands.Cog):
             )
         elif rng < 50:
             await self.bot.usr.update_user_income(user, -amount)
-            await ctx.send(f"{user} rolled a {rng} and lost {amount} {self.bot.channel.channel.coin_name}.")
+            await ctx.send(
+                f"{user} rolled a {rng} and lost {amount} {self.bot.channel.channel.coin_name}."
+            )
         elif rng == 50:
             await ctx.send(f"{user} rolled a {rng} and nothing happened.")
         else:
             amount = int(2 * amount)
             await self.bot.usr.update_user_income(user, amount)
-            await ctx.send(f"{user} rolled a {rng} and won {amount} {self.bot.channel.channel.coin_name}!")
+            await ctx.send(
+                f"{user} rolled a {rng} and won {amount} {self.bot.channel.channel.coin_name}!"
+            )

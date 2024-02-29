@@ -54,10 +54,10 @@
 <div class="container">
   <div class="row p-4 rounded">
     <div class="col-12 mt-4">
-      <h1>
-        Sounds Effects - SFX
+      <h1 style="font-family: 'Roboto', sans-serif;">
+        SFX
       </h1>
-      <p>Create and Configure your own SFXs</p>
+      <p>Create and Configure your own SFX</p>
     </div>
     <div class="row">
       <div class="col">
@@ -103,7 +103,7 @@
           </tr>
         </thead>
         <tbody class="table-group-divider"> 
-          {% for msg in message['sfx'] %}
+          {% for msg in message['games'] %}
           {{ generate_table_row(msg) }}
           {% endfor %} 
         </tbody>
@@ -118,7 +118,7 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="popupFormLabel">Add SFX</h5>
+        <h5 class="modal-title" id="popupFormLabel">Add SFX Group</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
@@ -143,12 +143,8 @@
             <label for="category" class="form-label">Category</label>
             <select class="form-select" id="category" name="category" aria-label="Default select example">
               <option selected>Select category</option>
-              <option value="Game">Game</option>
-              <option value=""`
-              <option value="Meme">Meme</option>
-              <option value="Music">Music</option>
-              <option value="TV">TV</option>
-
+              <option value="RPG">RPG</option>
+              <option value="Gatcha">Gatcha</option>
             </select>
           </div>
           <div class="mb-3">
@@ -170,14 +166,14 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="deleteModalLabel">Delete game</h5>
+        <h5 class="modal-title" id="deleteModalLabel">Delete SFX Group</h5>
               
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
         <div class="modal-body">
           <div id="delete-error-message" class="alert alert-danger" style="display: none;"></div>
           <div id="delete-success-message" class="alert alert-success" style="display: none;"></div>
-          Are you sure you want to delete this game?
+          Are you sure you want to delete this SFX Group?
         </div>
         <form id="delete-game-form">
         <input type="hidden" class="form-control" id="delete-name" name="name" value="">
@@ -195,9 +191,9 @@
 
 <script>
   addEditButtonEventListeners();
-  addSwitchButtonEventListeners("game", "status");
+  addSwitchButtonEventListeners("sfx", "status");
   addFormEventListeners();
 
-  processForms(['create','delete'], 'game');
+  processForms(['create','delete'], 'sfx');
 </script>
 

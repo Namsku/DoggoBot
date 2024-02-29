@@ -492,13 +492,12 @@ class RpgCog(commands.Cog):
             The result.
         """
 
-
         if isinstance(id, dict):
             id = id.get("name")
-        
+
         if isinstance(id, str):
             id = int(id)
-        
+
         if isinstance(id, RpgEvent):
             id = id.id
 
@@ -677,14 +676,16 @@ class RpgCog(commands.Cog):
             }
         """
 
-        sql_query = "SELECT type, COUNT(*) FROM rpg_event WHERE rpg_id = ? GROUP BY type"
+        sql_query = (
+            "SELECT type, COUNT(*) FROM rpg_event WHERE rpg_id = ? GROUP BY type"
+        )
         async with self.connection.execute(sql_query, (rpg_id,)) as cursor:
             content = await cursor.fetchall()
             if content:
                 return {event_type: count for event_type, count in content}
             else:
                 return {}
-            
+
     async def get_rpg_actions_stats(self, rpg_id: int) -> dict:
         """
         Get the rpg actions stats.
@@ -705,14 +706,16 @@ class RpgCog(commands.Cog):
             }
         """
 
-        sql_query = "SELECT event, COUNT(*) FROM rpg_event WHERE rpg_id = ? GROUP BY event"
+        sql_query = (
+            "SELECT event, COUNT(*) FROM rpg_event WHERE rpg_id = ? GROUP BY event"
+        )
         async with self.connection.execute(sql_query, (rpg_id,)) as cursor:
             content = await cursor.fetchall()
             if content:
                 return {event: count for event, count in content}
             else:
                 return {}
-            
+
     async def get_rpg_normal_actions_stats(self, rpg_id: int) -> dict:
         """
         Get the rpg normal actions stats.
@@ -740,7 +743,7 @@ class RpgCog(commands.Cog):
                 return {event: count for event, count in content}
             else:
                 return {}
-            
+
     async def get_rpg_treasure_actions_stats(self, rpg_id: int) -> dict:
         """
         Get the rpg treasure actions stats.
@@ -768,7 +771,7 @@ class RpgCog(commands.Cog):
                 return {event: count for event, count in content}
             else:
                 return {}
-    
+
     async def get_rpg_monster_actions_stats(self, rpg_id: int) -> dict:
         """
         Get the rpg monster actions stats.
@@ -796,7 +799,7 @@ class RpgCog(commands.Cog):
                 return {event: count for event, count in content}
             else:
                 return {}
-    
+
     async def get_rpg_trap_actions_stats(self, rpg_id: int) -> dict:
         """
         Get the rpg trap actions stats.
@@ -824,7 +827,7 @@ class RpgCog(commands.Cog):
                 return {event: count for event, count in content}
             else:
                 return {}
-    
+
     async def get_rpg_boss_actions_stats(self, rpg_id: int) -> dict:
         """
         Get the rpg boss actions stats.
@@ -852,4 +855,26 @@ class RpgCog(commands.Cog):
                 return {event: count for event, count in content}
             else:
                 return {}
-    
+
+    async def get_random_event(self, rpg_list) -> RpgEvent:
+        """
+        Get a random event.
+
+        Parameters
+        ----------
+        rpg_id : int
+            The id of the rpg.
+
+        Returns
+        -------
+        RpgEvent
+            The random event.
+        """
+
+        sql_query = "SELECT * FROM rpg_event WHERE rpg_id = ? ORDER BY RANDOM() LIMIT 1"
+        async with self.connection.execute(sql_query, (rpg_id,)) as cursor:
+            content = await cursor.fetchone()
+            if content:
+                return RpgEvent(*content)
+            else:
+                return None

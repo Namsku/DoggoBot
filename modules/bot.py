@@ -71,6 +71,7 @@ class Bot(commands.Bot):
         await self._ainit_database_classes(channel_cog)
         await self._ainit_cogs()
         await self._ainit_database_tables()
+
         await self._ainit_env()
         await self._ainit_user_commands()
 
@@ -156,6 +157,8 @@ class Bot(commands.Bot):
         await self.sfx.create_table()
         await self.gms.create_table()
 
+        # if they are empty, add the default values
+        await self.cmd.__ainit__()
         await self.gms.gambling.__ainit__()
         self.logger.debug("Tables created.")
 
@@ -253,17 +256,20 @@ class Bot(commands.Bot):
         -------
         None
         """
-        if os.getenv("TWITCH_SECRET_TOKEN") and os.getenv("TWITCH_CLIENT_TOKEN"):
-            await self._get_channel_members()
-            await self._get_user_bots()
-            await self._update_user_database()
+        try:
+            if os.getenv("TWITCH_SECRET_TOKEN") and os.getenv("TWITCH_CLIENT_TOKEN"):
+                await self._get_channel_members()
+                await self._get_user_bots()
+                await self._update_user_database()
 
-            self.initialized = True
+                self.initialized = True
+        except Exception as e:
+            self.logger.error(f"Error while initializing environment: {e}")
 
     def get_decapi_secret_token(self) -> str:
         """
         Gets the DecAPI secret token from the environment variables.
-        
+
         Returns
         -------
         str
@@ -450,14 +456,20 @@ class Bot(commands.Bot):
         -------
         None
         """
-        your_channel: [User] = await self.fetch_users([self.channel_id])
-        followers: [ChannelFollowerEvent] = await your_channel[
-            0
-        ].fetch_channel_followers(self.token)
 
-        self.user = await self.fetch_users([self.channel_id])
-        self.user = self.user[0]
-        self.channel_members = [follower.user.name.lower() for follower in followers]
+        try:
+            your_channel: [User] = await self.fetch_users([self.channel_id])
+            followers: [ChannelFollowerEvent] = await your_channel[
+                0
+            ].fetch_channel_followers(self.token)
+
+            self.user = await self.fetch_users([self.channel_id])
+            self.user = self.user[0]
+            self.channel_members = [
+                follower.user.name.lower() for follower in followers
+            ]
+        except Exception as e:
+            self.logger.error(f"Error while fetching channel members: {e}")
 
     async def get_top_chatter(self) -> str:
         """
@@ -608,9 +620,10 @@ class Bot(commands.Bot):
             return
 
         content = cmd.description
+
+        await self.cmd.increment_usage(ctx.command.name)
         await ctx.send(f"{content}")
 
-    
     @commands.command(name="balance")
     async def balance(self, ctx: commands.Context) -> None:
         """
@@ -635,6 +648,8 @@ class Bot(commands.Bot):
         if user not in self.channel_members:
             await ctx.send(f"{user} is not following the channel.")
             return
+
+        await self.cmd.increment_usage(ctx.command.name)
 
         await ctx.send(
             f"{user} has {await self.usr.get_balance(user)} {self.coin_name}"
@@ -665,6 +680,8 @@ class Bot(commands.Bot):
             await ctx.send(f"{user} is not following the channel.")
             return
 
+        await self.cmd.increment_usage(ctx.command.name)
+
         await ctx.send(
             f"{user} has been following the channel since {await self.usr.get_followdate(user)}"
         )
@@ -694,10 +711,10 @@ class Bot(commands.Bot):
             await ctx.send(f"{user} is not following the channel.")
             return
 
+        await self.cmd.increment_usage(ctx.command.name)
         await ctx.send(
             f"{user} has been following the channel for {await self.usr.get_followage(user)}"
         )
-
 
     @commands.command(name="topchatter")
     async def topchatter(self, ctx: commands.Context) -> None:
@@ -719,6 +736,7 @@ class Bot(commands.Bot):
             return
 
         user = await self.get_top_chatter()
+        await self.cmd.increment_usage(ctx.command.name)
 
         if user:
             await ctx.send(f"The top chatter is {user}")
@@ -776,6 +794,8 @@ class Bot(commands.Bot):
             await ctx.send("Usage: !add <user> <number>")
             return
 
+        await self.cmd.increment_usage(ctx.command.name)
+
         try:
             user = ctx.message.content.split()[1].replace("@", "").lower()
             # check user exists
@@ -784,7 +804,7 @@ class Bot(commands.Bot):
                 return
 
             num = int(ctx.message.content.split()[2])
-            
+
             if num < 0:
                 await ctx.send("Usage: !add <user> <number>")
                 return

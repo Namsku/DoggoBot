@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from dataclasses import asdict
 import dataclasses
+
 from modules.bot import Bot
 from modules.cmd import Cmd
 from modules.channel import Channel
@@ -384,8 +385,8 @@ class Server(Bot):
                 "streamer_channel": form.get("streamer_channel"),
                 "prefix": form.get("prefix"),
                 "coin_name": form.get("coin_name"),
-                "default_income": int(form.get("default_income")),
-                "default_timeout": int(form.get("default_timeout")),
+                "income": int(form.get("default_income")),
+                "timeout": int(form.get("default_timeout")),
             }
         )
 
@@ -504,6 +505,7 @@ class Server(Bot):
             "add_cmd": self.bot.cmd.add_cmd,
             "add_game": self.add_game,
             "add_event": self.bot.gms.rpg.add_rpg_event,
+            "add_sfx": self.bot.add_sfx,
             "cmd": self.update_cmd_status,
             "delete_game": self.delete_game,
             "delete_cmd": self.bot.cmd.delete_cmd,
@@ -536,6 +538,23 @@ class Server(Bot):
     async def update_event(self, value):
         self.logger.info(f"update_event -> value: {value}")
         return await self.bot.gms.rpg.update_rpg_event(value)
+
+    async def add_sfx(self, value):
+        # first we need to create the game in the database
+        result = await self.bot.sfx.add_sfx(value)
+
+        if not result.get("success"):
+            return result
+
+        # create the sfx profile
+        rpg_result = await self.bot.sfx.add_sfx_profile(value["name"])
+
+        # if the sfx profile wasn't created successfully, we need to delete the whole sfx group
+        if not rpg_result.get("success"):
+            await self.bot.sfx.delete_sfx_by_name(value["name"])
+            return rpg_result  # Return the RPG failure result
+
+        return rpg_result
 
     async def add_game(self, value):
 

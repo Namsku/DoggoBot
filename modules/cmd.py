@@ -59,8 +59,7 @@ class CmdCog(commands.Cog):
         None
         """
 
-        if not await self._is_single_row_table():
-            self.command = await self._fill_default_table()
+        self.command = await self._fill_default_table()
 
     async def create_table(self) -> None:
         """
@@ -144,7 +143,7 @@ class CmdCog(commands.Cog):
         if await self.is_cmd_exists(cmd.name):
             return {"error": "name already exists"}
 
-        if not self.is_name_valid(cmd.name):
+        if not await self.is_name_valid(cmd.name):
             return {
                 "error": f"command {cmd.name} must only contains letters or/and numbers"
             }
@@ -179,6 +178,8 @@ class CmdCog(commands.Cog):
         )
         await self.connection.commit()
         self.logger.info(f"Added cmd -> {cmd.name}.")
+
+        self.bot.add_command(commands.Command(cmd.name, self.bot.template_command))
         return {"success": f"command {cmd.name} added"}
 
     async def is_cmd_exists(self, name: str) -> bool:
@@ -200,6 +201,43 @@ class CmdCog(commands.Cog):
             "SELECT name FROM cmd WHERE name = ?", (name,)
         ) as cursor:
             return bool(await cursor.fetchone())
+
+    async def increment_usage(self, name: str):
+        """
+        Increments the usage of a cmd.
+
+        Parameters
+        ----------
+        name : str
+            The cmd name.
+
+        Returns
+        -------
+        None
+        """
+
+        await self.connection.execute(
+            "UPDATE cmd SET used = used + 1 WHERE name = ?", (name,)
+        )
+        await self.connection.commit()
+        self.logger.debug(f"Incremented cmd usage -> {name}.")
+
+    async def is_name_valid(self, name: str) -> bool:
+        """
+        Checks if the name is valid.
+
+        Parameters
+        ----------
+        name : str
+            The name.
+
+        Returns
+        -------
+        bool
+            True if the name is valid, it must contains only letters and numbers, False otherwise.
+        """
+
+        return bool(re.match("^[a-zA-Z0-9_]*$", name))
 
     async def get_cmd(self, name: str) -> Cmd:
         """
@@ -282,6 +320,14 @@ class CmdCog(commands.Cog):
 
         await self.connection.commit()
         self.logger.info(f"Updated cmd status -> {name} -> {status}.")
+
+        # delete command
+        if status == 0:
+            await self.remove_command(name)
+
+        if status == 1:
+            await self.add_command(commands.Command(name, self.template_command))
+
         return {"success": f"command {name} status updated"}
 
     async def update_cmd(self, name: str, cmd: Union[Cmd, dict]) -> dict:
@@ -367,6 +413,8 @@ class CmdCog(commands.Cog):
         if isinstance(name, dict):
             name = name["name"]
 
+        self.bot.remove_command(name)
+
         await self.connection.execute("DELETE FROM cmd WHERE name = ?", (name,))
         await self.connection.commit()
         self.logger.info(f"Deleted cmd -> {name}.")
@@ -422,6 +470,8 @@ class CmdCog(commands.Cog):
         """
 
         link = "discord.gg/SjGyhS9T"
+
+        await self.increment_usage(ctx.command.name)
         await ctx.send(
             f"DoggoBot has been created by Fumi/Namsku - If you want more info ping him on his Discord ({link})"
         )
@@ -440,6 +490,8 @@ class CmdCog(commands.Cog):
         -------
         None
         """
+
+        await self.increment_usage(ctx.command.name)
         await ctx.send(f"Pong!")
 
     @commands.command(name="shoutout", aliases=["so"])
@@ -464,11 +516,12 @@ class CmdCog(commands.Cog):
         user = ctx.message.content.split()[1].lower().replace("@", "")
         game = await self.bot.usr.get_last_game(user)
 
+        await self.increment_usage(ctx.command.name)
+
         await ctx.send(
             f" 📢 Please give a look to our >>> {user} <<< "
             f"Take a look at his twitch channel (twitch.tv/{str.lower(user)}) | Last stream was about {game}"
         )
-
 
     @commands.command(name="mods")
     async def info_mods(self, ctx: commands.Context):
@@ -503,6 +556,7 @@ class CmdCog(commands.Cog):
         None
         """
 
+        await self.increment_usage(ctx.command.name)
         await ctx.send("📢 The schedule is on the discord (!socials for more info)")
 
     @commands.command(name="help")
@@ -521,11 +575,10 @@ class CmdCog(commands.Cog):
         """
 
         # give the full list of commands that are currently available from the bot
-        cmd_list = list(sorted([f"!{cmd}" for cmd in self.commands.keys()]))
+        bot_list = list(sorted([f"!{cmd}" for cmd in self.bot.commands.keys()]))
 
-        await ctx.send(
-            f"📢 available commands: {' '.join(cmd_list)}"
-        )
+        await self.increment_usage(ctx.command.name)
+        await ctx.send(f"📢 available commands: {' '.join(bot_list)}")
 
     @commands.command(name="sfx")
     async def sound_effects(self, ctx: commands.Context):
@@ -564,6 +617,8 @@ class CmdCog(commands.Cog):
             return
 
         dict = await self.bot.user.create_clip(token=self.bot.token)
+
+        await self.increment_usage(ctx.command.name)
         self.logger.info(f"Clip created -> {dict}")
 
     async def _fill_default_table(self) -> None:
