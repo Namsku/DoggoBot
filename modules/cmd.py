@@ -117,7 +117,7 @@ class CmdCog(commands.Cog):
         ) as cursor:
             return bool(await cursor.fetchone())
 
-    async def add_cmd(self, cmd: Union[Cmd, dict]) -> dict:
+    async def add_cmd(self, cmd: Union[Cmd, dict], standard=False) -> dict:
         """
         Adds a cmd.
 
@@ -179,7 +179,9 @@ class CmdCog(commands.Cog):
         await self.connection.commit()
         self.logger.info(f"Added cmd -> {cmd.name}.")
 
-        self.bot.add_command(commands.Command(cmd.name, self.bot.template_command))
+        if not standard:
+            await self.bot.add_command(commands.Command(cmd.name, self.bot.template_command))
+        
         return {"success": f"command {cmd.name} added"}
 
     async def is_cmd_exists(self, name: str) -> bool:
@@ -469,7 +471,7 @@ class CmdCog(commands.Cog):
         None
         """
 
-        link = "discord.gg/SjGyhS9T"
+        link = " discord.gg/xxqtuubayy"
 
         await self.increment_usage(ctx.command.name)
         await ctx.send(
@@ -799,7 +801,7 @@ class CmdCog(commands.Cog):
 
         for entry in default_cmds:
             cmd = Cmd(*entry)
-            await self.add_cmd(cmd)
+            await self.add_cmd(cmd, standard=True)
 
         self.logger.info("Filled default cmds.")
 

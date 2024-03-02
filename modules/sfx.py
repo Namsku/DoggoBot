@@ -4,10 +4,11 @@ import aiosqlite
 
 from pathlib import Path
 from contextlib import closing
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 from twitchio.ext import sounds, commands
 
+from modules.logger import Logger
 
 @dataclass
 class SFX:
@@ -19,7 +20,7 @@ class SFX:
     cooldown: int
     soundcard: str
 
-
+@dataclass
 class SFXGroup:
     id: int
     name: str
@@ -31,6 +32,7 @@ class SFXGroup:
 class SFXCog(commands.Cog):
     def __init__(self, connection: aiosqlite.Connection):
         self.connection = connection
+        self.logger = Logger(__name__)
         self.sfx = {}
         # self.load_sfx()
 
@@ -38,21 +40,36 @@ class SFXCog(commands.Cog):
         self.player = sounds.AudioPlayer(callback=self.reset_player)
 
     async def create_table(self):
-        query = """
-        CREATE TABLE IF NOT EXISTS sfx (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            path TEXT NOT NULL,
-            volume INTEGER NOT NULL,
-            cost INTEGER NOT NULL,
-            cooldown INTEGER NOT NULL,
-            soundcard TEXT NOT NULL
+        await self.connection.execute(
+            """
+                CREATE TABLE IF NOT EXISTS sfx_groups (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    category TEXT NOT NULL,
+                    description TEXT NOT NULL,
+                    status INTEGER NOT NULL
+                )
+            """
         )
-        """
-        async with self.connection.cursor() as cursor:
-            await cursor.execute(query)
-            await self.connection.commit()
+        await self.connection.commit()
 
+        await self.connection.execute(
+            """
+                CREATE TABLE IF NOT EXISTS sfx (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    path TEXT NOT NULL,
+                    volume INTEGER NOT NULL,
+                    cost INTEGER NOT NULL,
+                    cooldown INTEGER NOT NULL,
+                    soundcard TEXT NOT NULL,
+                    group_id INTEGER,
+                    FOREIGN KEY(group_id) REFERENCES sfx_groups(id)
+                )
+            """
+        )
+        await self.connection.commit()
+    
     def add_sfx_command(self, sfx: SFX):
         super().add_command(self.play_sfx, name=sfx.name, aliases=[sfx.name.lower()])
 
@@ -151,3 +168,72 @@ class SFXCog(commands.Cog):
                         ),
                     )
             await self.connection.commit()
+    
+    async def add_sfx_group(self, sfxgroup: dict):
+        # We need to check if values are valid from the dict
+        check = await self.check_sfxgroup_dict(sfxgroup)
+        if check.get("error"):
+            return check
+        
+        id = await self.get_last_id() + 1
+        
+        async with self.connection.cursor() as cursor:
+            await cursor.execute(
+                "INSERT INTO sfx_groups (id, name, category, description, status) VALUES (?, ?, ?, ?, ?)",
+                (id, sfxgroup['name'], sfxgroup['category'], sfxgroup['description'], 1)
+            )
+            await self.connection.commit()
+
+        return {"success": "SFX Group added successfully"}
+    
+    async def check_sfxgroup_dict(self, sfxgroup: dict):
+        self.logger.debug(f"{sfxgroup} -> {type(sfxgroup)}")
+        if not sfxgroup['name']:
+            return {"error": "Name is required"}
+        if await self.is_name_exists(sfxgroup['name']):
+            return {"error": "Name already exists"}
+        if not sfxgroup['category']:
+            return {"error": "Category is required"}
+        if not sfxgroup['description']:
+            return {"error": "Description is required"}
+        
+        return {"success": "All values are valid"}
+    
+    async def is_name_exists(self, name) -> bool:
+        async with self.connection.cursor() as cursor:
+            await cursor.execute("SELECT * FROM sfx_groups WHERE name = ?", (name,))
+            return await cursor.fetchone() is not None
+        
+    async def get_last_id(self):
+        async with self.connection.cursor() as cursor:
+            await cursor.execute("SELECT id FROM sfx_groups ORDER BY id DESC LIMIT 1")
+            result = await cursor.fetchone()
+            return result[0] if result else 0
+        
+    async def get_all_sfx_groups(self):
+        async with self.connection.execute("SELECT * FROM sfx_groups") as cursor:
+            sfx_groups = await cursor.fetchall()
+
+        sfx = [asdict(SFXGroup(*group)) for group in sfx_groups]
+
+        return sfx
+    
+    async def delete_sfx_group(self, msg):
+        name = msg["name"]
+        # get the id of the sfx group
+        async with self.connection.cursor() as cursor:
+            await cursor.execute("SELECT id FROM sfx_groups WHERE name = ?", (name,))
+            id = await cursor.fetchone()
+            # deal with the case it's None or Tuple with none or Tupe
+            id = id[0] if id else 1
+
+        async with self.connection.cursor() as cursor:
+            await cursor.execute("DELETE FROM sfx_groups WHERE name = ?", (name,))
+            await self.connection.commit()
+
+        # delete all sfx from the sfx group
+        async with self.connection.cursor() as cursor:
+            await cursor.execute("DELETE FROM sfx WHERE group_id = ?", (id,))
+            await self.connection.commit()
+        
+        return {"success": "SFX Group deleted successfully"}

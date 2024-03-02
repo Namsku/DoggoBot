@@ -42,7 +42,7 @@ class GamesCog(commands.Cog):
         self.bot = bot
 
         self.rpg = RpgCog(connection)
-        self.rpg_games = # TODO
+        # self.rpg_games = # TODO
 
         self.gambling = GamblingCog(connection, self.bot)
 

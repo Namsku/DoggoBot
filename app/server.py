@@ -68,7 +68,7 @@ class Server(Bot):
         self.router.add_api_route("/overlay", self.overlay, methods=["GET"])
         self.router.add_api_route("/settings", self.settings, methods=["GET", "POST"])
 
-        self.router.add_api_route("/sounds", self.sfx, methods=["GET"])
+        self.router.add_api_route("/sounds", self.sounds, methods=["GET"])
         self.router.add_api_route("/sfx/{name}", self.sfx, methods=["GET"])
 
         self.router.add_api_route("/user/{name}", self.user, methods=["GET"])
@@ -150,7 +150,7 @@ class Server(Bot):
             result = await func(id)
             return dumps(result)
         else:
-            return json.dumps({})
+            return dumps({})
 
     # parse content from the twitch oath redirect
     async def get_oath(self, request: Request):
@@ -239,7 +239,7 @@ class Server(Bot):
             "index.html", {"request": request, "message": message}
         )
 
-    async def sfx(self, request: Request):
+    async def sounds(self, request: Request):
         """
         Returns the sfx page.
 
@@ -253,6 +253,14 @@ class Server(Bot):
             A dictionary containing the sfx's setting
         """
 
+        message = {}
+        message["sfx"] = await self.bot.sfx.get_all_sfx_groups()
+
+        return self.templates.TemplateResponse(
+            "index.html", {"request": request, "message": message}
+        )
+    
+    async def sfx(self, request: Request, name: str):
         message = {}
 
         return self.templates.TemplateResponse(
@@ -505,11 +513,12 @@ class Server(Bot):
             "add_cmd": self.bot.cmd.add_cmd,
             "add_game": self.add_game,
             "add_event": self.bot.gms.rpg.add_rpg_event,
-            "add_sfx": self.bot.add_sfx,
+            "add_sfx": self.add_sfx,
             "cmd": self.update_cmd_status,
             "delete_game": self.delete_game,
             "delete_cmd": self.bot.cmd.delete_cmd,
             "delete_event": self.bot.gms.rpg.delete_rpg_event_by_id,
+            "delete_sfx": self.bot.sfx.delete_sfx_group,
             "game": self.update_game_status,
             "import_event": self.import_events,
             "update_cmd": self.update_cmd,
@@ -517,7 +526,9 @@ class Server(Bot):
         }
 
         for key, value in json.items():
+            self.logger.debug(f"key: {key}, value: {value}")
             func = key_to_func.get(key)
+            self.logger.debug(f"func: {func}")
             if func:
                 return await func(value)
 
@@ -540,21 +551,10 @@ class Server(Bot):
         return await self.bot.gms.rpg.update_rpg_event(value)
 
     async def add_sfx(self, value):
-        # first we need to create the game in the database
-        result = await self.bot.sfx.add_sfx(value)
-
-        if not result.get("success"):
-            return result
-
         # create the sfx profile
-        rpg_result = await self.bot.sfx.add_sfx_profile(value["name"])
+        sfx_result = await self.bot.sfx.add_sfx_group(value)
 
-        # if the sfx profile wasn't created successfully, we need to delete the whole sfx group
-        if not rpg_result.get("success"):
-            await self.bot.sfx.delete_sfx_by_name(value["name"])
-            return rpg_result  # Return the RPG failure result
-
-        return rpg_result
+        return sfx_result
 
     async def add_game(self, value):
 
