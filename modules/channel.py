@@ -205,15 +205,32 @@ class ChannelCog(commands.Cog):
         """
 
         try:
-            # file is created at the root of the project
+            # Read the existing lines
+            with open(".env", "r") as file:
+                lines = file.readlines()
+
+            # Update the lines
+            new_lines = []
+            for line in lines:
+                if line.startswith("TWITCH_SECRET_TOKEN="):
+                    new_lines.append(f"TWITCH_SECRET_TOKEN={config.get('secret_token')}\n")
+                elif line.startswith("TWITCH_CLIENT_TOKEN="):
+                    new_lines.append(f"TWITCH_CLIENT_TOKEN={config.get('client_token')}\n")
+                elif line.startswith("DECAPI_SECRET_TOKEN="):
+                    new_lines.append(f"DECAPI_SECRET_TOKEN={config.get('decapi_secret_token')}\n")
+                else:
+                    new_lines.append(line)
+
+            # Write the new lines back to the file
             with open(".env", "w") as file:
-                file.write(f"TWITCH_SECRET_TOKEN={config.get('secret_token')}\n")
-                file.write(f"TWITCH_CLIENT_TOKEN={config.get('client_token')}\n")
-            # update the environment variables
+                file.writelines(new_lines)
+
+            # Update the environment variables
             os.environ["TWITCH_SECRET_TOKEN"] = config.get("secret_token")
             os.environ["TWITCH_CLIENT_TOKEN"] = config.get("client_token")
+            os.environ["DECAPI_SECRET_TOKEN"] = config.get("decapi_secret_token")
         except Exception as e:
-            self.logger.error(f"Error while writing the .env file: {e}")
+            self.logger.error(f"Error while updating the .env file: {e}")
             exit(1)
 
         self.logger.info("Environment variables updated successfully.")
