@@ -78,24 +78,7 @@
             </p>
             <div class="collapse" id="collapse-sfx-help">
               <div class="card card-body">
-                <p>
-                  <b> Cost </b> - The amount of coins it costs to play the game.
-                </p>
-                <p>
-                  <b> Success Rate </b> - The chance of winning the game.
-                </p>
-                <p>
-                  <b> Timer </b> - Waiting time for the player to play again.
-                </p>
-                <p>
-                  <b> Success Bonus </b> - The multiplier of the reward when the game is won.
-                </p>
-                <p>
-                  <b> Boss Bonus </b> - The multiplier of the reward when the game is won and the boss is defeated.
-                </p>
-                <p>
-                  <b> Boss Malus </b> - The multiplier of the reward when the game is won and the boss is not defeated.
-                </p>
+                <p>Here you can configure your sfx as your own taste. You can add, edit, and delete sfx. You can also import and export sfx.</p>
               </div>
             </div>
           </div>
@@ -108,7 +91,86 @@
     {% if message['status'] == "error" %} 
     <div id="alert-message" class="alert alert-danger  mb-4 mt-4" role="alert"> {{ message['error'] }} </div> 
     {% endif %} 
- 
+
+    <!-- Start Form -->
+    <form novalidate method="post">
+      <div class="row">
+        <div class="col-md-6">
+
+          <div class="form-group mb-1">
+            <label for="sfx_cost"> Default Volume </label>
+            <div class="col">
+              <div class="input-group mt-1">
+                <!-- hidden input value -->
+                <input type="hidden" name="sfx_id" value="{{message['sfx'].id}}">
+                <input type="hidden" name="sfx_name" value="{{message['sfx'].name}}">
+                <span class="input-group-text" id="basic-addon1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cash" viewBox="0 0 16 16">
+                    <path d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4"></path>
+                    <path d="M0 4a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1zm3 0a2 2 0 0 1-2 2v4a2 2 0 0 1 2 2h10a2 2 0 0 1 2-2V6a2 2 0 0 1-2-2z"></path>
+                  </svg>
+                </span>
+                <input type="text" class="form-control" id="sfx_cost" name="sfx_cost" value="{{ message['sfx'].volume }}" placeholder="" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group mb-1">
+            <label for="exampleInputPassword1"> Default Cost </label>
+            <div class="col">
+              <div class="input-group mt-1">
+                <span class="input-group-text" id="basic-addon1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calculator" viewBox="0 0 16 16">
+                    <path d="M12 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"></path>
+                    <path d="M4 2.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5zm0 4a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z"></path>
+                  </svg>
+                </span>
+                <input type="text" class="form-control" id="sfx_win_rate" name="sfx_win_rate" value="{{ message['sfx'].cost }}" placeholder="" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group mb-1">
+            <label for="exampleInputPassword1"> Default Cooldown </label>
+            <div class="col">
+              <div class="input-group mt-1">
+                <span class="input-group-text" id="basic-addon1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stopwatch" viewBox="0 0 16 16">
+                    <path d="M8.5 5.6a.5.5 0 1 0-1 0v2.9h-3a.5.5 0 0 0 0 1H8a.5.5 0 0 0 .5-.5z"></path>
+                    <path d="M6.5 1A.5.5 0 0 1 7 .5h2a.5.5 0 0 1 0 1v.57c1.36.196 2.594.78 3.584 1.64l.012-.013.354-.354-.354-.353a.5.5 0 0 1 .707-.708l1.414 1.415a.5.5 0 1 1-.707.707l-.353-.354-.354.354-.013.012A7 7 0 1 1 7 2.071V1.5a.5.5 0 0 1-.5-.5M8 3a6 6 0 1 0 .001 12A6 6 0 0 0 8 3"></path>
+                  </svg>
+                </span>
+                <input type="text" class="form-control" id="sfx_timer" name="sfx_timer" value="{{ message['sfx'].cooldown }}" placeholder="" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group mb-1">
+            <label for="exampleInputPassword1"> Default Soundcard </label>
+            <div class="col">
+              <div class="input-group mt-1">
+                <!-- list box -->
+                <select class="form-select" id="sfx_timer" name="sfx_timer" value="{{ message['sfx'].soundcard }}" placeholder="" required>
+                  {% for key, value in message['soundcards'].items() %}
+                    <option value="{{key}}">{{ value.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      <div class="row">
+        <div class="col-md-11"></div>
+        <div class="col-md-1">
+          <button class="btn btn-primary mt-3" type="submit">Save</button>
+        </div>
+      </div>
+    </form>
+    <!-- End Form -->
+  </div>  
+ </div>
+</div>
 <!-- Container Fluid 2 - sfx -->
 <div class="container mt-8">
   <div class="col-12 mt-4">
@@ -119,15 +181,15 @@
       <div class="col  d-flex justify-content-end mb-4">
         <!-- Make a add command button on the right side of the div class -->
         <button type="button" id="open-create-form-btn" class="btn btn-primary me-3" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
-            Add event 
+            Add SFX 
         </button>
 
         <button type="button" id="open-import-form-btn" class="btn btn-primary me-3" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
-            Import events 
-        </button>
+          Import Folder 
+       </button>
 
         <button type="button" id="export-btn" class="btn btn-primary me-3" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
-            Export events 
+            Export SFXs 
         </button>
         </a>
       </div>
@@ -136,11 +198,13 @@
       <table class="table table-sm">
         <thead>
           <tr>
-            <th scope="col" class="w-5">ID</th>
-            <th scope="col" class="w-55">Message</th>
-            <th scope="col" class="w-15">Type</th>
-            <th scope="col" class="w-15">Event</th>
-            <th scope="col" class="w-10">Action</th>
+            <th scope="col" class="w-10">ID</th>
+            <th scope="col" class="w-10">Name</th>
+            <th scope="col" class="w-10">Volume</th>
+            <th scope="col" class="w-10">Cost</th>
+            <th scope="col" class="w-10">Cooldown</th>
+            <th scope="col" class="w-40">Soundcard</th>
+            <th scope="col" class="w-10">Actions</th>
           </tr>
         </thead>
         <tbody id="user-commands" class="table-group-divider"> 
@@ -289,7 +353,7 @@
           <input type="hidden" class="form-control" id="update_type" name="update_type" value="import_event">
           <input type="hidden" class="form-control" id="sfx_id" name="sfx_id" value="{{ message['sfx'].id }}">
           <div class="mb-3">
-            <label for="import-file" class="form-label">Import file</label>
+            <label for="import-file" class="form-label">Import folder</label>
             <input class="form-control" type="file" id="import-file" name="import-file" required>
             <div class="col-12 mb-4 mt-4">
               <table class="table table-sm">

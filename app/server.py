@@ -262,7 +262,20 @@ class Server(Bot):
     
     async def sfx(self, request: Request, name: str):
         message = {}
+        status = "none"
 
+        if request.method == "POST":
+            result = await self.save_rpg_settings(request)
+            status = "error" if result.get("error") else "success"
+            message[status] = result.get(status)
+
+        message["status"] = status
+        message["sfx"] = await self.bot.sfx.get_sfx_from_group_name(name)
+        message["soundcards"] = self.bot.sfx.player.devices
+        message["events"] = await self.bot.sfx.get_all_sfx_events_from_group_name(name)
+
+        self.logger.debug(f"message: {message}")
+        
         return self.templates.TemplateResponse(
             "index.html", {"request": request, "message": message}
         )

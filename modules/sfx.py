@@ -22,10 +22,10 @@ class SFXEvent:
     cooldown: int
     soundcard: str
 
+@dataclass!n
 class SFX:
     id: int
     group_id: int
-    name: str
     volume: int
     cost: int
     cooldown: int
@@ -68,7 +68,6 @@ class SFXCog(commands.Cog):
                 CREATE TABLE IF NOT EXISTS sfx (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     group_id INTEGER,
-                    name TEXT NOT NULL,
                     volume INTEGER NOT NULL,
                     cost INTEGER NOT NULL,
                     cooldown INTEGER NOT NULL,
@@ -98,20 +97,6 @@ class SFXCog(commands.Cog):
         )
         await self.connection.commit()
     
-    def fill_default_sfx(self, group_id: int):
-        sfx = [
-            {
-                "name": "default",
-                "volume": 50,
-                "cost": 0,
-                "cooldown": 0,
-                "soundcard": self.player.active_device,
-                "group_id": group_id,
-            }
-        ]
-        for s in sfx:
-            self.add_sfx(s)
-
     def add_sfx_command(self, sfx: SFX):
         super().add_command(self.play_sfx, name=sfx.name, aliases=[sfx.name.lower()])
 
@@ -295,16 +280,25 @@ class SFXCog(commands.Cog):
         SFX Base
     '''
 
-    async def add_sfx(self, sfx: dict):
-        # We need to check if values are valid from the dict
-        check = await self.check_sfx_dict(sfx)
-        if check.get("error"):
-            return check
-        
+    async def add_sfx(self, group_id: int):
+        # We need to check if values are valid from the dict  
+        if self.player.active_device is None:
+            self.logger.error("No default soundcard detected, selecting a random one")
+            # get a random value from dictionary self.player.devices
+            value = list(self.player.devices.values())[0].name
+        else:
+            value = self.player.active_device
         async with self.connection.cursor() as cursor:
             await cursor.execute(
-                "INSERT INTO sfx (group_id, name, volume, cost, cooldown, soundcard) VALUES (?, ?, ?, ?, ?, ?)",
-                (sfx['group_id'], sfx['name'], sfx['volume'], sfx['cost'], sfx['cooldown'], sfx['soundcard'])
+                "INSERT INTO sfx (id, group_id, volume, cost, cooldown, soundcard) VALUES (?, ?, ?, ?, ?, ?)",
+                (
+                    await self.get_last_sfx_id() + 1,
+                    group_id, 
+                    50, 
+                    0, 
+                    0, 
+                    value
+                )
             )
             await self.connection.commit()
 
@@ -392,7 +386,7 @@ class SFXCog(commands.Cog):
         if check.get("error"):
             return check
         
-        id = await self.get_last_id() + 1
+        id = await self.get_last_sfx_group_id() + 1
         
         async with self.connection.cursor() as cursor:
             await cursor.execute(
@@ -400,6 +394,10 @@ class SFXCog(commands.Cog):
                 (id, sfxgroup['name'], sfxgroup['category'], sfxgroup['description'], 1)
             )
             await self.connection.commit()
+
+        result = await self.add_sfx(id)
+        if result.get("error"):
+            return result
 
         return {"success": "SFX Group added successfully"}
     
@@ -458,3 +456,37 @@ class SFXCog(commands.Cog):
             await self.connection.commit()
         
         return {"success": "SFX Group deleted successfully"}
+    
+    async def get_sfx_from_group_name(self, name) -> SFX:
+        id = 0
+        
+        async with self.connection.cursor() as cursor:
+            await cursor.execute("SELECT id FROM sfx_groups WHERE name = ?", (name,))
+            id = await cursor.fetchone()
+            id = id[0] if id else 1
+
+        self.logger.debug(f"ID: {id}")
+        
+        async with self.connection.cursor() as cursor:
+            await cursor.execute("SELECT * FROM sfx WHERE group_id = ?", (id,))
+            sfx = await cursor.fetchone()
+        
+        self.logger.debug(f"SFX: {sfx}")
+
+        return SFX(*sfx)
+
+    async def get_all_sfx_events_from_group_name(self, name) -> list[SFXEvent]:
+        id = 0
+        
+        async with self.connection.cursor() as cursor:
+            await cursor.execute("SELECT id FROM sfx_groups WHERE name = ?", (name,))
+            id = await cursor.fetchone()
+            id = id[0] if id else 1
+        
+        async with self.connection.cursor() as cursor:
+            await cursor.execute("SELECT * FROM sfx_event WHERE group_id = ?", (id,))
+            sfx = await cursor.fetchall()
+        
+        sfx = [SFXEvent(*event) for event in sfx]
+
+        return sfx
