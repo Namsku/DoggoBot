@@ -11,10 +11,21 @@ from twitchio.ext import sounds, commands
 from modules.logger import Logger
 
 @dataclass
-class SFX:
+class SFXEvent:
     id: int
+    group_id: int
+    sfx_id: int
     name: str
     path: str
+    volume: int
+    cost: int
+    cooldown: int
+    soundcard: str
+
+class SFX:
+    id: int
+    group_id: int
+    name: str
     volume: int
     cost: int
     cooldown: int
@@ -27,7 +38,6 @@ class SFXGroup:
     category: str
     description: str
     status: bool
-
 
 class SFXCog(commands.Cog):
     def __init__(self, connection: aiosqlite.Connection):
@@ -57,6 +67,22 @@ class SFXCog(commands.Cog):
             """
                 CREATE TABLE IF NOT EXISTS sfx (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    group_id INTEGER,
+                    name TEXT NOT NULL,
+                    volume INTEGER NOT NULL,
+                    cost INTEGER NOT NULL,
+                    cooldown INTEGER NOT NULL,
+                    soundcard TEXT NOT NULL,
+                    FOREIGN KEY(group_id) REFERENCES sfx_groups(id)
+                )
+            """
+        )
+        await self.connection.commit()
+
+        await self.connection.execute(
+            """
+                CREATE TABLE IF NOT EXISTS sfx_event (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT NOT NULL,
                     path TEXT NOT NULL,
                     volume INTEGER NOT NULL,
@@ -64,12 +90,28 @@ class SFXCog(commands.Cog):
                     cooldown INTEGER NOT NULL,
                     soundcard TEXT NOT NULL,
                     group_id INTEGER,
+                    sfx_id INTEGER,
                     FOREIGN KEY(group_id) REFERENCES sfx_groups(id)
+                    FOREIGN KEY(sfx_id) REFERENCES sfx(id)
                 )
             """
         )
         await self.connection.commit()
     
+    def fill_default_sfx(self, group_id: int):
+        sfx = [
+            {
+                "name": "default",
+                "volume": 50,
+                "cost": 0,
+                "cooldown": 0,
+                "soundcard": self.player.active_device,
+                "group_id": group_id,
+            }
+        ]
+        for s in sfx:
+            self.add_sfx(s)
+
     def add_sfx_command(self, sfx: SFX):
         super().add_command(self.play_sfx, name=sfx.name, aliases=[sfx.name.lower()])
 
@@ -169,6 +211,181 @@ class SFXCog(commands.Cog):
                     )
             await self.connection.commit()
     
+
+    '''
+        SFX Event
+    '''
+
+    async def add_sfx_event(self, sfxevent: dict):
+        # We need to check if values are valid from the dict
+        check = await self.check_sfxevent_dict(sfxevent)
+        if check.get("error"):
+            return check
+        
+        async with self.connection.cursor() as cursor:
+            await cursor.execute(
+                "INSERT INTO sfx_event (name, path, volume, cost, cooldown, soundcard, group_id, sfx_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (sfxevent['name'], sfxevent['path'], sfxevent['volume'], sfxevent['cost'], sfxevent['cooldown'], sfxevent['soundcard'], sfxevent['group_id'], sfxevent['sfx_id'])
+            )
+            await self.connection.commit()
+
+        return {"success": "SFX Event added successfully"}
+    
+    async def check_sfxevent_dict(self, sfxevent: dict):
+        self.logger.debug(f"{sfxevent} -> {type(sfxevent)}")
+        if not sfxevent['name']:
+            return {"error": "Name is required"}
+        if await self.is_name_exists_sfx_event(sfxevent['name']):
+            return {"error": "Name already exists"}
+        
+        if not sfxevent['path']:
+            return {"error": "Path is required"}
+        if not sfxevent['volume']:
+            return {"error": "Volume is required"}
+        if not sfxevent['cost']:
+            return {"error": "Cost is required"}
+        if not sfxevent['cost'].isdigit():
+            return {"error": "Cost must be a number"}
+        
+        cost = int(sfxevent['cost'])
+        if cost < 0:
+            return {"error": "Cost must be greater than 0"}
+        
+        if not sfxevent['cooldown']:
+            return {"error": "Cooldown is required"}
+        if not sfxevent['cooldown'].isdigit():
+            return {"error": "Cooldown must be a number"}
+        
+        cooldown = int(sfxevent['cooldown'])
+        if cooldown < 0:
+            return {"error": "Cooldown must be greater than 0"}
+
+        if not sfxevent['soundcard']:
+            return {"error": "Soundcard is required"}
+        if not sfxevent['group_id']:
+            return {"error": "Group ID is required"}
+        if not sfxevent['sfx_id']:
+            return {"error": "SFX ID is required"}
+        
+        return {"success": "All values are valid"}
+
+    async def is_name_exists_sfx_event(self, name) -> bool:
+        async with self.connection.cursor() as cursor:
+            await cursor.execute("SELECT * FROM sfx_event WHERE name = ?", (name,))
+            return await cursor.fetchone() is not None
+
+    async def get_all_sfx_events(self):
+        async with self.connection.execute("SELECT * FROM sfx_event") as cursor:
+            sfx_events = await cursor.fetchall()
+
+        sfx = [asdict(SFXEvent(*event)) for event in sfx_events]
+
+        return sfx
+    
+    async def delete_sfx_event(self, msg):
+        name = msg["name"]
+        async with self.connection.cursor() as cursor:
+            await cursor.execute("DELETE FROM sfx_event WHERE name = ?", (name,))
+            await self.connection.commit()
+        
+        return {"success": "SFX Event deleted successfully"}
+    
+
+    '''
+        SFX Base
+    '''
+
+    async def add_sfx(self, sfx: dict):
+        # We need to check if values are valid from the dict
+        check = await self.check_sfx_dict(sfx)
+        if check.get("error"):
+            return check
+        
+        async with self.connection.cursor() as cursor:
+            await cursor.execute(
+                "INSERT INTO sfx (group_id, name, volume, cost, cooldown, soundcard) VALUES (?, ?, ?, ?, ?, ?)",
+                (sfx['group_id'], sfx['name'], sfx['volume'], sfx['cost'], sfx['cooldown'], sfx['soundcard'])
+            )
+            await self.connection.commit()
+
+        return {"success": "SFX added successfully"}
+    
+    async def check_sfx_dict(self, sfx: dict):
+        self.logger.debug(f"{sfx} -> {type(sfx)}")
+        if not sfx['group_id']:
+            return {"error": "Group ID is required"}
+        
+        if not sfx['name']:
+            return {"error": "Name is required"}
+        if sfx['name'].isalnum():
+            return {"error": "Name must be alphanumeric"}
+        if await self.is_name_exists_sfx(sfx['name']):
+            return {"error": "Name already exists"}
+        
+        if not sfx['volume']:
+            return {"error": "Volume is required"}
+        if not sfx['volume'].isdigit():
+            return {"error": "Volume must be a number"}
+
+        volume = int(sfx['volume'])
+
+        if volume < 0 or volume > 100:
+            return {"error": "Volume must be between 0 and 100"}
+
+        if not sfx['cost']:
+            return {"error": "Cost is required"}
+        if not sfx['cost'].isdigit():
+            return {"error": "Cost must be a number"}
+        
+        cost = int(sfx['cost'])
+        if cost < 0:
+            return {"error": "Cost must be greater than 0"}
+
+        if not sfx['cooldown']:
+            return {"error": "Cooldown is required"}
+        if not sfx['cooldown'].isdigit():
+            return {"error": "Cooldown must be a number"}
+        
+        cooldown = int(sfx['cooldown'])
+        if cooldown < 0:
+            return {"error": "Cooldown must be greater than 0"}
+        
+        if not sfx['soundcard']:
+            return {"error": "Soundcard is required"}
+        
+        return {"success": "All values are valid"}
+    
+    async def is_name_exists_sfx(self, name) -> bool:
+        async with self.connection.cursor() as cursor:
+            await cursor.execute("SELECT * FROM sfx WHERE name = ?", (name,))
+            return await cursor.fetchone() is not None
+    
+    async def get_last_sfx_id(self):
+        async with self.connection.cursor() as cursor:
+            await cursor.execute("SELECT id FROM sfx ORDER BY id DESC LIMIT 1")
+            result = await cursor.fetchone()
+            return result[0] if result else 0
+    
+    async def get_all_sfx(self):
+        async with self.connection.execute("SELECT * FROM sfx") as cursor:
+            sfx = await cursor.fetchall()
+
+        sfx = [asdict(SFX(*s)) for s in sfx]
+
+        return sfx
+    
+    async def delete_sfx(self, msg):
+        name = msg["name"]
+        async with self.connection.cursor() as cursor:
+            await cursor.execute("DELETE FROM sfx WHERE name = ?", (name,))
+            await self.connection.commit()
+        
+        return {"success": "SFX deleted successfully"}
+
+    ''' 
+        SFX Group 
+    '''
+
     async def add_sfx_group(self, sfxgroup: dict):
         # We need to check if values are valid from the dict
         check = await self.check_sfxgroup_dict(sfxgroup)
@@ -204,7 +421,7 @@ class SFXCog(commands.Cog):
             await cursor.execute("SELECT * FROM sfx_groups WHERE name = ?", (name,))
             return await cursor.fetchone() is not None
         
-    async def get_last_id(self):
+    async def get_last_sfx_group_id(self):
         async with self.connection.cursor() as cursor:
             await cursor.execute("SELECT id FROM sfx_groups ORDER BY id DESC LIMIT 1")
             result = await cursor.fetchone()
@@ -234,6 +451,10 @@ class SFXCog(commands.Cog):
         # delete all sfx from the sfx group
         async with self.connection.cursor() as cursor:
             await cursor.execute("DELETE FROM sfx WHERE group_id = ?", (id,))
+            await self.connection.commit()
+
+        async with self.connection.cursor() as cursor:
+            await cursor.execute("DELETE FROM sfx_event WHERE group_id = ?", (id,))
             await self.connection.commit()
         
         return {"success": "SFX Group deleted successfully"}
