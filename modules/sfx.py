@@ -1,10 +1,11 @@
 import hashlib
+from typing import dataclass_transform
 import zipfile
 import aiosqlite
 
 from pathlib import Path
 from contextlib import closing
-from dataclasses import asdict, dataclass
+from dataclasses import Field, asdict, dataclass
 
 from twitchio.ext import sounds, commands
 
@@ -22,7 +23,7 @@ class SFXEvent:
     cooldown: int
     soundcard: str
 
-@dataclass!n
+@dataclass
 class SFX:
     id: int
     group_id: int
@@ -50,34 +51,55 @@ class SFXCog(commands.Cog):
         self.player = sounds.AudioPlayer(callback=self.reset_player)
 
     async def create_table(self):
-            dataclasses = [SFXGroup, SFX, SFXEvent]
-            for dataclass in dataclasses:
-                table_name = dataclass.__name__.lower()
-                columns = ", ".join(self.get_column_definition(field) for field in fields(dataclass))
-                query = f"""
-                    CREATE TABLE IF NOT EXISTS {table_name} (
-                        {columns}
-                    )
-                """
-                await self.connection.execute(query)
-                await self.connection.commit()
+        '''
+            Create the table for sfx
+        '''
+        await self.connection.execute(
+            """
+                CREATE TABLE IF NOT EXISTS sfx_groups (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    category TEXT NOT NULL,
+                    description TEXT NOT NULL,
+                    status INTEGER NOT NULL
+                )
+            """
+        )
+        await self.connection.commit()
 
-    def get_column_definition(self, field: Field):
-        column_type = self.get_sqlite_type(field.type)
-        constraints = "NOT NULL" if field.default_factory == dataclasses.MISSING else ""
-        if field.name == "id":
-            constraints += " PRIMARY KEY AUTOINCREMENT"
-        return f"{field.name} {column_type} {constraints}"
+        await self.connection.execute(
+            """
+                CREATE TABLE IF NOT EXISTS sfx (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    group_id INTEGER,
+                    volume INTEGER NOT NULL,
+                    cost INTEGER NOT NULL,
+                    cooldown INTEGER NOT NULL,
+                    soundcard TEXT NOT NULL,
+                    FOREIGN KEY(group_id) REFERENCES sfx_groups(id)
+                )
+            """
+        )
+        await self.connection.commit()
 
-    def get_sqlite_type(self, type_):
-        if type_ == int:
-            return "INTEGER"
-        elif type_ == str:
-            return "TEXT"
-        elif type_ == bool:
-            return "INTEGER"
-        else:
-            return "BLOB"
+        await self.connection.execute(
+            """
+                CREATE TABLE IF NOT EXISTS sfx_event (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    path TEXT NOT NULL,
+                    volume INTEGER NOT NULL,
+                    cost INTEGER NOT NULL,
+                    cooldown INTEGER NOT NULL,
+                    soundcard TEXT NOT NULL,
+                    group_id INTEGER,
+                    sfx_id INTEGER,
+                    FOREIGN KEY(group_id) REFERENCES sfx_groups(id)
+                    FOREIGN KEY(sfx_id) REFERENCES sfx(id)
+                )
+            """
+        )
+        await self.connection.commit()
     
     def add_sfx_command(self, sfx: SFX):
         super().add_command(self.play_sfx, name=sfx.name, aliases=[sfx.name.lower()])
@@ -272,14 +294,7 @@ class SFXCog(commands.Cog):
         self.logger.debug(f"{sfx} -> {type(sfx)}")
         if not sfx['group_id']:
             return {"error": "Group ID is required"}
-        
-        if not sfx['name']:
-            return {"error": "Name is required"}
-        if sfx['name'].isalnum():
-            return {"error": "Name must be alphanumeric"}
-        if await self.is_name_exists_sfx(sfx['name']):
-            return {"error": "Name already exists"}
-        
+                
         if not sfx['volume']:
             return {"error": "Volume is required"}
         if not sfx['volume'].isdigit():
@@ -445,3 +460,17 @@ class SFXCog(commands.Cog):
         sfx = [SFXEvent(*event) for event in sfx]
 
         return sfx
+
+    async def update_sfx(self, sfx: dict):
+        check = await self.check_sfx_dict(sfx)
+        if check.get("error"):
+            return check
+
+        async with self.connection.cursor() as cursor:
+            await cursor.execute(
+                "UPDATE sfx SET volume = ?, cost = ?, cooldown = ?, soundcard = ? WHERE id = ?",
+                (sfx['volume'], sfx['cost'], sfx['cooldown'], sfx['soundcard'], sfx['id'])
+            )
+            await self.connection.commit()
+        
+        return {"success": "SFX updated successfully"}

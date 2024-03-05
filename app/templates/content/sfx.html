@@ -103,14 +103,14 @@
               <div class="input-group mt-1">
                 <!-- hidden input value -->
                 <input type="hidden" name="sfx_id" value="{{message['sfx'].id}}">
-                <input type="hidden" name="sfx_name" value="{{message['sfx'].name}}">
+                <input type="hidden" name="sfx_group_id" value="{{message['sfx'].group_id}}">
                 <span class="input-group-text" id="basic-addon1">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cash" viewBox="0 0 16 16">
                     <path d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4"></path>
                     <path d="M0 4a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1zm3 0a2 2 0 0 1-2 2v4a2 2 0 0 1 2 2h10a2 2 0 0 1 2-2V6a2 2 0 0 1-2-2z"></path>
                   </svg>
                 </span>
-                <input type="text" class="form-control" id="sfx_cost" name="sfx_cost" value="{{ message['sfx'].volume }}" placeholder="" required>
+                <input type="text" class="form-control" id="sfx_volume" name="sfx_volume" value="{{ message['sfx'].volume }}" placeholder="" required>
               </div>
             </div>
           </div>
@@ -125,7 +125,7 @@
                     <path d="M4 2.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5zm0 4a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z"></path>
                   </svg>
                 </span>
-                <input type="text" class="form-control" id="sfx_win_rate" name="sfx_win_rate" value="{{ message['sfx'].cost }}" placeholder="" required>
+                <input type="text" class="form-control" id="sfx_cost" name="sfx_cost" value="{{ message['sfx'].cost }}" placeholder="" required>
               </div>
             </div>
           </div>
@@ -140,7 +140,7 @@
                     <path d="M6.5 1A.5.5 0 0 1 7 .5h2a.5.5 0 0 1 0 1v.57c1.36.196 2.594.78 3.584 1.64l.012-.013.354-.354-.354-.353a.5.5 0 0 1 .707-.708l1.414 1.415a.5.5 0 1 1-.707.707l-.353-.354-.354.354-.013.012A7 7 0 1 1 7 2.071V1.5a.5.5 0 0 1-.5-.5M8 3a6 6 0 1 0 .001 12A6 6 0 0 0 8 3"></path>
                   </svg>
                 </span>
-                <input type="text" class="form-control" id="sfx_timer" name="sfx_timer" value="{{ message['sfx'].cooldown }}" placeholder="" required>
+                <input type="text" class="form-control" id="sfx_cooldown" name="sfx_cooldown" value="{{ message['sfx'].cooldown }}" placeholder="" required>
               </div>
             </div>
           </div>
@@ -150,9 +150,9 @@
             <div class="col">
               <div class="input-group mt-1">
                 <!-- list box -->
-                <select class="form-select" id="sfx_timer" name="sfx_timer" value="{{ message['sfx'].soundcard }}" placeholder="" required>
+                <select class="form-select" id="sfx_soundcard" name="sfx_soundcard" placeholder="" required>
                   {% for key, value in message['soundcards'].items() %}
-                    <option value="{{key}}">{{ value.name }}</option>
+                    <option value="{{key}}" {% if key|int == message['sfx'].soundcard|int %}selected{% endif %}>{{ value.name }}</option>
                   {% endfor %}
                 </select>
               </div>
@@ -217,7 +217,6 @@
   </div>
 </div>
 
-
 <!-- Popup form -->
 <div id="popup-create-form" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="popupFormLabel" aria-hidden="true">
   <div class="modal-dialog">
@@ -237,8 +236,37 @@
           <input type="hidden" class="form-control" id="sfx_id" name="sfx_id" value="{{ message['sfx'].id }}">
 
           <div class="mb-3">
-            <label for="message" class="form-label">Name</label>
-            <textarea class="form-control" id="message" name="message" rows="3"></textarea>
+            <label for="name" class="form-label">Name</label>
+            <input type="text" class="form-control" id="name" name="name" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="volume" class="form-label">Volume</label>
+            <input type="range" class="form-range" id="volume" name="volume" min="0" max="100" value="{{ message['sfx'].volume }}" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="cost" class="form-label">Cost</label>
+            <input type="number" class="form-control" id="cost" name="cost" value="{{ message['sfx'].cost }}" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="cooldown" class="form-label">Cooldown</label>
+            <input type="number" class="form-control" id="cooldown" name="cooldown" value="{{ message['sfx'].cooldown }}" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="soundcard" class="form-label">Soundcard</label>
+            <select class="form-select" id="soundcard" name="soundcard" required>
+              {% for key, value in message['soundcards'].items() %}
+                <option value="{{key}}">{{ value.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="file" class="form-label">Upload File</label>
+            <input type="file" class="form-control" id="file" name="file" required>
           </div>
 
           <button type="submit" id="create-event-form" class="btn btn-primary">Submit</button>

@@ -69,7 +69,7 @@ class Server(Bot):
         self.router.add_api_route("/settings", self.settings, methods=["GET", "POST"])
 
         self.router.add_api_route("/sounds", self.sounds, methods=["GET"])
-        self.router.add_api_route("/sfx/{name}", self.sfx, methods=["GET"])
+        self.router.add_api_route("/sfx/{name}", self.sfx, methods=["GET", "POST"])
 
         self.router.add_api_route("/user/{name}", self.user, methods=["GET"])
 
@@ -265,7 +265,7 @@ class Server(Bot):
         status = "none"
 
         if request.method == "POST":
-            result = await self.save_rpg_settings(request)
+            result = await self.save_sfx_settings(request)
             status = "error" if result.get("error") else "success"
             message[status] = result.get(status)
 
@@ -274,11 +274,38 @@ class Server(Bot):
         message["soundcards"] = self.bot.sfx.player.devices
         message["events"] = await self.bot.sfx.get_all_sfx_events_from_group_name(name)
 
-        self.logger.debug(f"message: {message}")
-        
         return self.templates.TemplateResponse(
             "index.html", {"request": request, "message": message}
         )
+    
+    async def save_sfx_settings(self, request: Request):
+        """
+        Saves the sfx settings.
+
+        Parameters
+        ----------
+        request : Request
+            The request object.
+
+        Returns
+        -------
+        None
+        """
+
+        form = await request.form()
+
+        form = {
+            "id": form.get("sfx_id"),
+            "group_id": form.get("sfx_group_id"),
+            "cost": form.get("sfx_cost"),
+            "soundcard": form.get("sfx_soundcard"),
+            "volume": form.get("sfx_volume"),
+            "cooldown": form.get("sfx_cooldown"),
+        }
+        result = await self.bot.sfx.update_sfx(form)
+
+        return result
+
 
     async def curse(self, request: Request):
         """
@@ -680,19 +707,3 @@ class Server(Bot):
                 return result
 
         return {"success": "Events imported successfully."}
-
-    async def add_sound_file(self, path: cfg):
-        # open the file
-        with open(path, 'rb'):
-             
-
-        # make a md5 hash
-        # if folder {sfx_group_name} is not existing, creating it
-        # copy it on the {sfx_group_name}
-        # get the default config 
-        
-        if isinstance(cfg, str):
-            cfg = self.bot.sfx.get_sfx_config()
-            # default config
-        
-        self.bot.sfx.add_sfx_event(cfg)
