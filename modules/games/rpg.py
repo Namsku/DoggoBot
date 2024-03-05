@@ -878,3 +878,35 @@ class RpgCog(commands.Cog):
                 return RpgEvent(*content)
             else:
                 return None
+
+        async def start_game(self) -> list:
+            """
+            Get all rpg events by active groups from the database.
+
+            Parameters
+            ----------
+            active_groups : list
+                The active groups.
+
+            Returns
+            -------
+            list
+                The list of rpg events.
+            """
+
+            # Get all ID from active games from Games table
+            sql_query = "SELECT id FROM games WHERE active = 1"
+            async with self.connection.execute(sql_query) as cursor:
+                active_games = await cursor.fetchall()
+
+            # Get all events from active games in their respective list
+            events = []
+            for game in active_games:
+                sql_query = "SELECT * FROM rpg_event WHERE rpg_id = ?"
+                async with self.connection.execute(sql_query, (game[0],)) as cursor:
+                    content = await cursor.fetchall()
+                    if content:
+                        events.append(content)
+                    else:
+                        events.append({})
+            return events

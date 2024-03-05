@@ -680,3 +680,19 @@ class Server(Bot):
                 return result
 
         return {"success": "Events imported successfully."}
+
+    async def add_sound_file(self, path: cfg):
+        # open the file
+        with open(path, 'rb'):
+             
+
+        # make a md5 hash
+        # if folder {sfx_group_name} is not existing, creating it
+        # copy it on the {sfx_group_name}
+        # get the default config 
+        
+        if isinstance(cfg, str):
+            cfg = self.bot.sfx.get_sfx_config()
+            # default config
+        
+        self.bot.sfx.add_sfx_event(cfg)

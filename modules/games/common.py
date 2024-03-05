@@ -340,7 +340,7 @@ class GamesCog(commands.Cog):
             last_id = await cursor.fetchone()
 
         return last_id[0] if last_id else 0
-    
+
     @commands.command(name="rpg")
     async def launch_rpg_game(self, ctx: commands.Context):
         """
@@ -355,9 +355,7 @@ class GamesCog(commands.Cog):
         -------
         None
         """
-        
 
-        _rpg : RpgCog = random.choice(self.rpg_games)
         user = ctx.author.name.lower()
 
         if user not in self.bot.channel_members:
@@ -368,7 +366,7 @@ class GamesCog(commands.Cog):
             await ctx.send(f"{user} does not have enough coins.")
             return
 
-        result = await self.get_spin_result()
+        _rpg = await self.rpg.get_all_active_rpg_events()
 
         if result["reward"] == 0:
             result["reward"] = -_rpg.cost

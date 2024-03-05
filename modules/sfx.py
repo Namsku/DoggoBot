@@ -50,52 +50,34 @@ class SFXCog(commands.Cog):
         self.player = sounds.AudioPlayer(callback=self.reset_player)
 
     async def create_table(self):
-        await self.connection.execute(
-            """
-                CREATE TABLE IF NOT EXISTS sfx_groups (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    name TEXT NOT NULL,
-                    category TEXT NOT NULL,
-                    description TEXT NOT NULL,
-                    status INTEGER NOT NULL
-                )
-            """
-        )
-        await self.connection.commit()
+            dataclasses = [SFXGroup, SFX, SFXEvent]
+            for dataclass in dataclasses:
+                table_name = dataclass.__name__.lower()
+                columns = ", ".join(self.get_column_definition(field) for field in fields(dataclass))
+                query = f"""
+                    CREATE TABLE IF NOT EXISTS {table_name} (
+                        {columns}
+                    )
+                """
+                await self.connection.execute(query)
+                await self.connection.commit()
 
-        await self.connection.execute(
-            """
-                CREATE TABLE IF NOT EXISTS sfx (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    group_id INTEGER,
-                    volume INTEGER NOT NULL,
-                    cost INTEGER NOT NULL,
-                    cooldown INTEGER NOT NULL,
-                    soundcard TEXT NOT NULL,
-                    FOREIGN KEY(group_id) REFERENCES sfx_groups(id)
-                )
-            """
-        )
-        await self.connection.commit()
+    def get_column_definition(self, field: Field):
+        column_type = self.get_sqlite_type(field.type)
+        constraints = "NOT NULL" if field.default_factory == dataclasses.MISSING else ""
+        if field.name == "id":
+            constraints += " PRIMARY KEY AUTOINCREMENT"
+        return f"{field.name} {column_type} {constraints}"
 
-        await self.connection.execute(
-            """
-                CREATE TABLE IF NOT EXISTS sfx_event (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    name TEXT NOT NULL,
-                    path TEXT NOT NULL,
-                    volume INTEGER NOT NULL,
-                    cost INTEGER NOT NULL,
-                    cooldown INTEGER NOT NULL,
-                    soundcard TEXT NOT NULL,
-                    group_id INTEGER,
-                    sfx_id INTEGER,
-                    FOREIGN KEY(group_id) REFERENCES sfx_groups(id)
-                    FOREIGN KEY(sfx_id) REFERENCES sfx(id)
-                )
-            """
-        )
-        await self.connection.commit()
+    def get_sqlite_type(self, type_):
+        if type_ == int:
+            return "INTEGER"
+        elif type_ == str:
+            return "TEXT"
+        elif type_ == bool:
+            return "INTEGER"
+        else:
+            return "BLOB"
     
     def add_sfx_command(self, sfx: SFX):
         super().add_command(self.play_sfx, name=sfx.name, aliases=[sfx.name.lower()])
@@ -123,45 +105,31 @@ class SFXCog(commands.Cog):
         return hasher.hexdigest()
 
     async def copy_sfx_files(self, source_folder, dest_folder=Path("data/sfx")):
-        """Copy sound files from source_folder to dest_folder, renaming them to their SHA256 hash."""
         dest_folder.mkdir(parents=True, exist_ok=True)
 
-        for source_path in source_folder.glob("*.[mM][pP]3") + source_folder.glob(
-            "*.[wW][aA][vV]"
-        ):
+        for source_path in source_folder.glob("*.[mM][pP]3") + source_folder.glob("*.[wW][aA][vV]"):
             hash_name = await self.hash_file(source_path)
             dest_path = dest_folder / (hash_name + source_path.suffix)
 
-            if dest_path.exists():
-                continue
-
-            dest_path.write_bytes(source_path.read_bytes())
-
-            # Add entry to SQL table
-            async with self.connection.cursor() as cursor:
-                await cursor.execute(
+            if not dest_path.exists():
+                dest_path.write_bytes(source_path.read_bytes())
+                await self.connection.execute(
                     "INSERT INTO sfx (name, path, volume, cost, cooldown) VALUES (?, ?, ?, ?, ?)",
                     (source_path.name, str(dest_path), 100, 1000, 10),
                 )
                 await self.connection.commit()
 
     async def export_sfx_full_config(self, dest_folder=Path("data/sfx")):
-        # Copy sound files from source_folder to dest_folder, renaming them to their SHA256 hash
         await self.copy_sfx_files(Path("data/sfx"), dest_folder)
 
-        # Create a zip file to store the exported data
         zip_file_path = dest_folder / "sfx_export.zip"
         with closing(zipfile.ZipFile(zip_file_path, "w")) as zip_file:
-            # Add the sound files to the zip file
             for sound_file in dest_folder.glob("*"):
                 zip_file.write(sound_file, arcname=sound_file.name)
 
-            # Add the SQL table to the zip file
-            query = "SELECT * FROM sfx"
-            async with self.connection.cursor() as cursor:
-                sfx = await cursor.execute(query)
-                table_data = "\n".join([",".join(map(str, s)) for s in sfx])
-                zip_file.writestr("sfx_table.csv", table_data)
+            sfx = await self.connection.execute("SELECT * FROM sfx")
+            table_data = "\n".join([",".join(map(str, s)) for s in sfx])
+            zip_file.writestr("sfx_table.csv", table_data)
 
         return zip_file_path
 
@@ -207,12 +175,11 @@ class SFXCog(commands.Cog):
         if check.get("error"):
             return check
         
-        async with self.connection.cursor() as cursor:
-            await cursor.execute(
-                "INSERT INTO sfx_event (name, path, volume, cost, cooldown, soundcard, group_id, sfx_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (sfxevent['name'], sfxevent['path'], sfxevent['volume'], sfxevent['cost'], sfxevent['cooldown'], sfxevent['soundcard'], sfxevent['group_id'], sfxevent['sfx_id'])
-            )
-            await self.connection.commit()
+        await self.connection.execute(
+            "INSERT INTO sfx_event (name, path, volume, cost, cooldown, soundcard, group_id, sfx_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (sfxevent['name'], sfxevent['path'], sfxevent['volume'], sfxevent['cost'], sfxevent['cooldown'], sfxevent['soundcard'], sfxevent['group_id'], sfxevent['sfx_id'])
+        )
+        await self.connection.commit()
 
         return {"success": "SFX Event added successfully"}
     
@@ -255,8 +222,7 @@ class SFXCog(commands.Cog):
         return {"success": "All values are valid"}
 
     async def is_name_exists_sfx_event(self, name) -> bool:
-        async with self.connection.cursor() as cursor:
-            await cursor.execute("SELECT * FROM sfx_event WHERE name = ?", (name,))
+        async with self.connection.execute("SELECT * FROM sfx_event WHERE name = ?", (name,)) as cursor:
             return await cursor.fetchone() is not None
 
     async def get_all_sfx_events(self):
@@ -269,12 +235,10 @@ class SFXCog(commands.Cog):
     
     async def delete_sfx_event(self, msg):
         name = msg["name"]
-        async with self.connection.cursor() as cursor:
-            await cursor.execute("DELETE FROM sfx_event WHERE name = ?", (name,))
-            await self.connection.commit()
+        await self.connection.execute("DELETE FROM sfx_event WHERE name = ?", (name,))
+        await self.connection.commit()
         
         return {"success": "SFX Event deleted successfully"}
-    
 
     '''
         SFX Base
@@ -381,7 +345,6 @@ class SFXCog(commands.Cog):
     '''
 
     async def add_sfx_group(self, sfxgroup: dict):
-        # We need to check if values are valid from the dict
         check = await self.check_sfxgroup_dict(sfxgroup)
         if check.get("error"):
             return check
@@ -402,7 +365,6 @@ class SFXCog(commands.Cog):
         return {"success": "SFX Group added successfully"}
     
     async def check_sfxgroup_dict(self, sfxgroup: dict):
-        self.logger.debug(f"{sfxgroup} -> {type(sfxgroup)}")
         if not sfxgroup['name']:
             return {"error": "Name is required"}
         if await self.is_name_exists(sfxgroup['name']):
@@ -435,18 +397,15 @@ class SFXCog(commands.Cog):
     
     async def delete_sfx_group(self, msg):
         name = msg["name"]
-        # get the id of the sfx group
         async with self.connection.cursor() as cursor:
             await cursor.execute("SELECT id FROM sfx_groups WHERE name = ?", (name,))
             id = await cursor.fetchone()
-            # deal with the case it's None or Tuple with none or Tupe
             id = id[0] if id else 1
 
         async with self.connection.cursor() as cursor:
             await cursor.execute("DELETE FROM sfx_groups WHERE name = ?", (name,))
             await self.connection.commit()
 
-        # delete all sfx from the sfx group
         async with self.connection.cursor() as cursor:
             await cursor.execute("DELETE FROM sfx WHERE group_id = ?", (id,))
             await self.connection.commit()
@@ -465,13 +424,9 @@ class SFXCog(commands.Cog):
             id = await cursor.fetchone()
             id = id[0] if id else 1
 
-        self.logger.debug(f"ID: {id}")
-        
         async with self.connection.cursor() as cursor:
             await cursor.execute("SELECT * FROM sfx WHERE group_id = ?", (id,))
             sfx = await cursor.fetchone()
-        
-        self.logger.debug(f"SFX: {sfx}")
 
         return SFX(*sfx)
 
