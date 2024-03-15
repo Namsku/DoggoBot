@@ -180,7 +180,7 @@ class CmdCog(commands.Cog):
         self.logger.info(f"Added cmd -> {cmd.name}.")
 
         if not standard:
-            await self.bot.add_command(commands.Command(cmd.name, self.bot.template_command))
+            self.bot.add_command(commands.Command(cmd.name, self.bot.template_command))
         
         return {"success": f"command {cmd.name} added"}
 

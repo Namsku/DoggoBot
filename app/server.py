@@ -1,17 +1,18 @@
 from collections import OrderedDict
 from dataclasses import asdict
 import dataclasses
+import hashlib
 
 from modules.bot import Bot
 from modules.cmd import Cmd
 from modules.channel import Channel
 from modules.logger import Logger
 
-
 import os
 import arel
+from pathlib import Path
 
-from fastapi import FastAPI, APIRouter, Request
+from fastapi import FastAPI, APIRouter, HTTPException, Request, UploadFile, File
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
@@ -55,6 +56,7 @@ class Server(Bot):
         self.router.add_api_route(
             "/api/events/{type}/{id}", self.get_events, methods=["GET"]
         )
+        self.router.add_api_route("/api/upload", self.upload, methods=["POST"])
 
         self.router.add_api_route("/chat", self.chat, methods=["GET"])
         self.router.add_api_route("/commands", self.commands, methods=["GET"])
@@ -554,6 +556,7 @@ class Server(Bot):
             "add_game": self.add_game,
             "add_event": self.bot.gms.rpg.add_rpg_event,
             "add_sfx": self.add_sfx,
+            "add_sfx_event": self.bot.sfx.add_sfx_event,
             "cmd": self.update_cmd_status,
             "delete_game": self.delete_game,
             "delete_cmd": self.bot.cmd.delete_cmd,
@@ -707,3 +710,41 @@ class Server(Bot):
                 return result
 
         return {"success": "Events imported successfully."}
+
+    async def upload(self, request: Request, file: UploadFile = File(...)) -> dict:        
+        message = {}
+        status = "none"
+
+        if request.method == "POST":
+            # Get the file extension
+            file_extension = file.filename.split('.')[-1]
+
+            # Check if the file is an audio file or an archive
+            if file_extension not in ['mp3', 'wav', 'flac']:
+                raise HTTPException(status_code=400, detail="Invalid file type. Please upload an audio file or an archive.")
+
+            contents = await file.read()
+            result = await self.upload_sound_file(contents)
+            status = "error" if result.get("error") else "success"
+            message[status] = result.get(status)
+
+        return message
+    
+    async def hash_file(self, content: bytes) -> str:
+        """Return the MD5 hash of a file."""
+        hasher = hashlib.md5(content)
+        return hasher.hexdigest()
+    
+    async def upload_sound_file(self, contents: bytes) -> dict:
+        dest_folder = Path("data/sfx")
+        dest_folder.mkdir(parents=True, exist_ok=True)
+
+        hash_name = await self.hash_file(contents)
+        dest_path = dest_folder / hash_name
+
+        if not dest_path.exists():
+            dest_path.write_bytes(contents)
+
+        return {"success": hash_name}
+            
+

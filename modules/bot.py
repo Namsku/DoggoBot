@@ -1,3 +1,5 @@
+import random
+import aiohttp
 from modules.channel import ChannelCog
 from modules.cmd import CmdCog, Cmd
 from modules.games.common import GamesCog
@@ -597,6 +599,79 @@ class Bot(commands.Bot):
         await self.cmd.enable_cmd(cmd)
         self.add_command(commands.Command(cmd.name, self.template_command))
 
+
+    async def analyze_token(self, token: str) -> str:
+        """
+        Analyzes the token.
+
+        Parameters
+        ----------
+        token : str
+            The token.
+
+        Returns
+        -------
+        str
+            The analyzed token.
+        """
+
+        self.logger.debug(f"Analyzing token: {token}")
+
+        if token.startswith("$url"):
+            token = token.replace("$url(", "")
+            if token[-1] == ',':
+                token = token[:-1]
+            if token[-1] == ')':
+                token = token[:-1]
+
+            
+
+            async with aiohttp.ClientSession() as session:
+                async with session.get(token) as response:
+                    return await response.text()
+
+        elif token.startswith("$random"):
+            token = token.replace("$random(", "")
+            token = token.split(")")[0]
+            token = token.split(",") 
+        
+            for value in token:
+                if not value.isdigit():
+                    return f"Invalid value: {value}"
+            
+            i,j = (int(token[0], base=10), int(token[1], base=10))
+
+            if i > j:
+                return f"Invalid values: {i}, must be lower than {j}"
+
+            return str(random.randint(i, j))
+
+        return token
+
+    async def analyze_cmd_comtent(self, content: str) -> str:
+        """
+        Analyzes the command content.
+
+        Parameters
+        ----------
+        content : str
+            The content of the command.
+
+        Returns
+        -------
+        str
+            The analyzed content.
+        """
+
+        tokens = content.split(" ")
+
+        for token in tokens:
+            if token.startswith("$"):
+                content = content.replace(token, await self.analyze_token(token))
+
+        return content
+
+
     # create a generic template for adding your own commands
     async def template_command(self, ctx: commands.Context) -> None:
         """
@@ -620,6 +695,8 @@ class Bot(commands.Bot):
             return
 
         content = cmd.description
+
+        content = await self.analyze_cmd_comtent(content);
 
         await self.cmd.increment_usage(ctx.command.name)
         await ctx.send(f"{content}")

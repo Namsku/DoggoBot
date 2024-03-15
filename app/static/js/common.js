@@ -1,5 +1,3 @@
-
-
 async function processFormSubmission(form_id, message_id) {
   // Select all forms with the class "form-command"
   let forms = document.querySelectorAll(form_id);
@@ -17,23 +15,16 @@ async function processFormSubmission(form_id, message_id) {
       let object = {};
 
       for (let [key, value] of formData.entries()) {
+        console.log(key, value);
         if (key !== 'update_type') {
           if (key === 'import-file') {
             // Parse the file and convert it to a JSON object
-            value = await new Promise((resolve, reject) => {
-              let reader = new FileReader();;
-              reader.onload = function(e) {
-                try {
-                  let json = JSON.parse(e.target.result);
-                  resolve(json);
-                } catch (err) {
-                  reject(err);
-                }
-              };
-              reader.onerror = reject;
-              reader.readAsText(value);
-            });
+            value = await parseFile(value);
             object[key] = value;
+          } else if (key === 'file') {
+            // Send the file to the server
+            result = await uploadFile(value);            
+            object[key] = result["success"];
           } else {
             object[key] = value;
           }
@@ -75,6 +66,39 @@ async function processFormSubmission(form_id, message_id) {
       event.preventDefault();
     });
   });
+}
+
+async function parseFile(file) {
+  return new Promise((resolve, reject) => {
+    let reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        let json = JSON.parse(e.target.result);
+        resolve(json);
+      } catch (err) {
+        reject(err);
+      }
+    };
+    reader.onerror = reject;
+    reader.readAsText(file);
+  });
+}
+
+async function uploadFile(file) {
+  let formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch("/api/upload", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data;
 }
 
 async function processForms(actions, id) {

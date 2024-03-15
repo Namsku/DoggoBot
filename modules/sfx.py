@@ -17,7 +17,7 @@ class SFXEvent:
     group_id: int
     sfx_id: int
     name: str
-    path: str
+    file: str
     volume: int
     cost: int
     cooldown: int
@@ -87,7 +87,7 @@ class SFXCog(commands.Cog):
                 CREATE TABLE IF NOT EXISTS sfx_event (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT NOT NULL,
-                    path TEXT NOT NULL,
+                    file TEXT NOT NULL,
                     volume INTEGER NOT NULL,
                     cost INTEGER NOT NULL,
                     cooldown INTEGER NOT NULL,
@@ -117,29 +117,6 @@ class SFXCog(commands.Cog):
     async def reset_player(self):
         self.player.volume = 100
         self.player.stop()
-
-    async def hash_file(self, filepath):
-        """Return the MD5 hash of a file."""
-        hasher = hashlib.md5()
-        with open(filepath, "rb") as f:
-            for chunk in iter(lambda: f.read(4096), b""):
-                hasher.update(chunk)
-        return hasher.hexdigest()
-
-    async def copy_sfx_files(self, source_folder, dest_folder=Path("data/sfx")):
-        dest_folder.mkdir(parents=True, exist_ok=True)
-
-        for source_path in source_folder.glob("*.[mM][pP]3") + source_folder.glob("*.[wW][aA][vV]"):
-            hash_name = await self.hash_file(source_path)
-            dest_path = dest_folder / (hash_name + source_path.suffix)
-
-            if not dest_path.exists():
-                dest_path.write_bytes(source_path.read_bytes())
-                await self.connection.execute(
-                    "INSERT INTO sfx (name, path, volume, cost, cooldown) VALUES (?, ?, ?, ?, ?)",
-                    (source_path.name, str(dest_path), 100, 1000, 10),
-                )
-                await self.connection.commit()
 
     async def export_sfx_full_config(self, dest_folder=Path("data/sfx")):
         await self.copy_sfx_files(Path("data/sfx"), dest_folder)
@@ -174,7 +151,7 @@ class SFXCog(commands.Cog):
                 if line:
                     values = line.split(",")
                     await cursor.execute(
-                        "INSERT INTO sfx (name, path, volume, cost, cooldown, soundcard) VALUES (?, ?, ?, ?, ?, ?)",
+                        "INSERT INTO sfx (name, file, volume, cost, cooldown, soundcard) VALUES (?, ?, ?, ?, ?, ?)",
                         (
                             values[1],
                             values[2],
@@ -206,13 +183,15 @@ class SFXCog(commands.Cog):
         return {"success": "SFX Event added successfully"}
     
     async def check_sfxevent_dict(self, sfxevent: dict):
+
         self.logger.debug(f"{sfxevent} -> {type(sfxevent)}")
+
         if not sfxevent['name']:
             return {"error": "Name is required"}
         if await self.is_name_exists_sfx_event(sfxevent['name']):
             return {"error": "Name already exists"}
-        
-        if not sfxevent['path']:
+
+        if not sfxevent['file']:
             return {"error": "Path is required"}
         if not sfxevent['volume']:
             return {"error": "Volume is required"}

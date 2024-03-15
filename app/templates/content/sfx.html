@@ -230,9 +230,10 @@
         <div id="create-error-message" class="alert alert-danger" style="display: none;"></div>
         <div id="create-success-message" class="alert alert-success" style="display: none;"></div>
 
-        <form id="create-event-form">
+        <form id="create-sfx-event-form" enctype="multipart/form-data">
 
           <input type="hidden" class="form-control" id="update_type" name="update_type" value="add_sfx_event">
+          <input type="hidden" class="form-control" id="sfx_group_id" name="sfx_group_id" value="{{ message['sfx'].group_id }}">
           <input type="hidden" class="form-control" id="sfx_id" name="sfx_id" value="{{ message['sfx'].id }}">
 
           <div class="mb-3">
@@ -259,7 +260,7 @@
             <label for="soundcard" class="form-label">Soundcard</label>
             <select class="form-select" id="soundcard" name="soundcard" required>
               {% for key, value in message['soundcards'].items() %}
-                <option value="{{key}}">{{ value.name }}</option>
+              <option value="{{key}}" {% if key|int == message['sfx'].soundcard|int %}selected{% endif %}>{{ value.name }}</option>
               {% endfor %}
             </select>
           </div>
@@ -291,7 +292,7 @@
         <div id="edit-error-message" class="alert alert-danger" style="display: none;"></div>
         <div id="edit-success-message" class="alert alert-success" style="display: none;"></div>
 
-        <form id="edit-event-form">
+        <form id="edit-sfx-event-form">
 
           <input type="hidden" class="form-control" id="update_type" name="update_type" value="update_sfx_event">
 
@@ -303,29 +304,7 @@
             <textarea class="form-control" id="message" name="message" rows="3"></textarea>
           </div>
 
-          <div class="mb-3">
-            <label for="type" class="form-label">Type</label>
-            <select class="form-select" id="type" name="type" aria-label="Default select example">
-              <option selected>Select type</option>
-              <option value="Normal">Normal</option>
-              <option value="Treasure">Treasure</option>
-              <option value="Trap">Trap</option>
-              <option value="Monster">Monster</option>
-              <option value="Boss">Boss</option>
-            </select>
-          </div>
-
-          <div class="mb-3">
-            <label for="event" class="form-label">Event</label>
-            <select class="form-select" id="event" name="event" aria-label="Default select example">
-              <option selected>Select event</option>
-              <option value="Win">Win</option>
-              <option value="Tie">Tie</option>
-              <option value="Loss">Loss</option>
-            </select>
-          </div>
-
-          <button type="submit" id="add-event-form" class="btn btn-primary">Submit</button>
+          <button type="submit" id="add-sfx-event-form" class="btn btn-primary">Submit</button>
         </form>
       </div>
       <div class="modal-footer">
@@ -429,24 +408,7 @@
     addImportEventListeners();
 
     // Process forms for create, edit, and delete actions
-    processForms(['create','edit', 'delete', 'import'], 'sfx_event');
+    processForms(['create','edit', 'delete', 'import'], 'sfx-event');
     fadeOutAlert();
 
-    window.onload = async function() {
-        sfxIdValue = '/' + sfxIdValue;
-
-        var charts = [
-            {id: 'event-type-chart', endpoint: '/api/events/type', title: 'Event Stats'},
-            {id: 'event-ratio-chart', endpoint: '/api/events/actions', title: 'Ratio Stats'},
-            {id: 'event-normal-chart', endpoint: '/api/events/normal', title: 'Normal Event Stats'},
-            {id: 'event-treasure-chart', endpoint: '/api/events/treasure', title: 'Treasure Event Stats'},
-            {id: 'event-trap-chart', endpoint: '/api/events/trap', title: 'Trap Event Stats'},
-            {id: 'event-monster-chart', endpoint: '/api/events/monster', title: 'Monster Event Stats'},
-            {id: 'event-boss-chart', endpoint: '/api/events/boss', title: 'Boss Event Stats'}
-        ];
-
-        charts.forEach(chart => {
-            generateChart(chart.id, chart.endpoint + sfxIdValue, 'pie', chart.title);
-        });
-    };
 </script>
