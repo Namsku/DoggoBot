@@ -46,9 +46,11 @@
 {% macro generate_game_table_row(msg) %}
   <tr>
     <td>{{ msg.id }}</td>
-    <td>{{ msg.message }}</td>
-    <td>{{ msg.type }}</td>
-    <td>{{ msg.event }}</td>
+    <td>{{ msg.name }}</td>
+    <td>{{ msg.volume }}</td>
+    <td>{{ msg.cost }}</td>
+    <td>{{ msg.cooldown }}</td>
+    <td>{{ msg.soundcard }}</td>
     <td>{{ generate_buttons(msg.id) }}</td>
   </tr>
 {% endmacro %}
@@ -176,7 +178,7 @@
   <div class="col-12 mt-4">
     <div class="row">
       <div class="col">
-        <h3>Events</h1>
+        <h3>SFX Events</h1>
       </div>
       <div class="col  d-flex justify-content-end mb-4">
         <!-- Make a add command button on the right side of the div class -->
@@ -292,19 +294,47 @@
         <div id="edit-error-message" class="alert alert-danger" style="display: none;"></div>
         <div id="edit-success-message" class="alert alert-success" style="display: none;"></div>
 
-        <form id="edit-sfx-event-form">
+        <form id="edit-sfx-event-form" enctype="multipart/form-data">
 
-          <input type="hidden" class="form-control" id="update_type" name="update_type" value="update_sfx_event">
-
-          <input type="hidden" class="form-control" id="id" name="id" value="">
-          <input type="hidden" class="form-control" id="sfx_id" name="sfx_id" value="{{ message['events'].sfx_id }}">
+          <input type="hidden" class="form-control" id="update_type" name="update_type" value="edit_sfx_event">
+          <input type="hidden" class="form-control" id="sfx_group_id" name="sfx_group_id" value="{{ message['sfx'].group_id }}">
+          <input type="hidden" class="form-control" id="sfx_id" name="sfx_id" value="{{ message['sfx'].id }}">
 
           <div class="mb-3">
-            <label for="message" class="form-label">Message</label>
-            <textarea class="form-control" id="message" name="message" rows="3"></textarea>
+            <label for="name" class="form-label">Name</label>
+            <input type="text" class="form-control" id="name" name="name" required>
           </div>
 
-          <button type="submit" id="add-sfx-event-form" class="btn btn-primary">Submit</button>
+          <div class="mb-3">
+            <label for="volume" class="form-label">Volume</label>
+            <input type="range" class="form-range" id="volume" name="volume" min="0" max="100" value="{{ message['sfx'].volume }}" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="cost" class="form-label">Cost</label>
+            <input type="number" class="form-control" id="cost" name="cost" value="{{ message['sfx'].cost }}" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="cooldown" class="form-label">Cooldown</label>
+            <input type="number" class="form-control" id="cooldown" name="cooldown" value="{{ message['sfx'].cooldown }}" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="soundcard" class="form-label">Soundcard</label>
+            <select class="form-select" id="soundcard" name="soundcard" required>
+              {% for key, value in message['soundcards'].items() %}
+              <option value="{{key}}" {% if key|int == message['sfx'].soundcard|int %}selected{% endif %}>{{ value.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="file" class="form-label">Upload File</label>
+            <input type="file" class="form-control" id="file" name="file" required>
+          </div>
+
+          <button type="submit" id="edit-event-form" class="btn btn-primary">Submit</button>
         </form>
       </div>
       <div class="modal-footer">
@@ -328,12 +358,12 @@
           <div id="delete-success-message" class="alert alert-success" style="display: none;"></div>
           Are you sure you want to delete this event?
         </div>
-        <form id="delete-event-form">
+        <form id="delete-sfx-event-form">
         <input type="hidden" class="form-control" id="delete-name" name="name" value="">
         <input type="hidden" class="form-control" id="update_type" name="update_type" value="delete_sfx_event">
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
-          <button type="submit" id="delete-event-form" class="btn btn-primary">Yes</button>
+          <button type="submit" id="delete-sfx-event-form" class="btn btn-primary">Yes</button>
         </div>
       </form>
     </div>

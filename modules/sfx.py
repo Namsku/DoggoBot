@@ -14,14 +14,14 @@ from modules.logger import Logger
 @dataclass
 class SFXEvent:
     id: int
-    group_id: int
-    sfx_id: int
     name: str
     file: str
     volume: int
     cost: int
     cooldown: int
     soundcard: str
+    group_id: int
+    sfx_id: int
 
 @dataclass
 class SFX:
@@ -173,18 +173,16 @@ class SFXCog(commands.Cog):
         check = await self.check_sfxevent_dict(sfxevent)
         if check.get("error"):
             return check
-        
+
         await self.connection.execute(
-            "INSERT INTO sfx_event (name, path, volume, cost, cooldown, soundcard, group_id, sfx_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            (sfxevent['name'], sfxevent['path'], sfxevent['volume'], sfxevent['cost'], sfxevent['cooldown'], sfxevent['soundcard'], sfxevent['group_id'], sfxevent['sfx_id'])
+            "INSERT INTO sfx_event (sfx_id, group_id, name, file, volume, cost, cooldown, soundcard) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (sfxevent['sfx_id'], sfxevent['sfx_group_id'], sfxevent['name'], sfxevent['file'], sfxevent['volume'], sfxevent['cost'], sfxevent['cooldown'], sfxevent['soundcard'])
         )
         await self.connection.commit()
 
         return {"success": "SFX Event added successfully"}
     
     async def check_sfxevent_dict(self, sfxevent: dict):
-
-        self.logger.debug(f"{sfxevent} -> {type(sfxevent)}")
 
         if not sfxevent['name']:
             return {"error": "Name is required"}
@@ -215,7 +213,7 @@ class SFXCog(commands.Cog):
 
         if not sfxevent['soundcard']:
             return {"error": "Soundcard is required"}
-        if not sfxevent['group_id']:
+        if not sfxevent['sfx_group_id']:
             return {"error": "Group ID is required"}
         if not sfxevent['sfx_id']:
             return {"error": "SFX ID is required"}
@@ -236,7 +234,7 @@ class SFXCog(commands.Cog):
     
     async def delete_sfx_event(self, msg):
         name = msg["name"]
-        await self.connection.execute("DELETE FROM sfx_event WHERE name = ?", (name,))
+        await self.connection.execute("DELETE FROM sfx_event WHERE id = ?", (name,))
         await self.connection.commit()
         
         return {"success": "SFX Event deleted successfully"}

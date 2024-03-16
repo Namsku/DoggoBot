@@ -562,6 +562,7 @@ class Server(Bot):
             "delete_cmd": self.bot.cmd.delete_cmd,
             "delete_event": self.bot.gms.rpg.delete_rpg_event_by_id,
             "delete_sfx": self.bot.sfx.delete_sfx_group,
+            "delete_sfx_event": self.bot.sfx.delete_sfx_event,
             "game": self.update_game_status,
             "import_event": self.import_events,
             "update_cmd": self.update_cmd,

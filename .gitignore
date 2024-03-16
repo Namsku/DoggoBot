@@ -6,6 +6,7 @@
 
 ### Data folder ###
 data/database
+data/sfx
 data/logs
 
 ### Git ###
