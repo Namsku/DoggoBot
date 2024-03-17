@@ -76,6 +76,7 @@ class Bot(commands.Bot):
 
         await self._ainit_env()
         await self._ainit_user_commands()
+        await self._ainit_sfx_commands()
 
     async def _ainit_database_conn(self, channel_cog: ChannelCog) -> None:
         """
@@ -200,6 +201,25 @@ class Bot(commands.Bot):
                 self.add_command(commands.Command(cmd.name, self.template_command))
 
         self.logger.debug(f"User commands initialized. {len(cmds)}")
+
+    async def _ainit_sfx_commands(self) -> None:
+        """
+        Initializes the sfx commands.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+
+        sfxs = await self.sfx.get_all_sfxevents()
+        for sfx in sfxs:
+            self.add_command(commands.Command(sfx.name, self.sfx.template_sfx))
+
+        self.logger.debug(f"SFX commands initialized. {len(sfxs)}")
 
     async def _get_channel_members(self) -> None:
         """

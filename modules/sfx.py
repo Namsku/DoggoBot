@@ -1,6 +1,7 @@
 import hashlib
 import zipfile
 import aiosqlite
+import os
 
 from pathlib import Path
 from contextlib import closing
@@ -129,11 +130,13 @@ class SFXCog(commands.Cog):
         """
 
         self.logger.debug(f'SFX event named "{ctx.command.name}" called')
-        sfx: SFXEvent = await self.sfx.get_sfx_event_by_name(ctx.command.name)
+        sfx: SFXEvent = await self.get_sfx_event_by_name(ctx.command.name)
 
         if len(ctx.message.content.split()) != 1:
             await ctx.send(f"Usage: !{sfx.name}")
             return
+
+        await self.play_sfx(sfx)
 
     """
 
@@ -548,18 +551,30 @@ class SFXCog(commands.Cog):
 
         return SFX(*sfx)
 
+    async def get_all_sfxevents(self):
+        async with self.connection.execute("SELECT * FROM sfx_event") as cursor:
+            sfx = await cursor.fetchall()
+
+        sfx = [SFXEvent(*event) for event in sfx]
+
+        return sfx
+
     """
 
         PLAYER CORE
     
     """
 
-    async def play_sfx(self, ctx: commands.Context, sfx: SFXEvent):
+    async def play_sfx(self, sfx: SFXEvent):
         self.logger.debug(f'Playing SFX event "{sfx.name}"')
-        sound = sounds.Sound("/data/sfx/" + sfx.file)
+        print(os.getcwd())
+        filepath = "data/sfx/" + sfx.file
+        sound = sounds.Sound(source=filepath)
+        self.logger.debug(f"data/sfx/{sfx.file}")
         self.player.volume = sfx.volume
         self.player.play(sound)
 
     async def reset_player(self):
         self.player.volume = 100
         self.player.stop()
+        self.logger.debug("SFX Player done")
