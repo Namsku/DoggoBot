@@ -52,6 +52,7 @@ class Server(Bot):
         # self.router.add_api_route("/api/gatcha/events/{id}", self.get_all_gatch_events_by_id, methods=["GET"])
         self.router.add_api_route("/api/command", self.get_command, methods=["POST"])
         self.router.add_api_route("/api/rpg", self.get_rpg_event, methods=["POST"])
+        self.router.add_api_route("/api/sfx", self.get_sfx_event, methods=["POST"])
         self.router.add_api_route("/api/update", self.update_database, methods=["POST"])
         self.router.add_api_route(
             "/api/events/{type}/{id}", self.get_events, methods=["GET"]
@@ -261,7 +262,7 @@ class Server(Bot):
         return self.templates.TemplateResponse(
             "index.html", {"request": request, "message": message}
         )
-    
+
     async def sfx(self, request: Request, name: str):
         message = {}
         status = "none"
@@ -279,7 +280,7 @@ class Server(Bot):
         return self.templates.TemplateResponse(
             "index.html", {"request": request, "message": message}
         )
-    
+
     async def save_sfx_settings(self, request: Request):
         """
         Saves the sfx settings.
@@ -307,7 +308,6 @@ class Server(Bot):
         result = await self.bot.sfx.update_sfx(form)
 
         return result
-
 
     async def curse(self, request: Request):
         """
@@ -566,6 +566,7 @@ class Server(Bot):
             "game": self.update_game_status,
             "import_event": self.import_events,
             "update_cmd": self.update_cmd,
+            "update_sfx_event": self.bot.sfx.update_sfx_event,
             "update_event": self.update_event,
         }
 
@@ -712,17 +713,20 @@ class Server(Bot):
 
         return {"success": "Events imported successfully."}
 
-    async def upload(self, request: Request, file: UploadFile = File(...)) -> dict:        
+    async def upload(self, request: Request, file: UploadFile = File(...)) -> dict:
         message = {}
         status = "none"
 
         if request.method == "POST":
             # Get the file extension
-            file_extension = file.filename.split('.')[-1]
+            file_extension = file.filename.split(".")[-1]
 
             # Check if the file is an audio file or an archive
-            if file_extension not in ['mp3', 'wav', 'flac']:
-                raise HTTPException(status_code=400, detail="Invalid file type. Please upload an audio file or an archive.")
+            if file_extension not in ["mp3", "wav", "flac"]:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid file type. Please upload an audio file or an archive.",
+                )
 
             contents = await file.read()
             result = await self.upload_sound_file(contents)
@@ -730,12 +734,12 @@ class Server(Bot):
             message[status] = result.get(status)
 
         return message
-    
+
     async def hash_file(self, content: bytes) -> str:
         """Return the MD5 hash of a file."""
         hasher = hashlib.md5(content)
         return hasher.hexdigest()
-    
+
     async def upload_sound_file(self, contents: bytes) -> dict:
         dest_folder = Path("data/sfx")
         dest_folder.mkdir(parents=True, exist_ok=True)
@@ -747,5 +751,16 @@ class Server(Bot):
             dest_path.write_bytes(contents)
 
         return {"success": hash_name}
-            
 
+    async def get_sfx_event(self, request: Request) -> dict:
+        """Gets a sfx event."""
+
+        json = await request.json()
+        self.bot.logger.debug(f"get_sfx_event -> json: {json}")
+
+        for key, value in json.items():
+            if key == "sfx":
+                # convert cmd to json
+                event = await self.bot.sfx.get_sfx_event_by_id(value)
+
+                return asdict(event)

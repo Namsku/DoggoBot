@@ -296,28 +296,27 @@
 
         <form id="edit-sfx-event-form" enctype="multipart/form-data">
 
-          <input type="hidden" class="form-control" id="update_type" name="update_type" value="edit_sfx_event">
-          <input type="hidden" class="form-control" id="sfx_group_id" name="sfx_group_id" value="{{ message['sfx'].group_id }}">
-          <input type="hidden" class="form-control" id="sfx_id" name="sfx_id" value="{{ message['sfx'].id }}">
+          <input type="hidden" class="form-control" id="update_type" name="update_type" value="update_sfx_event">
+          <input type="hidden" class="form-control" id="sfx_event_id" name="sfx_event_id">
 
           <div class="mb-3">
             <label for="name" class="form-label">Name</label>
-            <input type="text" class="form-control" id="name" name="name" required>
+            <input type="text" class="form-control" id="name" name="name" readonly>
           </div>
 
           <div class="mb-3">
             <label for="volume" class="form-label">Volume</label>
-            <input type="range" class="form-range" id="volume" name="volume" min="0" max="100" value="{{ message['sfx'].volume }}" required>
+            <input type="range" class="form-range" id="volume" name="volume" min="0" max="100" required>
           </div>
 
           <div class="mb-3">
             <label for="cost" class="form-label">Cost</label>
-            <input type="number" class="form-control" id="cost" name="cost" value="{{ message['sfx'].cost }}" required>
+            <input type="number" class="form-control" id="cost" name="cost" required>
           </div>
 
           <div class="mb-3">
             <label for="cooldown" class="form-label">Cooldown</label>
-            <input type="number" class="form-control" id="cooldown" name="cooldown" value="{{ message['sfx'].cooldown }}" required>
+            <input type="number" class="form-control" id="cooldown" name="cooldown" required>
           </div>
 
           <div class="mb-3">
@@ -327,11 +326,6 @@
               <option value="{{key}}" {% if key|int == message['sfx'].soundcard|int %}selected{% endif %}>{{ value.name }}</option>
               {% endfor %}
             </select>
-          </div>
-
-          <div class="mb-3">
-            <label for="file" class="form-label">Upload File</label>
-            <input type="file" class="form-control" id="file" name="file" required>
           </div>
 
           <button type="submit" id="edit-event-form" class="btn btn-primary">Submit</button>

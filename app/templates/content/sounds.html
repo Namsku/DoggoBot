@@ -4,27 +4,6 @@
   {{ request.url.path.split('/')[-1] }} 
 {% endmacro %}
 
-{% macro generate_switch(value, name) %}
-  <div class="form-check form-switch">
-    <input class="form-check-input" type="checkbox" role="switch" id="switch-{{name}}" {{ 'checked' if value == 1 else '' }}>
-    <label class="form-check-label" for="switch-{{name}}"></label>
-  </div>
-{% endmacro %}
-
-{% macro generate_switch(value, name) %}
-  {% if value == 1 %} 
-    <div class="form-check form-switch">
-    <input class="form-check-input" type="checkbox" role="switch" id="switch-{{name}}" checked>
-    <label class="form-check-label" for="switch-{{name}}"></label>
-    </div>
-  {% else %}
-    <div class="form-check form-switch">
-    <input class="form-check-input" type="checkbox" role="switch" id="switch-{{name}}">
-    <label class="form-check-label" for="switch-{{name}}"></label>
-    </div>
-  {% endif %}
-{% endmacro %}
-
 {% macro generate_buttons(type, id, category) %}
 <button type="button" id="open-sfx" class="btn btn-primary" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;" onclick="window.location.href='/sfx/{{id}}';">
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pen" viewBox="0 0 16 16">
@@ -45,7 +24,6 @@
     <td>{{ msg['name'] }}</td>
     <td>{{ msg['category'] }}</td>
     <td>{{ msg['description'] }}</td>
-    <td>{{ generate_switch(msg['status'],msg['name']).strip() }}</td>
     <td>{{ generate_buttons(msg['type'], msg['name'], msg['category'].lower() ) }}</td>
   </tr> 
 {% endmacro %}
@@ -113,7 +91,6 @@
             <th scope="col" class="w-10">Name</th>
             <th scope="col" class="w-10">Category</th>
             <th scope="col" class="w-65">Description</th>
-            <th scope="col" class="w-5">Status</th>
             <th scope="col" class="w-10">Action</th>
           </tr>
         </thead>

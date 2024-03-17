@@ -116,7 +116,7 @@ class Bot(commands.Bot):
         self.cmd = CmdCog(self.connection_cmd, self)
         self.msg = MessageCog(self.connection_message)
         self.usr = UserCog(channel_cog, self.connection_user)
-        self.sfx = SFXCog(self.connection_sfx)
+        self.sfx = SFXCog(self.connection_sfx, self)
         self.gms = GamesCog(self.connection_games, self)
         self.logger.info("Database classes initialized.")
 
@@ -599,7 +599,6 @@ class Bot(commands.Bot):
         await self.cmd.enable_cmd(cmd)
         self.add_command(commands.Command(cmd.name, self.template_command))
 
-
     async def analyze_token(self, token: str) -> str:
         """
         Analyzes the token.
@@ -619,12 +618,10 @@ class Bot(commands.Bot):
 
         if token.startswith("$url"):
             token = token.replace("$url(", "")
-            if token[-1] == ',':
+            if token[-1] == ",":
                 token = token[:-1]
-            if token[-1] == ')':
+            if token[-1] == ")":
                 token = token[:-1]
-
-            
 
             async with aiohttp.ClientSession() as session:
                 async with session.get(token) as response:
@@ -633,13 +630,13 @@ class Bot(commands.Bot):
         elif token.startswith("$random"):
             token = token.replace("$random(", "")
             token = token.split(")")[0]
-            token = token.split(",") 
-        
+            token = token.split(",")
+
             for value in token:
                 if not value.isdigit():
                     return f"Invalid value: {value}"
-            
-            i,j = (int(token[0], base=10), int(token[1], base=10))
+
+            i, j = (int(token[0], base=10), int(token[1], base=10))
 
             if i > j:
                 return f"Invalid values: {i}, must be lower than {j}"
@@ -671,7 +668,6 @@ class Bot(commands.Bot):
 
         return content
 
-
     # create a generic template for adding your own commands
     async def template_command(self, ctx: commands.Context) -> None:
         """
@@ -696,7 +692,7 @@ class Bot(commands.Bot):
 
         content = cmd.description
 
-        content = await self.analyze_cmd_comtent(content);
+        content = await self.analyze_cmd_comtent(content)
 
         await self.cmd.increment_usage(ctx.command.name)
         await ctx.send(f"{content}")
