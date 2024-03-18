@@ -702,6 +702,8 @@ class Bot(commands.Bot):
         -------
         None
         """
+        
+
 
         self.logger.debug(f'User command named "{ctx.command.name}" called')
         cmd: Cmd = await self.cmd.get_cmd(ctx.command.name)
@@ -709,6 +711,13 @@ class Bot(commands.Bot):
         if len(ctx.message.content.split()) != 1:
             await ctx.send(f"Usage: !{cmd.name}")
             return
+        
+        user = ctx.author.name.lower()
+
+        if user not in self.channel_members:
+            await ctx.send(f"{user} is not following the channel.")
+            return
+
 
         content = cmd.description
 
@@ -906,3 +915,4 @@ class Bot(commands.Bot):
             await ctx.send(f"{user} has been awarded {num} {self.coin_name}")
         except ValueError:
             await ctx.send("Usage: !add <user> <number>")
+

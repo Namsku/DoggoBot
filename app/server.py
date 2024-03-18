@@ -273,6 +273,7 @@ class Server(Bot):
             message[status] = result.get(status)
 
         message["status"] = status
+        message["name"] = name
         message["sfx"] = await self.bot.sfx.get_sfx_from_group_name(name)
         message["soundcards"] = self.bot.sfx.player.devices
         message["events"] = await self.bot.sfx.get_all_sfx_events_from_group_name(name)

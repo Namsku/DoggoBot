@@ -576,6 +576,13 @@ class CmdCog(commands.Cog):
         None
         """
 
+        
+        user = ctx.author.name.lower()
+
+        if user not in self.bot.channel_members:
+            await ctx.send(f"{user} is not following the channel.")
+            return
+
         # give the full list of commands that are currently available from the bot
         bot_list = list(sorted([f"!{cmd}" for cmd in self.bot.commands.keys()]))
 
@@ -597,6 +604,13 @@ class CmdCog(commands.Cog):
         None
         """
 
+        
+        user = ctx.author.name.lower()
+
+        if user not in self.bot.channel_members:
+            await ctx.send(f"{user} is not following the channel.")
+            return
+
         await ctx.send("📢 The full list is on my discord (!socials for more info)")
 
     @commands.command(name="clip")
@@ -614,14 +628,24 @@ class CmdCog(commands.Cog):
         None
         """
 
+        '''
+            user = ctx.author.name.lower()
+
+            if user not in self.bot.channel_members:
+                await ctx.send(f"{user} is not following the channel.")
+                return
+        '''
+
         if len(ctx.message.content.split()) != 1:
-            await ctx.send("Usage: !clip")
-            return
+                await ctx.send("Usage: !clip")
+                return
+
 
         dict = await self.bot.user.create_clip(token=self.bot.token)
+        ssss = await self.bot.fetch_clips(dict['id'])
 
         await self.increment_usage(ctx.command.name)
-        self.logger.info(f"Clip created -> {dict}")
+        self.logger.info(f"Clip created -> {dict} -> {ssss}")
 
     async def _fill_default_table(self) -> None:
         """

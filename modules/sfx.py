@@ -129,6 +129,13 @@ class SFXCog(commands.Cog):
         None
         """
 
+        
+        user = ctx.author.name.lower()
+
+        if user not in self.bot.channel_members:
+            await ctx.send(f"{user} is not following the channel.")
+            return
+
         self.logger.debug(f'SFX event named "{ctx.command.name}" called')
         sfx: SFXEvent = await self.get_sfx_event_by_name(ctx.command.name)
 
