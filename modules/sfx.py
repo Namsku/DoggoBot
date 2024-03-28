@@ -574,7 +574,6 @@ class SFXCog(commands.Cog):
 
     async def play_sfx(self, sfx: SFXEvent):
         self.logger.debug(f'Playing SFX event "{sfx.name}"')
-        print(os.getcwd())
         filepath = "data/sfx/" + sfx.file
         sound = sounds.Sound(source=filepath)
         self.logger.debug(f"data/sfx/{sfx.file}")

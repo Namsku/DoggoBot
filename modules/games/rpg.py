@@ -879,7 +879,7 @@ class RpgCog(commands.Cog):
             else:
                 return None
 
-        async def start_game(self) -> list:
+    async def start_game(self) -> list:
             """
             Get all rpg events by active groups from the database.
 
@@ -909,4 +909,7 @@ class RpgCog(commands.Cog):
                         events.append(content)
                     else:
                         events.append({})
+
+            print(events)
+            
             return events

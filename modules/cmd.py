@@ -646,6 +646,7 @@ class CmdCog(commands.Cog):
 
         await self.increment_usage(ctx.command.name)
         self.logger.info(f"Clip created -> {dict} -> {ssss}")
+        await ctx.send(f"📢 Clip created -> {dict['edit_url'].replace('/edit','')}")
 
     async def _fill_default_table(self) -> None:
         """
