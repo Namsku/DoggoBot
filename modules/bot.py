@@ -1,31 +1,30 @@
-from modules.logger import Logger
-from modules.user import UserCog
-from modules.sfx import SFXCog
+import random
+import aiohttp
 from modules.channel import ChannelCog
-from modules.message import MessageCog
 from modules.cmd import CmdCog, Cmd
 from modules.games.common import GamesCog
-
-import aiosqlite
+from modules.logger import Logger
+from modules.message import MessageCog
+from modules.sfx import SFXCog
+from modules.user import UserCog
 
 from twitchio import ChannelFollowerEvent, Message
-from twitchio.ext import commands
 from twitchio.channel import Channel
+from twitchio.ext import commands
 from twitchio.user import User
 
-# from twitchio.ext import eventsub
-
 import os
+import aiosqlite
 
 
 class Bot(commands.Bot):
-    def __init__(self, channel: ChannelCog) -> None:
+    def __init__(self, channel_cog: ChannelCog) -> None:
         """
         Initializes a new bot object.
 
         Parameters
         ----------
-        channel : ChannelCog
+        channel_cog : ChannelCog
             The channel object.
 
         Returns
@@ -34,8 +33,9 @@ class Bot(commands.Bot):
         """
 
         self.token = self.get_twitch_secret_token()
-        self.channel_id = channel.streamer_channel
-        self.prefix = channel.prefix
+        self.decapi_token = self.get_decapi_secret_token()
+        self.channel_id = channel_cog.channel.streamer_channel
+        self.prefix = channel_cog.channel.prefix
 
         super().__init__(
             token=self.token,
@@ -46,16 +46,17 @@ class Bot(commands.Bot):
         self.active = False
         self.initialized = False
 
-        self.bot_name = channel.bot_name
+        self.bot_name = channel_cog.channel.bot_name
+        self.user = None
         self.user_bots = None
         self.client_id = self.get_twitch_client_token()
 
         self.channel_members = None
-        self.coin_name = channel.coin_name
+        self.coin_name = channel_cog.channel.coin_name
         self.logger = Logger(__name__)
         self.server = None
 
-    async def __ainit__(self, channel: ChannelCog) -> None:
+    async def __ainit__(self, channel_cog: ChannelCog) -> None:
         """
         Initializes the bot object.
 
@@ -68,11 +69,101 @@ class Bot(commands.Bot):
         -------
         None
         """
-        await self._ainit_database_conn(channel)
-        await self._ainit_database_classes(channel)
+        await self._ainit_database_conn(channel_cog)
+        await self._ainit_database_classes(channel_cog)
+        await self._ainit_cogs()
         await self._ainit_database_tables()
+
         await self._ainit_env()
         await self._ainit_user_commands()
+        await self._ainit_sfx_commands()
+
+    async def _ainit_database_conn(self, channel_cog: ChannelCog) -> None:
+        """
+        Initializes the database connection.
+
+        Parameters
+        ----------
+        channel : ChannelCog
+            The channel object.
+
+        Returns
+        -------
+        None
+        """
+        self.connection_channel = channel_cog.connection
+        self.connection_cmd = await aiosqlite.connect("data/database/cmd.sqlite")
+        self.connection_message = await aiosqlite.connect(
+            "data/database/message.sqlite"
+        )
+        self.connection_user = await aiosqlite.connect("data/database/user.sqlite")
+        self.connection_sfx = await aiosqlite.connect("data/database/sfx.sqlite")
+        self.connection_games = await aiosqlite.connect("data/database/games.sqlite")
+        self.logger.debug("Database connection established.")
+
+    async def _ainit_database_classes(self, channel_cog: ChannelCog) -> None:
+        """
+        Initializes the database classes.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+        self.channel = channel_cog
+        self.cmd = CmdCog(self.connection_cmd, self)
+        self.msg = MessageCog(self.connection_message)
+        self.usr = UserCog(channel_cog, self.connection_user)
+        self.sfx = SFXCog(self.connection_sfx, self)
+        self.gms = GamesCog(self.connection_games, self)
+        self.logger.info("Database classes initialized.")
+
+    async def _ainit_cogs(self) -> None:
+        """
+        Adds the Cog classes to the bot.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+        self.add_cog(self.cmd)
+        self.add_cog(self.msg)
+        self.add_cog(self.usr)
+        self.add_cog(self.sfx)
+        self.add_cog(self.gms)
+        self.add_cog(self.gms.gambling)
+        self.logger.info("Cogs added to the bot.")
+
+    async def _ainit_database_tables(self) -> None:
+        """
+        Initializes the database tables.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+        await self.channel.create_table()
+        await self.cmd.create_table()
+        await self.msg.create_table()
+        await self.usr.create_table()
+        await self.sfx.create_table()
+        await self.gms.create_table()
+
+        # if they are empty, add the default values
+        await self.cmd.__ainit__()
+        await self.gms.gambling.__ainit__()
+        self.logger.debug("Tables created.")
 
     async def __aclose__(self) -> None:
         """
@@ -90,69 +181,6 @@ class Bot(commands.Bot):
         await self.connection_channel.close()
         await self.connection_user.close()
         await self.connection_sfx.close()
-
-    async def _ainit_database_conn(self, channel: ChannelCog) -> None:
-        """
-        Initializes the database connection.
-
-        Parameters
-        ----------
-        channel : ChannelCog
-            The channel object.
-
-        Returns
-        -------
-        None
-        """
-        self.connection_channel = channel.connection
-        self.connection_cmd = await aiosqlite.connect("data/database/cmd.sqlite")
-        self.connection_message = await aiosqlite.connect("data/database/message.sqlite")
-        self.connection_user = await aiosqlite.connect("data/database/user.sqlite")
-        self.connection_sfx = await aiosqlite.connect("data/database/sfx.sqlite")
-        self.connection_games = await aiosqlite.connect("data/database/games.sqlite")
-        self.logger.debug("Database connection established.")
-
-    async def _ainit_database_classes(self, channel: ChannelCog) -> None:
-        """
-        Initializes the database classes.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
-        """
-        self.channel = channel
-        self.cmd = CmdCog(self.connection_cmd)
-        self.msg = MessageCog(self.connection_message)
-        self.usr = UserCog(channel, self.connection_user)
-        self.sfx = SFXCog(self.connection_sfx)
-        self.gms = GamesCog(self.connection_games)
-        self.logger.debug("Database classes initialized.")
-
-    async def _ainit_database_tables(self) -> None:
-        """
-        Initializes the database tables.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
-        """
-        await self.channel.create_table()
-        await self.cmd.create_table()
-        await self.cmd.fill_default_table()
-        await self.msg.create_table()
-        await self.usr.create_table()
-        await self.sfx.create_table()
-        await self.gms.create_table()
-        await self.gms.gambling.__ainit__()
-        self.logger.debug("Tables created.")
 
     async def _ainit_user_commands(self) -> None:
         """
@@ -173,6 +201,25 @@ class Bot(commands.Bot):
                 self.add_command(commands.Command(cmd.name, self.template_command))
 
         self.logger.debug(f"User commands initialized. {len(cmds)}")
+
+    async def _ainit_sfx_commands(self) -> None:
+        """
+        Initializes the sfx commands.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+
+        sfxs = await self.sfx.get_all_sfxevents()
+        for sfx in sfxs:
+            self.add_command(commands.Command(sfx.name, self.sfx.template_sfx))
+
+        self.logger.debug(f"SFX commands initialized. {len(sfxs)}")
 
     async def _get_channel_members(self) -> None:
         """
@@ -231,12 +278,29 @@ class Bot(commands.Bot):
         -------
         None
         """
-        if os.getenv("TWITCH_SECRET_TOKEN") and os.getenv("TWITCH_CLIENT_TOKEN"):
-            await self._get_channel_members()
-            await self._get_user_bots()
-            await self._update_user_database()
+        try:
+            if os.getenv("TWITCH_SECRET_TOKEN") and os.getenv("TWITCH_CLIENT_TOKEN"):
+                await self._get_channel_members()
+                await self._get_user_bots()
+                await self._update_user_database()
 
-            self.initialized = True
+                self.initialized = True
+        except Exception as e:
+            self.logger.error(f"Error while initializing environment: {e}")
+
+    def get_decapi_secret_token(self) -> str:
+        """
+        Gets the DecAPI secret token from the environment variables.
+
+        Returns
+        -------
+        str
+            The DecAPI secret token.
+        """
+        token = os.getenv("DECAPI_SECRET_TOKEN")
+        if token is None:
+            raise RuntimeError("DECAPI_SECRET_TOKEN environment variable is not set.")
+        return token
 
     def get_twitch_secret_token(self) -> str:
         """
@@ -328,7 +392,9 @@ class Bot(commands.Bot):
         self.logger.info(f"{name} -> {message.content}")
         return await super().event_message(message)
 
-    async def event_command_error(self, ctx: commands.Context, error: Exception) -> None:
+    async def event_command_error(
+        self, ctx: commands.Context, error: Exception
+    ) -> None:
         """
         Event called when a command error occurs.
 
@@ -412,10 +478,20 @@ class Bot(commands.Bot):
         -------
         None
         """
-        your_channel: [User] = await self.fetch_users([self.channel_id])
-        followers: [ChannelFollowerEvent] = await your_channel[0].fetch_channel_followers(self.token)
 
-        self.channel_members = [follower.user.name.lower() for follower in followers]
+        try:
+            your_channel: [User] = await self.fetch_users([self.channel_id])
+            followers: [ChannelFollowerEvent] = await your_channel[
+                0
+            ].fetch_channel_followers(self.token)
+
+            self.user = await self.fetch_users([self.channel_id])
+            self.user = self.user[0]
+            self.channel_members = [
+                follower.user.name.lower() for follower in followers
+            ]
+        except Exception as e:
+            self.logger.error(f"Error while fetching channel members: {e}")
 
     async def get_top_chatter(self) -> str:
         """
@@ -447,393 +523,6 @@ class Bot(commands.Bot):
         User
             The user object.
         """
-
-    @commands.command(name="ping")
-    async def ping(self, ctx: commands.Context) -> None:
-        """
-        Pings the bot.
-
-        Parameters
-        ----------
-        ctx : twitchio.Context
-            The context object.
-
-        Returns
-        -------
-        None
-        """
-        await ctx.send(f"Pong! {round(self.latency*1000)}ms")
-
-    @commands.command(name="shoutout", aliases=["so"])
-    async def shoutout(self, ctx: commands.Context) -> None:
-        """
-        Shoutouts a user.
-
-        Parameters
-        ----------
-        ctx : twitchio.Context
-            The context object.
-
-        Returns
-        -------
-        None
-        """
-
-        if len(ctx.message.content.split()) != 2:
-            await ctx.send("Usage: !so <user>")
-            return
-
-        user = ctx.content.split()[1].lower().replace("@", "")
-
-        await ctx.send(
-            f" 📢 Please give a look to our >>> {user} <<<, " f"Take a look at his twitch channel (twitch.tv/{str.lower(user)})"
-        )
-
-    @commands.command(name="topchatter")
-    async def topchatter(self, ctx: commands.Context) -> None:
-        """
-        Gets the top chatter.
-
-        Parameters
-        ----------
-        ctx : twitchio.Context
-            The context object.
-
-        Returns
-        -------
-        None
-        """
-
-        if len(ctx.message.content.split()) != 1:
-            await ctx.send("Usage: !topchatter")
-            return
-
-        user = await self.usr.get_top_chatter()
-
-        if user:
-            await ctx.send(f"The top chatter is {user}")
-        else:
-            await ctx.send("No top chatter found.")
-
-    @commands.command(name="mods")
-    async def info_mods(self, ctx: commands.Context):
-        """
-        Mods of the channel
-
-        Parameters
-        ----------
-        ctx : twitchio.Context
-            The context object.
-
-        Returns
-        -------
-        None
-        """
-        await ctx.send("📢 If you search a list of good mods/tools for RE, everything is on my discord (!socials for more info)")
-
-    @commands.command(name="balance")
-    async def balance(self, ctx: commands.Context) -> None:
-        """
-        Gets the balance of a user.
-
-        Parameters
-        ----------
-        ctx : twitchio.Context
-            The context object.
-
-        Returns
-        -------
-        None
-        """
-
-        if len(ctx.message.content.split()) != 1:
-            await ctx.send("Usage: !balance")
-            return
-
-        user = ctx.author.name.lower()
-
-        if user not in self.channel_members:
-            await ctx.send(f"{user} is not following the channel.")
-            return
-
-        await ctx.send(f"{user} has {await self.usr.get_balance(user)} {self.coin_name}")
-
-    @commands.command(name="schedule")
-    async def schedule(self, ctx: commands.Context):
-        """
-        Schedule of the streamer
-
-        Parameters
-        ----------
-        ctx : twitchio.Context
-            The context object.
-
-        Returns
-        -------
-        None
-        """
-
-        await ctx.send("WORK IN PROGRESS")
-
-    @commands.command(name="help")
-    async def help(self, ctx: commands.Context):
-        """
-        Help command
-
-        Parameters
-        ----------
-        ctx : twitchio.Context
-            The context object.
-
-        Returns
-        -------
-        None
-        """
-
-        await ctx.send(
-            "📢 available commands: !about !followage !followdate !gamble !help !income !mods !rpg !schedule !sfx !slots !so !socials !roll"
-        )
-
-    @commands.command(name="sfx")
-    async def sound_effects(self, ctx: commands.Context):
-        """
-        Sound effects command
-
-        Parameters
-        ----------
-        ctx : twitchio.Context
-            The context object.
-
-        Returns
-        -------
-        None
-        """
-
-        await ctx.send("📢 The full list is on my discord (!socials for more info)")
-
-    @commands.command(name="clip")
-    async def clip(self, ctx: commands.Context) -> None:
-        """
-        Creates a clip.
-
-        Parameters
-        ----------
-        ctx : twitchio.Context
-            The context object.
-
-        Returns
-        -------
-        None
-        """
-
-        if len(ctx.message.content.split()) != 1:
-            await ctx.send("Usage: !clip")
-            return
-
-        await ctx.send("Creating clip...")
-        await ctx.channel.create_clip()
-
-    @commands.command(name="followdate")
-    async def followdate(self, ctx: commands.Context) -> None:
-        """
-        Gets the followdate of a user.
-
-        Parameters
-        ----------
-        ctx : twitchio.Context
-            The context object.
-
-        Returns
-        -------
-        None
-        """
-
-        if len(ctx.message.content.split()) != 1:
-            await ctx.send("Usage: !followdate")
-            return
-
-        user = ctx.author.name.lower()
-
-        if user not in self.channel_members:
-            await ctx.send(f"{user} is not following the channel.")
-            return
-
-        await ctx.send(f"{user} has been following the channel since {await self.usr.get_followdate(user)}")
-
-    @commands.command(name="about")
-    async def about_bot(self, ctx: commands.Context):
-        """
-        About the bot.
-
-        Parameters
-        ----------
-        ctx : twitchio.Context
-            The context object.
-
-        Returns
-        -------
-        None
-        """
-
-        link = "discord.gg/SjGyhS9T"
-        await ctx.send(f"DoggoBot has been created by Fumi - If you want more info ping him on his Discord ({link})")
-
-    @commands.command(name="followage")
-    async def followage(self, ctx: commands.Context) -> None:
-        """
-        Gets the followage of a user.
-
-        Parameters
-        ----------
-        ctx : twitchio.Context
-            The context object.
-
-        Returns
-        -------
-        None
-        """
-
-        if len(ctx.message.content.split()) != 1:
-            await ctx.send("Usage: !followage")
-            return
-
-        user = ctx.author.name.lower()
-
-        if user not in self.channel_members:
-            await ctx.send(f"{user} is not following the channel.")
-            return
-
-        await ctx.send(f"{user} has been following the channel for {await self.usr.get_followage(user)}")
-
-    @commands.command(name="watchtime")
-    async def watchtime(self, ctx: commands.Context) -> None:
-        """
-        Gets the watchtime of a user.
-
-        Parameters
-        ----------
-        ctx : twitchio.Context
-            The context object.
-
-        Returns
-        -------
-        None
-        """
-
-        if len(ctx.message.content.split()) != 1:
-            await ctx.send("Usage: !watchtime")
-            return
-
-        user = ctx.author.name.lower()
-
-        if user not in self.channel_members:
-            await ctx.send(f"{user} is not following the channel.")
-            return
-
-        await ctx.send(f"{user} has been watching the channel for {await self.usr.get_watchtime(user)}")
-
-    @commands.command(name="slots")
-    async def slots(self, ctx: commands.Context) -> None:
-        """
-        Slots game.
-
-        Parameters
-        ----------
-        ctx : twitchio.Context
-            The context object.
-
-        Returns
-        -------
-        None
-        """
-
-        user = ctx.author.name.lower()
-        amount = ctx.content.split()[1]
-
-        if await self.usr.get_balance(user) < amount:
-            await ctx.send(f"{user} does not have enough coins.")
-            return
-
-        result = self.gms.get_slots_result()
-
-        if result["status"]:
-            await self.usr.update_user_balance(user, result["amount"])
-            await ctx.send(f"{' '.join(result['spin'])} | {user} won {result['amount']} {self.coin_name}!")
-        else:
-            await self.usr.update_user_balance(user, -result["amount"])
-            await ctx.send(f"{' '.join(result['spin'])} | {user} lost {result['amount']} {self.coin_name}!")
-
-    @commands.command(name="gamble")
-    async def gamble(self, ctx: commands.Context) -> None:
-        """
-        Gambles a certain amount of coins.
-
-        Parameters
-        ----------
-        ctx : twitchio.Context
-            The context object.
-
-        Returns
-        -------
-        None
-        """
-
-        if len(ctx.content.split()) != 2:
-            await ctx.send("Usage: !gamble <amount>")
-            return
-
-        user = ctx.author.name.lower()
-        amount = ctx.content.split()[1]
-
-        if not amount.isdigit():
-            await ctx.send("Usage: !gamble <amount>")
-            return
-
-        amount = int(amount)
-
-        if amount < 1:
-            await ctx.send("Usage: !gamble <amount>")
-            return
-
-        if user not in self.channel_members:
-            await ctx.send(f"{user} is not following the channel.")
-            return
-
-        if await self.usr.get_balance(user) < amount:
-            await ctx.send(f"{user} does not have enough coins.")
-            return
-
-        if self.gms.roll.maximum_bet < amount:
-            await ctx.send(f"{user} cannot bet more than {self.gms.roll.maximum_bet} coins.")
-            return
-
-        if self.gms.roll.minimum_bet > amount:
-            await ctx.send(f"{user} cannot bet less than {self.gms.roll.minimum_bet} coins.")
-            return
-
-        rng = self.gms.get_roll_number()
-
-        # Critical Failure
-        if rng == 0:
-            # change amount has negative be sure it's integer without decimals
-            amount = self.gms.roll.reward_critical_failure * amount
-            amount = int(-amount)
-
-            await self.usr.update_user_balance(user, amount)
-            await ctx.send(f"{user} rolled an awful {rng} and lost {amount} {self.coin_name}!")
-        elif rng == 100:
-            amount = int(self.gms.roll.reward_critical_success * amount)
-            await self.usr.update_user_balance(user, amount)
-            await ctx.send(f"{user} rolled a perfect {rng} and won {amount} {self.coin_name}!")
-        elif rng < 50:
-            await self.usr.update_user_balance(user, -amount)
-            await ctx.send(f"{user} rolled a {rng} and lost {amount} {self.coin_name}.")
-        elif rng == 50:
-            await ctx.send(f"{user} rolled a {rng} and nothing happened.")
-        else:
-            amount = int(2 * amount)
-            await self.usr.update_user_balance(user, amount)
-            await ctx.send(f"{user} rolled a {rng} and won {amount} {self.coin_name}!")
 
     # get all commands names
     async def get_all_commands(self) -> [Cmd]:
@@ -876,7 +565,7 @@ class Bot(commands.Bot):
             The command object.
 
         Returns
-        -------
+        -------±
         None
         """
         await self.cmd.add_cmd(cmd)
@@ -930,6 +619,75 @@ class Bot(commands.Bot):
         await self.cmd.enable_cmd(cmd)
         self.add_command(commands.Command(cmd.name, self.template_command))
 
+    async def analyze_token(self, token: str) -> str:
+        """
+        Analyzes the token.
+
+        Parameters
+        ----------
+        token : str
+            The token.
+
+        Returns
+        -------
+        str
+            The analyzed token.
+        """
+
+        self.logger.debug(f"Analyzing token: {token}")
+
+        if token.startswith("$url"):
+            token = token.replace("$url(", "")
+            if token[-1] == ",":
+                token = token[:-1]
+            if token[-1] == ")":
+                token = token[:-1]
+
+            async with aiohttp.ClientSession() as session:
+                async with session.get(token) as response:
+                    return await response.text()
+
+        elif token.startswith("$random"):
+            token = token.replace("$random(", "")
+            token = token.split(")")[0]
+            token = token.split(",")
+
+            for value in token:
+                if not value.isdigit():
+                    return f"Invalid value: {value}"
+
+            i, j = (int(token[0], base=10), int(token[1], base=10))
+
+            if i > j:
+                return f"Invalid values: {i}, must be lower than {j}"
+
+            return str(random.randint(i, j))
+
+        return token
+
+    async def analyze_cmd_comtent(self, content: str) -> str:
+        """
+        Analyzes the command content.
+
+        Parameters
+        ----------
+        content : str
+            The content of the command.
+
+        Returns
+        -------
+        str
+            The analyzed content.
+        """
+
+        tokens = content.split(" ")
+
+        for token in tokens:
+            if token.startswith("$"):
+                content = content.replace(token, await self.analyze_token(token))
+
+        return content
+
     # create a generic template for adding your own commands
     async def template_command(self, ctx: commands.Context) -> None:
         """
@@ -944,6 +702,8 @@ class Bot(commands.Bot):
         -------
         None
         """
+        
+
 
         self.logger.debug(f'User command named "{ctx.command.name}" called')
         cmd: Cmd = await self.cmd.get_cmd(ctx.command.name)
@@ -951,6 +711,208 @@ class Bot(commands.Bot):
         if len(ctx.message.content.split()) != 1:
             await ctx.send(f"Usage: !{cmd.name}")
             return
+        
+        user = ctx.author.name.lower()
+
+        if user not in self.channel_members:
+            await ctx.send(f"{user} is not following the channel.")
+            return
+
 
         content = cmd.description
+
+        content = await self.analyze_cmd_comtent(content)
+
+        await self.cmd.increment_usage(ctx.command.name)
         await ctx.send(f"{content}")
+
+    @commands.command(name="balance")
+    async def balance(self, ctx: commands.Context) -> None:
+        """
+        Gets the balance of a user.
+
+        Parameters
+        ----------
+        ctx : twitchio.Context
+            The context object.
+
+        Returns
+        -------
+        None
+        """
+
+        if len(ctx.message.content.split()) != 1:
+            await ctx.send("Usage: !balance")
+            return
+
+        user = ctx.author.name.lower()
+
+        if user not in self.channel_members:
+            await ctx.send(f"{user} is not following the channel.")
+            return
+
+        await self.cmd.increment_usage(ctx.command.name)
+
+        await ctx.send(
+            f"{user} has {await self.usr.get_balance(user)} {self.coin_name}"
+        )
+
+    @commands.command(name="followdate")
+    async def followdate(self, ctx: commands.Context) -> None:
+        """
+        Gets the followdate of a user.
+
+        Parameters
+        ----------
+        ctx : twitchio.Context
+            The context object.
+
+        Returns
+        -------
+        None
+        """
+
+        if len(ctx.message.content.split()) != 1:
+            await ctx.send("Usage: !followdate")
+            return
+
+        user = ctx.author.name.lower()
+
+        if user not in self.channel_members:
+            await ctx.send(f"{user} is not following the channel.")
+            return
+
+        await self.cmd.increment_usage(ctx.command.name)
+
+        await ctx.send(
+            f"{user} has been following the channel since {await self.usr.get_followdate(user)}"
+        )
+
+    @commands.command(name="followage")
+    async def followage(self, ctx: commands.Context) -> None:
+        """
+        Gets the followage of a user.
+
+        Parameters
+        ----------
+        ctx : twitchio.Context
+            The context object.
+
+        Returns
+        -------
+        None
+        """
+
+        if len(ctx.message.content.split()) != 1:
+            await ctx.send("Usage: !followage")
+            return
+
+        user = ctx.author.name.lower()
+
+        if user not in self.channel_members:
+            await ctx.send(f"{user} is not following the channel.")
+            return
+
+        await self.cmd.increment_usage(ctx.command.name)
+        await ctx.send(
+            f"{user} has been following the channel for {await self.usr.get_followage(user)}"
+        )
+
+    @commands.command(name="topchatter")
+    async def topchatter(self, ctx: commands.Context) -> None:
+        """
+        Gets the top chatter.
+
+        Parameters
+        ----------
+        ctx : twitchio.Context
+            The context object.
+
+        Returns
+        -------
+        None
+        """
+
+        if len(ctx.message.content.split()) != 1:
+            await ctx.send("Usage: !topchatter")
+            return
+
+        user = await self.get_top_chatter()
+        await self.cmd.increment_usage(ctx.command.name)
+
+        if user:
+            await ctx.send(f"The top chatter is {user}")
+        else:
+            await ctx.send("No top chatter found.")
+
+    @commands.command(name="watchtime")
+    async def watchtime(self, ctx: commands.Context) -> None:
+        """
+        Gets the watchtime of a user.
+
+        Parameters
+        ----------
+        ctx : twitchio.Context
+            The context object.
+
+        Returns
+        -------
+        None
+        """
+
+        if len(ctx.message.content.split()) != 1:
+            await ctx.send("Usage: !watchtime")
+            return
+
+        user = ctx.author.name.lower()
+
+        if user not in self.channel_members:
+            await ctx.send(f"{user} is not following the channel.")
+            return
+
+        await ctx.send(
+            f"{user} has been watching the channel for {await self.usr.get_watchtime(user)}"
+        )
+
+    @commands.command(name="add")
+    async def add(self, ctx: commands.Context) -> None:
+        """
+        Adds two numbers together.
+
+        Parameters
+        ----------
+        ctx : twitchio.Context
+            The context object.
+
+        Returns
+        -------
+        None
+        """
+        if ctx.author.name.lower() != self.channel.channel.streamer_channel:
+            await ctx.send("You do not have permission to use this command.")
+            return
+
+        if len(ctx.message.content.split()) != 3:
+            await ctx.send("Usage: !add <user> <number>")
+            return
+
+        await self.cmd.increment_usage(ctx.command.name)
+
+        try:
+            user = ctx.message.content.split()[1].replace("@", "").lower()
+            # check user exists
+            if user not in self.channel_members:
+                await ctx.send(f"{user} is not following the channel.")
+                return
+
+            num = int(ctx.message.content.split()[2])
+
+            if num < 0:
+                await ctx.send("Usage: !add <user> <number>")
+                return
+
+            await self.usr.update_user_income(user, num)
+            await ctx.send(f"{user} has been awarded {num} {self.coin_name}")
+        except ValueError:
+            await ctx.send("Usage: !add <user> <number>")
+

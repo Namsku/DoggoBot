@@ -5,7 +5,7 @@
   </div> {% endif %}
   <!-- A stylish and aesthetic Page Heading with Dashbard as title with some marge from the top -->
   <div class="d-sm-flex align-items-center justify-content-between mb-4 mt-4">
-    <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
+    <h1 class="h3 mb-0 text-gray-800" style="font-family: 'Roboto', sans-serif;">Dashboard</h1>
   </div>
   <hr class="my-4">
   <!-- Content Row -->
@@ -18,13 +18,36 @@
               <br>
               <form novalidate method="post">
                 <a href="/settings" class="w-2 btn btn-primary btn-lg">Configure</a>
-                <button class="w-1 btn btn-warning btn-lg" type="submit">Activate</button>
+                <p>Please restart the whole application to use it after your configured it</p>
+                <!-- <button class="w-1 btn btn-warning btn-lg" type="submit">Activate</button> -->
               </form> {% endif %}
             </div>
           </div>
         </div>
       </div>
-    </div> {% else %}
+    </div> 
+        <!-- If oath token has been done and message['oath'] exist -->
+        {% if 'oath' in message %}
+        <div class="row">
+          <table class="table table-sm mt-4">
+            <thead>
+              <tr>
+                <th scope="col" class="w-10">Key</th>
+                <th scope="col" class="w-10">Value</th>
+              </tr>
+            </thead>
+            <tbody class="table-group-divider">
+              {% for key, value in message['oath'].items() %}
+              <tr>
+                <td>{{ key }}</td>
+                <td>{{ value }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+        </div>
+        {% endif %}
+    {% else %}
+
     <!-- Follower Card -->
     <div class="col-xl-3 col-md-6 mb-4">
       <div class="card border-left-warning shadow h-100">
@@ -144,8 +167,8 @@
     </div>
     <script>
       window.onload = async function() {
-        await top_chatters_stats()
-        await user_stats_pie()
+        await generateTopChattersChart()
+        await generateUserStatsPieChart()
         await user_stats_stack()
       };
     </script> 

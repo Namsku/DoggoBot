@@ -1,21 +1,37 @@
 <div class="container">
-  <!-- If message['status'] is "success" show success bar --> 
-  {% if message['status'] == "success" %} 
-  <div class="alert alert-success  mb-4 mt-4" role="alert"> the content has been saved on the database </div> 
-  {% endif %} 
-  <div class="py-5 text-center">
-    <img class="d-block mx-auto mb-4" src="{{ url_for('static', path='svg/settings.svg') }}" alt="" width="128" height="128">
-    <h2>Settings</h2>
+  <div class="row p-4 rounded">
+    <div class="col-12 mt-4">
+      <h1 style="font-family: 'Roboto', sans-serif;">
+        Settings
+      </h1>
+      <p>Configure your own bot</p>
+    </div>
   </div>
-  <div class="d-flex align-items-center">
-    <form novalidate method="post">
-      <div class="col-md-7 col-lg-8">
-        <h4 class="mb-3">Tokens</h4>
-        <div class="row g-3">
-          <div class="col-10">
+    <!-- If message['status'] is "success" show success bar --> 
+    {% if message['status'] == "success" %} 
+    <div id="alert-message" class="alert alert-success  mb-4 mt-4" role="alert"> the content has been saved to the database </div> 
+    {% endif %} 
+    {% if message['status'] == "error" %} 
+    <div id="alert-message" class="alert alert-danger  mb-4 mt-4" role="alert"> {{ message['error'] }} </div> 
+    {% endif %} 
+
+  <form novalidate method="post">
+  <!-- Container Fluid 1 - Twitch Tokens -->
+  <div class="bg-body-tertiary p-5 rounded border border-gray">
+    <!-- Container starting -->
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-11">
+          <h3> Twitch tokens </h3>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <div class="form-group mb-1">
             <label for="secret_token" class="form-label">Secret Token</label>
-            <div class="input-group">
-              <span class="input-group-text">
+            <div class="col">
+              <div class="input-group mt-1">
+                <span class="input-group-text" id="basic-addon1">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-incognito" viewBox="0 0 16 16">
                   <path fill-rule="evenodd" d="m4.736 1.968-.892 3.269-.014.058C2.113 5.568 1 6.006 1 6.5 1 7.328 4.134 8 8 8s7-.672 7-1.5c0-.494-1.113-.932-2.83-1.205a1.032 1.032 0 0 0-.014-.058l-.892-3.27c-.146-.533-.698-.849-1.239-.734C9.411 1.363 8.62 1.5 8 1.5c-.62 0-1.411-.136-2.025-.267-.541-.115-1.093.2-1.239.735Zm.015 3.867a.25.25 0 0 1 .274-.224c.9.092 1.91.143 2.975.143a29.58 29.58 0 0 0 2.975-.143.25.25 0 0 1 .05.498c-.918.093-1.944.145-3.025.145s-2.107-.052-3.025-.145a.25.25 0 0 1-.224-.274ZM3.5 10h2a.5.5 0 0 1 .5.5v1a1.5 1.5 0 0 1-3 0v-1a.5.5 0 0 1 .5-.5Zm-1.5.5c0-.175.03-.344.085-.5H2a.5.5 0 0 1 0-1h3.5a1.5 1.5 0 0 1 1.488 1.312 3.5 3.5 0 0 1 2.024 0A1.5 1.5 0 0 1 10.5 9H14a.5.5 0 0 1 0 1h-.085c.055.156.085.325.085.5v1a2.5 2.5 0 0 1-5 0v-.14l-.21-.07a2.5 2.5 0 0 0-1.58 0l-.21.07v.14a2.5 2.5 0 0 1-5 0v-1Zm8.5-.5h2a.5.5 0 0 1 .5.5v1a1.5 1.5 0 0 1-3 0v-1a.5.5 0 0 1 .5-.5Z"></path>
                 </svg>
@@ -23,7 +39,7 @@
               <input type="password" class="form-control" id="secret_token" name="secret_token" value="{{ message.secret_token }}" placeholder="" required>
             </div>
           </div>
-          <div class="col-10">
+          <div class="col">
             <label for="client_token" class="form-label">Client Token</label>
             <div class="input-group">
               <span class="input-group-text">
@@ -36,91 +52,145 @@
             </div>
           </div>
         </div>
-        <hr class="my-4 col-10">
       </div>
-      <div class="col-md-7 col-lg-8">
-        <h4 class="mb-3">Channel</h4>
-        <div class="row g-3">
-          <div class="col-10">
-            <label for="bot_name" class="form-label">Bot Name</label>
-            <div class="input-group">
-              <span class="input-group-text">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-robot" viewBox="0 0 16 16">
-                  <path d="M6 12.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5ZM3 8.062C3 6.76 4.235 5.765 5.53 5.886a26.58 26.58 0 0 0 4.94 0C11.765 5.765 13 6.76 13 8.062v1.157a.933.933 0 0 1-.765.935c-.845.147-2.34.346-4.235.346-1.895 0-3.39-.2-4.235-.346A.933.933 0 0 1 3 9.219V8.062Zm4.542-.827a.25.25 0 0 0-.217.068l-.92.9a24.767 24.767 0 0 1-1.871-.183.25.25 0 0 0-.068.495c.55.076 1.232.149 2.02.193a.25.25 0 0 0 .189-.071l.754-.736.847 1.71a.25.25 0 0 0 .404.062l.932-.97a25.286 25.286 0 0 0 1.922-.188.25.25 0 0 0-.068-.495c-.538.074-1.207.145-1.98.189a.25.25 0 0 0-.166.076l-.754.785-.842-1.7a.25.25 0 0 0-.182-.135Z"></path>
-                  <path d="M8.5 1.866a1 1 0 1 0-1 0V3h-2A4.5 4.5 0 0 0 1 7.5V8a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1v1a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-1a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1v-.5A4.5 4.5 0 0 0 10.5 3h-2V1.866ZM14 7.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7.5A3.5 3.5 0 0 1 5.5 4h5A3.5 3.5 0 0 1 14 7.5Z"></path>
-                </svg>
-              </span>
-              <input type="text" class="form-control" id="bot_name" name="bot_name" value="{{ message.bot_name }}" placeholder="" required>
-            </div>
-          </div>
-          <div class="col-10">
-            <label for="streamer_channel" class="form-label">Steamer Channel</label>
-            <div class="input-group">
-              <span class="input-group-text">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
-                  <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"></path>
-                  <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"></path>
-                </svg>
-              </span>
-              <input type="text" class="form-control" id="streamer_channel" name="streamer_channel" value="{{ message.streamer_channel }}" placeholder="" required>
-            </div>
-          </div>
-          <div class="col-10">
-            <label for="prefix" class="form-label">Prefix</label>
-            <div class="input-group">
-              <span class="input-group-text">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-command" viewBox="0 0 16 16">
-                  <path d="M3.5 2A1.5 1.5 0 0 1 5 3.5V5H3.5a1.5 1.5 0 1 1 0-3zM6 5V3.5A2.5 2.5 0 1 0 3.5 6H5v4H3.5A2.5 2.5 0 1 0 6 12.5V11h4v1.5a2.5 2.5 0 1 0 2.5-2.5H11V6h1.5A2.5 2.5 0 1 0 10 3.5V5H6zm4 1v4H6V6h4zm1-1V3.5A1.5 1.5 0 1 1 12.5 5H11zm0 6h1.5a1.5 1.5 0 1 1-1.5 1.5V11zm-6 0v1.5A1.5 1.5 0 1 1 3.5 11H5z"></path>
-                </svg>
-              </span>
-              <input type="text" class="form-control" id="prefix" name="prefix" value="{{ message.prefix }}" placeholder="" required>
-            </div>
-          </div>
-          <div class="col-10">
-            <label for="coin_name" class="form-label">Coin Name</label>
-            <div class="input-group">
-              <span class="input-group-text">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cash-coin" viewBox="0 0 16 16">
-                  <path fill-rule="evenodd" d="M11 15a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm5-4a5 5 0 1 1-10 0 5 5 0 0 1 10 0z"></path>
-                  <path d="M9.438 11.944c.047.596.518 1.06 1.363 1.116v.44h.375v-.443c.875-.061 1.386-.529 1.386-1.207 0-.618-.39-.936-1.09-1.1l-.296-.07v-1.2c.376.043.614.248.671.532h.658c-.047-.575-.54-1.024-1.329-1.073V8.5h-.375v.45c-.747.073-1.255.522-1.255 1.158 0 .562.378.92 1.007 1.066l.248.061v1.272c-.384-.058-.639-.27-.696-.563h-.668zm1.36-1.354c-.369-.085-.569-.26-.569-.522 0-.294.216-.514.572-.578v1.1h-.003zm.432.746c.449.104.655.272.655.569 0 .339-.257.571-.709.614v-1.195l.054.012z"></path>
-                  <path d="M1 0a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h4.083c.058-.344.145-.678.258-1H3a2 2 0 0 0-2-2V3a2 2 0 0 0 2-2h10a2 2 0 0 0 2 2v3.528c.38.34.717.728 1 1.154V1a1 1 0 0 0-1-1H1z"></path>
-                  <path d="M9.998 5.083 10 5a2 2 0 1 0-3.132 1.65 5.982 5.982 0 0 1 3.13-1.567z"></path>
-                </svg>
-              </span>
-              <input type="text" class="form-control" id="coin_name" name="coin_name" value="{{ message.coin_name }}" placeholder="" required>
-            </div>
-            <hr class="my-4">
-          </div>
-          <div class="col-10">
-            <label for="default_income" class="form-label">Default Income</label>
-            <div class="input-group">
-              <span class="input-group-text">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bank" viewBox="0 0 16 16">
-                  <path d="m8 0 6.61 3h.89a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H15v7a.5.5 0 0 1 .485.38l.5 2a.498.498 0 0 1-.485.62H.5a.498.498 0 0 1-.485-.62l.5-2A.501.501 0 0 1 1 13V6H.5a.5.5 0 0 1-.5-.5v-2A.5.5 0 0 1 .5 3h.89L8 0ZM3.777 3h8.447L8 1 3.777 3ZM2 6v7h1V6H2Zm2 0v7h2.5V6H4Zm3.5 0v7h1V6h-1Zm2 0v7H12V6H9.5ZM13 6v7h1V6h-1Zm2-1V4H1v1h14Zm-.39 9H1.39l-.25 1h13.72l-.25-1Z"></path>
-                </svg>
-              </span>
-              <input type="text" class="form-control" id="default_income" name="default_income" value="{{ message.default_income }}" placeholder="" required>
-            </div>
-          </div>
-          <div class="col-10">
-            <label for="default_timeout" class="form-label">Default Timeout</label>
-            <div class="input-group">
-              <span class="input-group-text">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-alarm-fill" viewBox="0 0 16 16">
-                  <path d="M6 .5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1H9v1.07a7.001 7.001 0 0 1 3.274 12.474l.601.602a.5.5 0 0 1-.707.708l-.746-.746A6.97 6.97 0 0 1 8 16a6.97 6.97 0 0 1-3.422-.892l-.746.746a.5.5 0 0 1-.707-.708l.602-.602A7.001 7.001 0 0 1 7 2.07V1h-.5A.5.5 0 0 1 6 .5zm2.5 5a.5.5 0 0 0-1 0v3.362l-1.429 2.38a.5.5 0 1 0 .858.515l1.5-2.5A.5.5 0 0 0 8.5 9V5.5zM.86 5.387A2.5 2.5 0 1 1 4.387 1.86 8.035 8.035 0 0 0 .86 5.387zM11.613 1.86a2.5 2.5 0 1 1 3.527 3.527 8.035 8.035 0 0 0-3.527-3.527z"></path>
-                </svg>
-              </span>
-              <input type="text" class="form-control" id="default_timeout" name="default_timeout" value="{{ message.default_timeout }}" placeholder="" required>
-            </div>
-          </div>
-          <hr class="my-4 col-10">
+    </div>
+  </div>
+  </div>
+
+  <!-- Container Fluid 2 - DECAPI Token -->
+  <div class="bg-body-tertiary p-5 rounded border border-gray mt-3">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-11">
+          <h3> DecAPI Token </h3>
         </div>
-        <button class="w-100 btn btn-primary btn-lg mb-4" type="submit">Save</button>
       </div>
+      <div class="row">
+        <div class="col">
+          <div class="form-group mb-1">
+            <label for="secret_token" class="form-label">Secret Token</label>
+            <div class="col">
+              <div class="input-group mt-1">
+                <span class="input-group-text" id="basic-addon1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-incognito" viewBox="0 0 16 16">
+                  <path fill-rule="evenodd" d="m4.736 1.968-.892 3.269-.014.058C2.113 5.568 1 6.006 1 6.5 1 7.328 4.134 8 8 8s7-.672 7-1.5c0-.494-1.113-.932-2.83-1.205a1.032 1.032 0 0 0-.014-.058l-.892-3.27c-.146-.533-.698-.849-1.239-.734C9.411 1.363 8.62 1.5 8 1.5c-.62 0-1.411-.136-2.025-.267-.541-.115-1.093.2-1.239.735Zm.015 3.867a.25.25 0 0 1 .274-.224c.9.092 1.91.143 2.975.143a29.58 29.58 0 0 0 2.975-.143.25.25 0 0 1 .05.498c-.918.093-1.944.145-3.025.145s-2.107-.052-3.025-.145a.25.25 0 0 1-.224-.274ZM3.5 10h2a.5.5 0 0 1 .5.5v1a1.5 1.5 0 0 1-3 0v-1a.5.5 0 0 1 .5-.5Zm-1.5.5c0-.175.03-.344.085-.5H2a.5.5 0 0 1 0-1h3.5a1.5 1.5 0 0 1 1.488 1.312 3.5 3.5 0 0 1 2.024 0A1.5 1.5 0 0 1 10.5 9H14a.5.5 0 0 1 0 1h-.085c.055.156.085.325.085.5v1a2.5 2.5 0 0 1-5 0v-.14l-.21-.07a2.5 2.5 0 0 0-1.58 0l-.21.07v.14a2.5 2.5 0 0 1-5 0v-1Zm8.5-.5h2a.5.5 0 0 1 .5.5v1a1.5 1.5 0 0 1-3 0v-1a.5.5 0 0 1 .5-.5Z"></path>
+                </svg>
+              </span>
+              <input type="password" class="form-control" id="decapi_secret_token" name="decapi_secret_token" value="{{ message.decapi_secret_token }}" placeholder="" required>
+            </div>
+          </div>
+        </div>
       </div>
-      <!-- Adding some marging -->
-      <br>
-      <br>
+    </div>
+  </div>
+</div>
+
+<!-- Container Fluid 3 - Channel -->
+<div class="bg-body-tertiary p-5 rounded border border-gray mt-3">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-11">
+          <h3> Channel </h3>
+        </div>
+        
+
+        <div class="row">
+          <div class="col">
+            <div class="form-group mb-1">
+              <label for="bot_name" class="form-label">Bot Name</label>
+              <div class="col">
+                <div class="input-group mt-1">
+                  <span class="input-group-text" id="basic-addon1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-robot" viewBox="0 0 16 16">
+                      <path d="M6 12.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5ZM3 8.062C3 6.76 4.235 5.765 5.53 5.886a26.58 26.58 0 0 0 4.94 0C11.765 5.765 13 6.76 13 8.062v1.157a.933.933 0 0 1-.765.935c-.845.147-2.34.346-4.235.346-1.895 0-3.39-.2-4.235-.346A.933.933 0 0 1 3 9.219V8.062Zm4.542-.827a.25.25 0 0 0-.217.068l-.92.9a24.767 24.767 0 0 1-1.871-.183.25.25 0 0 0-.068.495c.55.076 1.232.149 2.02.193a.25.25 0 0 0 .189-.071l.754-.736.847 1.71a.25.25 0 0 0 .404.062l.932-.97a25.286 25.286 0 0 0 1.922-.188.25.25 0 0 0-.068-.495c-.538.074-1.207.145-1.98.189a.25.25 0 0 0-.166.076l-.754.785-.842-1.7a.25.25 0 0 0-.182-.135Z"></path>
+                      <path d="M8.5 1.866a1 1 0 1 0-1 0V3h-2A4.5 4.5 0 0 0 1 7.5V8a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1v1a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-1a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1v-.5A4.5 4.5 0 0 0 10.5 3h-2V1.866ZM14 7.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7.5A3.5 3.5 0 0 1 5.5 4h5A3.5 3.5 0 0 1 14 7.5Z"></path>
+                    </svg>
+                  </span>
+                <input type="text" class="form-control" id="bot_name" name="bot_name" value="{{ message.bot_name }}" placeholder="" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group mb-1">
+            <label for="streamer_channel" class="form-label">Steamer Channel</label>
+            <div class="col">
+              <div class="input-group mt-1">
+                <span class="input-group-text" id="basic-addon1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
+                    <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"></path>
+                    <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"></path>
+                  </svg>
+                </span>
+                <input type="text" class="form-control" id="streamer_channel" name="streamer_channel" value="{{ message.streamer_channel }}" placeholder="" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group mb-1">
+            <label for="prefix" class="form-label">Prefix</label>
+            <div class="col">
+              <div class="input-group mt-1">
+                <span class="input-group-text" id="basic-addon1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-command" viewBox="0 0 16 16">
+                    <path d="M3.5 2A1.5 1.5 0 0 1 5 3.5V5H3.5a1.5 1.5 0 1 1 0-3zM6 5V3.5A2.5 2.5 0 1 0 3.5 6H5v4H3.5A2.5 2.5 0 1 0 6 12.5V11h4v1.5a2.5 2.5 0 1 0 2.5-2.5H11V6h1.5A2.5 2.5 0 1 0 10 3.5V5H6zm4 1v4H6V6h4zm1-1V3.5A1.5 1.5 0 1 1 12.5 5H11zm0 6h1.5a1.5 1.5 0 1 1-1.5 1.5V11zm-6 0v1.5A1.5 1.5 0 1 1 3.5 11H5z"></path>
+                  </svg>
+                </span>
+                <input type="text" class="form-control" id="prefix" name="prefix" value="{{ message.prefix }}" placeholder="" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group mb-1">
+            <label for="coin_name" class="form-label">Coin Name</label>
+            <div class="col">
+              <div class="input-group mt-1">
+                <span class="input-group-text" id="basic-addon1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cash-coin" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M11 15a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm5-4a5 5 0 1 1-10 0 5 5 0 0 1 10 0z"></path>
+                    <path d="M9.438 11.944c.047.596.518 1.06 1.363 1.116v.44h.375v-.443c.875-.061 1.386-.529 1.386-1.207 0-.618-.39-.936-1.09-1.1l-.296-.07v-1.2c.376.043.614.248.671.532h.658c-.047-.575-.54-1.024-1.329-1.073V8.5h-.375v.45c-.747.073-1.255.522-1.255 1.158 0 .562.378.92 1.007 1.066l.248.061v1.272c-.384-.058-.639-.27-.696-.563h-.668zm1.36-1.354c-.369-.085-.569-.26-.569-.522 0-.294.216-.514.572-.578v1.1h-.003zm.432.746c.449.104.655.272.655.569 0 .339-.257.571-.709.614v-1.195l.054.012z"></path>
+                    <path d="M1 0a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h4.083c.058-.344.145-.678.258-1H3a2 2 0 0 0-2-2V3a2 2 0 0 0 2-2h10a2 2 0 0 0 2 2v3.528c.38.34.717.728 1 1.154V1a1 1 0 0 0-1-1H1z"></path>
+                    <path d="M9.998 5.083 10 5a2 2 0 1 0-3.132 1.65 5.982 5.982 0 0 1 3.13-1.567z"></path>
+                  </svg>
+                </span>
+                <input type="text" class="form-control" id="coin_name" name="coin_name" value="{{ message.coin_name }}" placeholder="" required>
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group mb-1">
+            <label for="default_income" class="form-label">Default Income</label>
+            <div class="col">
+              <div class="input-group mt-1">
+                <span class="input-group-text" id="basic-addon1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bank" viewBox="0 0 16 16">
+                    <path d="m8 0 6.61 3h.89a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H15v7a.5.5 0 0 1 .485.38l.5 2a.498.498 0 0 1-.485.62H.5a.498.498 0 0 1-.485-.62l.5-2A.501.501 0 0 1 1 13V6H.5a.5.5 0 0 1-.5-.5v-2A.5.5 0 0 1 .5 3h.89L8 0ZM3.777 3h8.447L8 1 3.777 3ZM2 6v7h1V6H2Zm2 0v7h2.5V6H4Zm3.5 0v7h1V6h-1Zm2 0v7H12V6H9.5ZM13 6v7h1V6h-1Zm2-1V4H1v1h14Zm-.39 9H1.39l-.25 1h13.72l-.25-1Z"></path>
+                  </svg>
+                </span>
+                <input type="text" class="form-control" id="default_income" name="default_income" value="{{ message.default_income }}" placeholder="" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group mb-1">
+            <label for="default_timeout" class="form-label">Default Timeout</label>
+            <div class="col">
+              <div class="input-group mt-1">
+                <span class="input-group-text" id="basic-addon1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-alarm-fill" viewBox="0 0 16 16">
+                    <path d="M6 .5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1H9v1.07a7.001 7.001 0 0 1 3.274 12.474l.601.602a.5.5 0 0 1-.707.708l-.746-.746A6.97 6.97 0 0 1 8 16a6.97 6.97 0 0 1-3.422-.892l-.746.746a.5.5 0 0 1-.707-.708l.602-.602A7.001 7.001 0 0 1 7 2.07V1h-.5A.5.5 0 0 1 6 .5zm2.5 5a.5.5 0 0 0-1 0v3.362l-1.429 2.38a.5.5 0 1 0 .858.515l1.5-2.5A.5.5 0 0 0 8.5 9V5.5zM.86 5.387A2.5 2.5 0 1 1 4.387 1.86 8.035 8.035 0 0 0 .86 5.387zM11.613 1.86a2.5 2.5 0 1 1 3.527 3.527 8.035 8.035 0 0 0-3.527-3.527z"></path>
+                  </svg>
+                </span>
+                <input type="text" class="form-control" id="default_timeout" name="default_timeout" value="{{ message.default_timeout }}" placeholder="" required>
+              </div>
+            </div>
+          </div>
+      
+        </div>
       </div>
-    </form>
+    </div>
+  </div>
+</div>
+
+<button class="w-100 btn btn-primary btn-lg mb-4" type="submit">Save</button>
+</form>
 </div>

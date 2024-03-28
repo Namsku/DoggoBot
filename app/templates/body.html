@@ -3,8 +3,10 @@
     dashboard
   {% elif 'user' in request.url.path %}
     user
-    {% elif 'rpg' in request.url.path %}
+  {% elif 'rpg' in request.url.path %}
     rpg
+  {% elif 'sfx' in request.url.path %}
+    sfx
   {% else %}
     {{ request.url.path.split('/')[-1] }}
   {% endif %}

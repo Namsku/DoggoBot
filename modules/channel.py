@@ -1,13 +1,13 @@
-import aiosqlite
-import os
-from dataclasses import dataclass
-
+from typing import Union
 from modules.logger import Logger
+from twitchio.ext import commands
 
-logger = Logger(__name__)
+import aiosqlite
+import dataclasses
+import os
 
 
-@dataclass
+@dataclasses.dataclass
 class Channel:
     id: int
     bot_name: str
@@ -18,84 +18,181 @@ class Channel:
     timeout: int
 
 
-class ChannelCog:
+class ChannelCog(commands.Cog):
+    """
+    The channel cog class.
+
+    Attributes
+    ----------
+    channel : Channel
+        The channel object.
+    connection : aiosqlite.Connection
+        The connection to the database.
+    logger : Logger
+        The logger object.
+
+    Methods
+    -------
+    __ainit__()
+        Initializes the channel cog object.
+    create_table()
+        Creates the table if it does not exist.
+    get_environment_variables()
+        Gets the environment variables.
+    get_last_channel()
+        Gets the last channel from the database.
+    update_channel(channel: Union[Channel, dict])
+        Updates the channel with the given values.
+    update_environment_variables(config: dict)
+        Update the environment variables.
+    _add_channel(channel: Channel)
+        Adds a new channel to the database.
+    _get_default_config()
+        Gets the default config values.
+    _is_single_row_table()
+        Checks if the table is having one row.
+    __str__()
+        Returns the string representation of the channel object.
+    """
+
     def __init__(self, connection: aiosqlite.Connection) -> None:
+        """
+        Initializes a new channel cog object.
+
+        Parameters
+        ----------
+        connection : aiosqlite.Connection
+            The connection to the database.
+
+        Returns
+        -------
+        None
+        """
+
+        self.channel = None
         self.connection = connection
+        self.logger = Logger(__name__)
 
     async def __ainit__(self) -> None:
-        if not await self.is_table_configured():
-            channel = self.get_default_config()
+        """
+        Initializes the channel cog object.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+
+        if not await self._is_single_row_table():
+            self.channel = self._get_default_config()
+            await self._add_channel(self.channel)
         else:
-            channel = await self.get_last_channel()
+            self.channel = await self.get_last_channel()
 
-        self.id = channel.id
-        self.bot_name = channel.bot_name
-        self.streamer_channel = channel.streamer_channel
-        self.prefix = channel.prefix
-        self.coin_name = channel.coin_name
-        self.income = channel.income
-        self.timeout = channel.timeout
-
-        if not await self.is_table_configured():
-            await self.add_channel()
-
-    def __str__(self) -> str:
+    async def create_table(self):
         """
-        Returns the string representation of the channel object.
-        """
-
-        return f"Channel(bot_name={self.bot_name}, streamer_channel={self.streamer_channel}, prefix={self.prefix}, coin_name={self.coin_name}, income={self.income}, timeout={self.timeout})"
-
-    def set(self, channel: Channel) -> None:
-        """
-        Sets the channel content.
+        Creates the table if it does not exist.
 
         Parameters
         ----------
-        channel : Channel
-            The channel object.
+        None
 
         Returns
         -------
         None
         """
 
-        self.id = channel.id
-        self.bot_name = channel.bot_name
-        self.streamer_channel = channel.streamer_channel
-        self.prefix = channel.prefix
-        self.coin_name = channel.coin_name
-        self.income = channel.income
-        self.timeout = channel.timeout
-
-    async def set_channel(self, config: dict) -> None:
+        await self.connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS channel (
+                id INTEGER PRIMARY KEY,
+                bot_name TEXT,
+                streamer_channel TEXT,
+                prefix TEXT,
+                coin_name TEXT,
+                income INTEGER,
+                timeout INTEGER
+            )
         """
-        Sets the channel content.
+        )
+
+        await self.connection.commit()
+
+    async def get_environment_variables(self) -> dict:
+        """
+        Gets the environment variables.
 
         Parameters
         ----------
-        config : dict
-            The channel config.
+        None
+
+        Returns
+        -------
+        cfg : dict
+            The environment variables.
+        """
+
+        cfg = {}
+        keys = ["TWITCH_SECRET_TOKEN", "TWITCH_CLIENT_TOKEN", "DECAPI_SECRET_TOKEN"]
+
+        for key in keys:
+            cfg[key] = os.getenv(key, "")
+
+        return cfg
+
+    async def get_last_channel(self) -> Channel:
+        """
+        Gets the last channel from the database.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Channel
+            The last channel from the database.
+        """
+
+        async with self.connection.execute(
+            """
+            SELECT * FROM channel ORDER BY id DESC LIMIT 1
+        """
+        ) as cursor:
+            result = await cursor.fetchone()
+
+        if result is None:
+            return None
+
+        return Channel(*result)
+
+    async def update_channel(self, channel: Union[Channel, dict]) -> None:
+        """
+        Updates the channel with the given values.
+
+        Parameters
+        ----------
+        channel : Union[Channel, dict]
+            The channel to be updated.
 
         Returns
         -------
         None
         """
 
-        print(config)
+        if isinstance(channel, Channel):
+            channel = dataclasses.asdict(channel)
 
-        self.bot_name = config["bot_name"]
-        self.streamer_channel = config["streamer_channel"]
-        self.prefix = config["prefix"]
-        self.coin_name = config["coin_name"]
-        self.income = config["default_income"]
-        self.timeout = config["default_timeout"]
+        sql_query = f"UPDATE channel SET {', '.join(f'{key} = :{key}' for key in channel.keys())} WHERE id = :id"
+        await self.connection.execute(sql_query, channel)
+        await self.connection.commit()
 
-        await self.update_channel()
-
-    def set_env(self, config: dict) -> None:
+    def update_environment_variables(self, config: dict) -> None:
         """
-        Sets the environment variables.
+        Update the environment variables.
 
         Parameters
         ----------
@@ -108,17 +205,73 @@ class ChannelCog:
         """
 
         try:
-            # file is created at the root of the project
+            # Read the existing lines
+            with open(".env", "r") as file:
+                lines = file.readlines()
+
+            # Update the lines
+            new_lines = []
+            for line in lines:
+                if line.startswith("TWITCH_SECRET_TOKEN="):
+                    new_lines.append(f"TWITCH_SECRET_TOKEN={config.get('secret_token')}\n")
+                elif line.startswith("TWITCH_CLIENT_TOKEN="):
+                    new_lines.append(f"TWITCH_CLIENT_TOKEN={config.get('client_token')}\n")
+                elif line.startswith("DECAPI_SECRET_TOKEN="):
+                    new_lines.append(f"DECAPI_SECRET_TOKEN={config.get('decapi_secret_token')}\n")
+                else:
+                    new_lines.append(line)
+
+            # Write the new lines back to the file
             with open(".env", "w") as file:
-                file.write(f"TWITCH_SECRET_TOKEN={config['secret_token']}\n")
-                file.write(f"TWITCH_CLIENT_TOKEN={config['client_token']}\n")
+                file.writelines(new_lines)
+
+            # Update the environment variables
+            os.environ["TWITCH_SECRET_TOKEN"] = config.get("secret_token")
+            os.environ["TWITCH_CLIENT_TOKEN"] = config.get("client_token")
+            os.environ["DECAPI_SECRET_TOKEN"] = config.get("decapi_secret_token")
         except Exception as e:
-            logger.error(f"Error while writing the .env file: {e}")
+            self.logger.error(f"Error while updating the .env file: {e}")
             exit(1)
 
-        logger.debug("Environment variables updated successfully.")
+        self.logger.info("Environment variables updated successfully.")
 
-    def get_default_config(self) -> Channel:
+    async def _add_channel(self, channel: Channel) -> None:
+        """
+        Adds a new channel to the database.
+
+        Parameters
+        ----------
+        channel : Union[Channel, dict]
+            The channel to be added.
+
+        Returns
+        -------
+        None
+        """
+
+        try:
+            await self.connection.execute(
+                """
+                INSERT INTO channel (id, bot_name, streamer_channel, prefix, coin_name, income, timeout) VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    channel.id,
+                    channel.bot_name,
+                    channel.streamer_channel,
+                    channel.prefix,
+                    channel.coin_name,
+                    channel.income,
+                    channel.timeout,
+                ),
+            )
+
+            await self.connection.commit()
+            self.logger.info("Channel added successfully.")
+        except Exception as e:
+            self.logger.error(f"Error while adding the channel: {e}")
+            raise
+
+    def _get_default_config(self) -> Channel:
         """
         Gets the default config values.
 
@@ -142,24 +295,7 @@ class ChannelCog:
             5,
         )
 
-    async def create_table(self):
-        await self.connection.execute(
-            """
-            CREATE TABLE IF NOT EXISTS channel (
-                id INTEGER PRIMARY KEY,
-                bot_name TEXT,
-                streamer_channel TEXT,
-                prefix TEXT,
-                coin_name TEXT,
-                income INTEGER,
-                timeout INTEGER
-            )
-        """
-        )
-
-        await self.connection.commit()
-
-    async def is_table_configured(self) -> bool:
+    async def _is_single_row_table(self) -> bool:
         """
         Checks if the table is having one row.
 
@@ -176,92 +312,15 @@ class ChannelCog:
         async with self.connection.execute(
             """
             SELECT COUNT(*) FROM channel
-        """
+            """
         ) as cursor:
             result = await cursor.fetchone()
 
-        if result[0] == 1:
-            return True
+        return result[0] == 1
 
-        return False
-
-    async def update_channel(self):
-        await self.connection.execute(
-            """
-            UPDATE channel SET bot_name = ?, streamer_channel = ?, prefix = ?, coin_name = ?, income = ?, timeout = ? WHERE id = ?
-        """,
-            (
-                self.bot_name,
-                self.streamer_channel,
-                self.prefix,
-                self.coin_name,
-                self.income,
-                self.timeout,
-                self.id,
-            ),
-        )
-
-        await self.connection.commit()
-
-    async def update_income(self, income: int):
-        await self.connection.execute(
-            """
-            UPDATE channel SET income = ? WHERE streamer_channel = ?
-        """,
-            (income, self.streamer_channel),
-        )
-
-        await self.connection.commit()
-        logger.debug(f"Income updated successfully with new value {income}.")
-
-    async def get_channel(self, name: str) -> Channel:
-        async with self.connection.execute(
-            """
-            SELECT * FROM channel WHERE streamer_channel = ?
-        """,
-            (name,),
-        ) as cursor:
-            result = await cursor.fetchone()
-
-        if result is None:
-            return None
-
-        return Channel(*result)
-
-    async def get_last_channel(self) -> Channel:
-        async with self.connection.execute(
-            """
-            SELECT * FROM channel ORDER BY id DESC LIMIT 1
+    def __str__(self) -> str:
         """
-        ) as cursor:
-            result = await cursor.fetchone()
-
-        if result is None:
-            return None
-
-        return Channel(*result)
-
-    async def add_channel(self):
-        await self.connection.execute(
-            """
-            INSERT INTO channel (bot_name, streamer_channel, prefix, coin_name, income, timeout) VALUES (?, ?, ?, ?, ?, ?)
-        """,
-            (
-                self.bot_name,
-                self.streamer_channel,
-                self.prefix,
-                self.coin_name,
-                self.income,
-                self.timeout,
-            ),
-        )
-
-        await self.connection.commit()
-        logger.debug("Channel added successfully.")
-
-    async def get_env(self):
-        """
-        Gets the environment variables.
+        Returns the string representation of the channel object.
 
         Parameters
         ----------
@@ -269,20 +328,8 @@ class ChannelCog:
 
         Returns
         -------
-        cfg : dict
-            The environment variables.
+        str
+            The string representation of the channel object.
         """
 
-        cfg = {}
-
-        if os.getenv("TWITCH_SECRET_TOKEN"):
-            cfg["TWITCH_SECRET_TOKEN"] = os.getenv("TWITCH_SECRET_TOKEN")
-        else:
-            cfg["TWITCH_SECRET_TOKEN"] = ""
-
-        if os.getenv("TWITCH_CLIENT_TOKEN"):
-            cfg["TWITCH_CLIENT_TOKEN"] = os.getenv("TWITCH_CLIENT_TOKEN")
-        else:
-            cfg["TWITCH_CLIENT_TOKEN"] = ""
-
-        return cfg
+        return f"Channel: {self.channel}"

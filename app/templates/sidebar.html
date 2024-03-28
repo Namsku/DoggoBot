@@ -13,8 +13,9 @@
 <div class="sidebar d-flex flex-column flex-shrink-0 p-3 text-bg-dark" style="width: 280px; height: 100vh;">
     <!-- Sidebar - Logo -->
     <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
-      <img src="{{ url_for('static', path='svg/dog.svg') }}" class="bi pe-none me-2" width="40" height="40" />
-      <span class="fs-3">DoggoBot</span>
+      <!-- <img src="{{ url_for('static', path='svg/dog.svg') }}" class="bi pe-none me-2" width="40" height="40" /> -->
+      <img src="{{ url_for('static', path='img/logo.png') }}" class="bi pe-none me-2" width="80" height="80" /> 
+      <span class="fs-3" style="font-family: 'Roboto', sans-serif;">DoggoBot</span>
     </a>
 
     <!-- Sidebar - Divider -->
@@ -35,7 +36,11 @@
       </li>
       
       <!-- Sidebar - Chat -->
-      <li>
+
+      <!--
+        Maybe later in 2024 
+      
+        <li>
         <a href="/chat" {{ generate_nav_link("/chat").strip() }}>
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chat-dots-fill me-2" viewBox="0 0 16 16">
             <path d="M16 8c0 3.866-3.582 7-8 7a9.06 9.06 0 0 1-2.347-.306c-.584.296-1.925.864-4.181 1.234-.2.032-.352-.176-.273-.362.354-.836.674-1.95.77-2.966C.744 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7zM5 8a1 1 0 1 0-2 0 1 1 0 0 0 2 0zm4 0a1 1 0 1 0-2 0 1 1 0 0 0 2 0zm3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>
@@ -44,9 +49,10 @@
         </a>
       </li>
 
+      -->
       <!-- Sidebar - SFX -->
       <li>
-        <a href="/sfx" {{ generate_nav_link("/sfx").strip() }}>
+        <a href="/sounds" {{ generate_nav_link("/sounds").strip() }}>
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-music-note me-2" viewBox="0 0 16 16">
             <path d="M9 13c0 1.105-1.12 2-2.5 2S4 14.105 4 13s1.12-2 2.5-2 2.5.895 2.5 2z"/>
             <path fill-rule="evenodd" d="M9 3v10H8V3h1z"/>
@@ -58,7 +64,7 @@
 
       <!-- Sidebar - Curses -->
       <li>
-        <a href="/curses" {{ generate_nav_link("/curses").strip() }}>
+        <a href="/curse" {{ generate_nav_link("/curse").strip() }}>
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-radioactive me-2" viewBox="0 0 16 16">
             <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Z"/>
             <path d="M9.653 5.496A2.986 2.986 0 0 0 8 5c-.61 0-1.179.183-1.653.496L4.694 2.992A5.972 5.972 0 0 1 8 2c1.222 0 2.358.365 3.306.992L9.653 5.496Zm1.342 2.324a2.986 2.986 0 0 1-.884 2.312 3.01 3.01 0 0 1-.769.552l1.342 2.683c.57-.286 1.09-.66 1.538-1.103a5.986 5.986 0 0 0 1.767-4.624l-2.994.18Zm-5.679 5.548 1.342-2.684A3 3 0 0 1 5.005 7.82l-2.994-.18a6 6 0 0 0 3.306 5.728ZM10 8a2 2 0 1 1-4 0 2 2 0 0 1 4 0Z"/>

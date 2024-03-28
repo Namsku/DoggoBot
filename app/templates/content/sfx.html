@@ -1,0 +1,438 @@
+<style>
+  .nav-tabs .nav-link {
+      border: 1px solid transparent;
+      border-radius: 12px 12px 0 0; /* Rounded corners on the upper left and right */
+      color: #495057;
+      background-color: rgb(224, 219, 219); /* Light grey background */
+      margin-right: 1px;
+      transition: all 0.3s ease;
+  }
+  
+  .nav-tabs .nav-link:hover {
+      border: 1px solid #dee2e6;
+      border-bottom-color: transparent;
+      color: #495057;
+      background-color: #e9ecef;
+  }
+  
+  .nav-tabs .nav-link.active {
+      color: #fff; /* White text */
+      background-color: #007bff; /* Blue background */
+      border-color: #dee2e6 #dee2e6 #0b0b0b;
+  }
+
+  </style>
+  
+  <!-- Your tablist HTML goes here -->
+  
+  <!-- Your tablist HTML goes here -->
+  
+  <!-- Your tablist HTML goes here -->
+
+{% macro generate_buttons(id) %}
+<button type="button" id="open-edit-form-btn-{{id}}" value="{{id}}" class="btn btn-primary" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pen" viewBox="0 0 16 16">
+  <path d="m13.498.795.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001zm-.644.766a.5.5 0 0 0-.707 0L1.95 11.756l-.764 3.057 3.057-.764L14.44 3.854a.5.5 0 0 0 0-.708l-1.585-1.585z"></path>
+  </svg>
+</button>
+
+<button type="button" id="open-delete-form-btn-{{id}}" value="{{id}}" class="btn btn-outline-danger" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3-fill" viewBox="0 0 16 16">
+  <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5Zm-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5ZM4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06Zm6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528ZM8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5Z"></path>
+  </svg>
+</button>
+{% endmacro %}
+
+{% macro generate_game_table_row(msg) %}
+  <tr>
+    <td>{{ msg.id }}</td>
+    <td>{{ msg.name }}</td>
+    <td>{{ msg.volume }}</td>
+    <td>{{ msg.cost }}</td>
+    <td>{{ msg.cooldown }}</td>
+    <td>{{ msg.soundcard }}</td>
+    <td>{{ generate_buttons(msg.id) }}</td>
+  </tr>
+{% endmacro %}
+
+<div class="container">
+    <div class="row p-4 rounded">
+      <div class="col-12 mt-4">
+        <h1 style="font-family: 'Roboto', sans-serif;">
+          SFX Profile - {{ message['name'] }}
+        </h1>
+        <p>configure your selected game as your own taste!</p>
+      </div>
+    </div>
+    <!-- Container Fluid 1 - sfx -->
+    <div class="bg-body-tertiary p-5 rounded border border-gray">
+      <!-- Container starting -->
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-md-11">
+            <h3> Configuration </h3>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col">
+            <p class="d-inline-flex gap-1">
+              <a class="btn btn-primary" data-bs-toggle="collapse" href="#collapse-sfx-help" role="button" aria-expanded="false" aria-controls="collapseExample"> Help </a>
+            </p>
+            <div class="collapse" id="collapse-sfx-help">
+              <div class="card card-body">
+                <p>Here you can configure your sfx as your own taste. You can add, edit, and delete sfx. You can also import and export sfx.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+            <!-- If message['status'] is "success" show success bar --> 
+    {% if message['status'] == "success" %} 
+    <div id="alert-message" class="alert alert-success  mb-4 mt-4" role="alert"> the content has been saved to the database </div> 
+    {% endif %} 
+    {% if message['status'] == "error" %} 
+    <div id="alert-message" class="alert alert-danger  mb-4 mt-4" role="alert"> {{ message['error'] }} </div> 
+    {% endif %} 
+
+    <!-- Start Form -->
+    <form novalidate method="post">
+      <div class="row">
+        <div class="col-md-6">
+
+          <div class="form-group mb-1">
+            <label for="sfx_cost"> Default Volume </label>
+            <div class="col">
+              <div class="input-group mt-1">
+                <!-- hidden input value -->
+                <input type="hidden" name="sfx_id" value="{{message['sfx'].id}}">
+                <input type="hidden" name="sfx_group_id" value="{{message['sfx'].group_id}}">
+                <span class="input-group-text" id="basic-addon1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cash" viewBox="0 0 16 16">
+                    <path d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4"></path>
+                    <path d="M0 4a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1zm3 0a2 2 0 0 1-2 2v4a2 2 0 0 1 2 2h10a2 2 0 0 1 2-2V6a2 2 0 0 1-2-2z"></path>
+                  </svg>
+                </span>
+                <input type="text" class="form-control" id="sfx_volume" name="sfx_volume" value="{{ message['sfx'].volume }}" placeholder="" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group mb-1">
+            <label for="exampleInputPassword1"> Default Cost </label>
+            <div class="col">
+              <div class="input-group mt-1">
+                <span class="input-group-text" id="basic-addon1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calculator" viewBox="0 0 16 16">
+                    <path d="M12 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"></path>
+                    <path d="M4 2.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5zm0 4a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z"></path>
+                  </svg>
+                </span>
+                <input type="text" class="form-control" id="sfx_cost" name="sfx_cost" value="{{ message['sfx'].cost }}" placeholder="" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group mb-1">
+            <label for="exampleInputPassword1"> Default Cooldown </label>
+            <div class="col">
+              <div class="input-group mt-1">
+                <span class="input-group-text" id="basic-addon1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stopwatch" viewBox="0 0 16 16">
+                    <path d="M8.5 5.6a.5.5 0 1 0-1 0v2.9h-3a.5.5 0 0 0 0 1H8a.5.5 0 0 0 .5-.5z"></path>
+                    <path d="M6.5 1A.5.5 0 0 1 7 .5h2a.5.5 0 0 1 0 1v.57c1.36.196 2.594.78 3.584 1.64l.012-.013.354-.354-.354-.353a.5.5 0 0 1 .707-.708l1.414 1.415a.5.5 0 1 1-.707.707l-.353-.354-.354.354-.013.012A7 7 0 1 1 7 2.071V1.5a.5.5 0 0 1-.5-.5M8 3a6 6 0 1 0 .001 12A6 6 0 0 0 8 3"></path>
+                  </svg>
+                </span>
+                <input type="text" class="form-control" id="sfx_cooldown" name="sfx_cooldown" value="{{ message['sfx'].cooldown }}" placeholder="" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group mb-1">
+            <label for="exampleInputPassword1"> Default Soundcard </label>
+            <div class="col">
+              <div class="input-group mt-1">
+                <!-- list box -->
+                <select class="form-select" id="sfx_soundcard" name="sfx_soundcard" placeholder="" required>
+                  {% for key, value in message['soundcards'].items() %}
+                    <option value="{{key}}" {% if key|int == message['sfx'].soundcard|int %}selected{% endif %}>{{ value.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      <div class="row">
+        <div class="col-md-11"></div>
+        <div class="col-md-1">
+          <button class="btn btn-primary mt-3" type="submit">Save</button>
+        </div>
+      </div>
+    </form>
+    <!-- End Form -->
+  </div>  
+ </div>
+</div>
+<!-- Container Fluid 2 - sfx -->
+<div class="container mt-8">
+  <div class="col-12 mt-4">
+    <div class="row">
+      <div class="col">
+        <h3>SFX Events</h1>
+      </div>
+      <div class="col  d-flex justify-content-end mb-4">
+        <!-- Make a add command button on the right side of the div class -->
+        <button type="button" id="open-create-form-btn" class="btn btn-primary me-3" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
+            Add SFX 
+        </button>
+
+        <button type="button" id="open-import-form-btn" class="btn btn-primary me-3" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
+          Import Folder 
+       </button>
+
+        <button type="button" id="export-btn" class="btn btn-primary me-3" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
+            Export SFXs 
+        </button>
+        </a>
+      </div>
+    </div>
+    <div class="col-12 mb-4">
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th scope="col" class="w-10">ID</th>
+            <th scope="col" class="w-10">Name</th>
+            <th scope="col" class="w-10">Volume</th>
+            <th scope="col" class="w-10">Cost</th>
+            <th scope="col" class="w-10">Cooldown</th>
+            <th scope="col" class="w-40">Soundcard</th>
+            <th scope="col" class="w-10">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="user-commands" class="table-group-divider"> 
+          {% for msg in message['events'] %}
+            {{ generate_game_table_row(msg) }}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Popup form -->
+<div id="popup-create-form" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="popupFormLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="popupFormLabel">Add SFX</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Error message display area -->
+        <div id="create-error-message" class="alert alert-danger" style="display: none;"></div>
+        <div id="create-success-message" class="alert alert-success" style="display: none;"></div>
+
+        <form id="create-sfx-event-form" enctype="multipart/form-data">
+
+          <input type="hidden" class="form-control" id="update_type" name="update_type" value="add_sfx_event">
+          <input type="hidden" class="form-control" id="sfx_group_id" name="sfx_group_id" value="{{ message['sfx'].group_id }}">
+          <input type="hidden" class="form-control" id="sfx_id" name="sfx_id" value="{{ message['sfx'].id }}">
+
+          <div class="mb-3">
+            <label for="name" class="form-label">Name</label>
+            <input type="text" class="form-control" id="name" name="name" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="volume" class="form-label">Volume</label>
+            <input type="range" class="form-range" id="volume" name="volume" min="0" max="100" value="{{ message['sfx'].volume }}" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="cost" class="form-label">Cost</label>
+            <input type="number" class="form-control" id="cost" name="cost" value="{{ message['sfx'].cost }}" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="cooldown" class="form-label">Cooldown</label>
+            <input type="number" class="form-control" id="cooldown" name="cooldown" value="{{ message['sfx'].cooldown }}" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="soundcard" class="form-label">Soundcard</label>
+            <select class="form-select" id="soundcard" name="soundcard" required>
+              {% for key, value in message['soundcards'].items() %}
+              <option value="{{key}}" {% if key|int == message['sfx'].soundcard|int %}selected{% endif %}>{{ value.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="file" class="form-label">Upload File</label>
+            <input type="file" class="form-control" id="file" name="file" required>
+          </div>
+
+          <button type="submit" id="create-event-form" class="btn btn-primary">Submit</button>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="popup-edit-form" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="popupFormLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="popupFormLabel">Edit event</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Error message display area -->
+        <div id="edit-error-message" class="alert alert-danger" style="display: none;"></div>
+        <div id="edit-success-message" class="alert alert-success" style="display: none;"></div>
+
+        <form id="edit-sfx-event-form" enctype="multipart/form-data">
+
+          <input type="hidden" class="form-control" id="update_type" name="update_type" value="update_sfx_event">
+          <input type="hidden" class="form-control" id="sfx_event_id" name="sfx_event_id">
+
+          <div class="mb-3">
+            <label for="name" class="form-label">Name</label>
+            <input type="text" class="form-control" id="name" name="name" readonly>
+          </div>
+
+          <div class="mb-3">
+            <label for="volume" class="form-label">Volume</label>
+            <input type="range" class="form-range" id="volume" name="volume" min="0" max="100" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="cost" class="form-label">Cost</label>
+            <input type="number" class="form-control" id="cost" name="cost" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="cooldown" class="form-label">Cooldown</label>
+            <input type="number" class="form-control" id="cooldown" name="cooldown" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="soundcard" class="form-label">Soundcard</label>
+            <select class="form-select" id="soundcard" name="soundcard" required>
+              {% for key, value in message['soundcards'].items() %}
+              <option value="{{key}}" {% if key|int == message['sfx'].soundcard|int %}selected{% endif %}>{{ value.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <button type="submit" id="edit-event-form" class="btn btn-primary">Submit</button>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal fade" id="popup-delete-form" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteModalLabel">Delete event</h5>
+              
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+        <div class="modal-body">
+          <div id="delete-error-message" class="alert alert-danger" style="display: none;"></div>
+          <div id="delete-success-message" class="alert alert-success" style="display: none;"></div>
+          Are you sure you want to delete this event?
+        </div>
+        <form id="delete-sfx-event-form">
+        <input type="hidden" class="form-control" id="delete-name" name="name" value="">
+        <input type="hidden" class="form-control" id="update_type" name="update_type" value="delete_sfx_event">
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+          <button type="submit" id="delete-sfx-event-form" class="btn btn-primary">Yes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<div id="popup-import-form" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="popupFormLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="popupFormLabel">Import events</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Error message display area -->
+        <div id="import-error-message" class="alert alert-danger" style="display: none;"></div>
+        <div id="import-success-message" class="alert alert-success" style="display: none;"></div>
+        <!-- Red bold text to warn that if them submit the import list, it will erase the current list forever -->
+        <p class="text-danger">Warning: Importing a new list will erase the current list forever.</p>
+
+        <!-- Open file -->
+        <form id="import-event-form" enctype="multipart/form-data">
+          <input type="hidden" class="form-control" id="update_type" name="update_type" value="import_event">
+          <input type="hidden" class="form-control" id="sfx_id" name="sfx_id" value="{{ message['sfx'].id }}">
+          <div class="mb-3">
+            <label for="import-file" class="form-label">Import folder</label>
+            <input class="form-control" type="file" id="import-file" name="import-file" required>
+            <div class="col-12 mb-4 mt-4">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th scope="col" class="w-70">Infos</th>
+                    <th scope="col" class="w-30">Value</th>
+                  </tr>
+                </thead>
+                <tbody id="user-commands" class="table-group-divider"> 
+                  <tr>
+                    <td>Json file</td>
+                    <td id="json-file-state">-</td>
+                  </tr>
+                  <tr>
+                    <td>Events</td>
+                    <td id="events-count">-</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Make a javascript code that will check if the file is a valid json file -->
+          
+
+          <button type="submit" id="import-event-form-btn" class="btn btn-primary" disabled>Submit</button>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+    const sfx = new URL(window.location.href).pathname.split('/')[1];
+    let sfxIdValue = document.querySelector('input[name="sfx_id"]').value;
+    
+    addEditButtonEventListeners(sfx);
+    addFormEventListeners();
+    addEventListenerExportButton(sfxIdValue);
+    addImportEventListeners();
+
+    // Process forms for create, edit, and delete actions
+    processForms(['create','edit', 'delete', 'import'], 'sfx-event');
+    fadeOutAlert();
+
+</script>

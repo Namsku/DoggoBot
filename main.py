@@ -69,7 +69,7 @@ async def create_bot(channel: ChannelCog) -> Bot:
     return bot
 
 
-def check_admin():
+def check_admin() -> bool:
     """Check if the script is running as root or administrator on any operating system.
 
     Returns:
@@ -82,6 +82,33 @@ def check_admin():
         return os.getuid() == 0 or os.getenv("SUDO_USER") == "root"
 
     return False
+
+
+def check_database() -> bool:
+    """
+    Checks if the database is initialized.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    bool
+        True if the database is initialized, False otherwise.
+    """
+
+    if not os.path.exists("data/database"):
+        os.makedirs("data/database")
+        return False
+
+    if not os.path.exists("data/database/channel.sqlite"):
+        return False
+
+    if not os.path.exists("data/database/cmd.sqlite"):
+        return False
+
+    return True
 
 
 def create_hyperconfig() -> HyperConfig:
@@ -99,7 +126,7 @@ def create_hyperconfig() -> HyperConfig:
     """
 
     hyperconfig = HyperConfig()
-    hyperconfig.bind = ["0.0.0.0:8000"]
+    hyperconfig.bind = ["0.0.0.0:80"]
     hyperconfig.worker_class = "asyncio"
     return hyperconfig
 
@@ -130,9 +157,19 @@ async def main() -> None:
         logger.debug("Debug mode enabled.")
 
     if not (os.getenv("TWITCH_SECRET_TOKEN") and os.getenv("TWITCH_CLIENT_TOKEN")):
-        logger.warning("Twitch tokens not found. Bot is not executed. Please add them on .env file or directly on the webapp.")
+        logger.warning(
+            "Twitch tokens not found. Bot is not executed. Please add them on .env file or directly on the webapp."
+        )
+    elif not (os.getenv("DECAPI_SECRET_TOKEN")):
+        logger.warning(
+            "DecAPI token not found. Please add it on .env file or directly on the webapp."
+        )
+    elif not check_database():
+        logger.warning("Database is not initialized. Please run the bot on the webapp.")
     elif bot.initialized is False:
-        logger.warning("Bot is not initialized. Please add the correct values on the webapp.")
+        logger.warning(
+            "Bot is not initialized. Please add the correct values on the webapp."
+        )
     else:
         asyncio.create_task(bot.start())
 
