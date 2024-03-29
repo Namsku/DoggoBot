@@ -79,7 +79,6 @@ class Bot(commands.Bot):
         await self._ainit_env()
         await self._ainit_user_commands()
         await self._ainit_sfx_commands()
-        await self._ainit_routines()
 
     async def _ainit_database_conn(self, channel_cog: ChannelCog) -> None:
         """
@@ -116,6 +115,8 @@ class Bot(commands.Bot):
         -------
         None
         """
+        self.cnl : Channel = self.get_channel(self.channel_id)
+        print(self.cnl, self.channel_id)
         self.channel = channel_cog
         self.cmd = CmdCog(self.connection_cmd, self)
         self.msg = MessageCog(self.connection_message)
@@ -385,6 +386,9 @@ class Bot(commands.Bot):
         """
         self.active = True
         self.logger.info(f"Ready | {self.nick}")
+        self.cnl = self.get_channel(self.channel_id)
+        await self.cnl.send("Bot is now online.")
+        await self._ainit_routines()
 
     async def event_message(self, message: Message) -> None:
         """
@@ -949,11 +953,10 @@ class Bot(commands.Bot):
         None
         """
         self.logger.info("Income routine called")
-
         for user in self.channel_members:
-            await self.usr.update_user_income(user, 10000)
+            await self.usr.increment_user_income(user, "10000")
 
-    @routines.routine(seconds=100)
+    @routines.routine(seconds=600)
     async def timeout_routine(self) -> None:
         """
         Timeout routine.
@@ -967,4 +970,4 @@ class Bot(commands.Bot):
         None
         """
         self.logger.info("Own advertising routine called")
-        await self.bot.channel.send_message("If you like the content, feel free to participate in the chat. It helps the channel grow. If you want to support the channel, you can follow the channel, subscribe, or donate. Thank you for being here.")
+        await self.cnl.send("If you like the content, or have any questions, feel free to follow the channel and ask in the chat. I'm here to help you out. If you want to support the channel, you can do so by subscribing. Thank you for watching.")
