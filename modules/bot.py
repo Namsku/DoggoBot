@@ -951,10 +951,9 @@ class Bot(commands.Bot):
         self.logger.info("Income routine called")
 
         for user in self.channel_members:
-            income = self.channel.income
-            self.usr.update_user_income(user, income)
+            await self.usr.update_user_income(user, 10000)
 
-    @routines.routine(seconds=5.0)
+    @routines.routine(seconds=100)
     async def timeout_routine(self) -> None:
         """
         Timeout routine.
@@ -968,4 +967,4 @@ class Bot(commands.Bot):
         None
         """
         self.logger.info("Own advertising routine called")
-        # self.bot.channel.send_message("If you like the content, feel free to participate in the chat. It helps the channel grow. If you want to support the channel, you can follow the channel, subscribe, or donate. Thank you for being here.")
+        await self.bot.channel.send_message("If you like the content, feel free to participate in the chat. It helps the channel grow. If you want to support the channel, you can follow the channel, subscribe, or donate. Thank you for being here.")
