@@ -19,9 +19,9 @@ DoggoBot is a Twitch bot that is currently in development. It is written in Pyth
 2. Add the following to the file:
 
 ```env
-TWITCH_TOKEN_SECRET=XXXXX
-TWITCH_CLIENT_SECRET=XXXXX
-DECAPI_TOKEN_SECRET=XXXXX
+TWITCH_SECRET_TOKEN=X
+TWITCH_CLIENT_TOKEN=X
+DECAPI_SECRET_TOKEN=X
 DOGGOBOT_SERVER_DBG=0
 ```
 
@@ -52,19 +52,19 @@ DOGGOBOT_SERVER_DBG=0
 
 1. Run the bot using `python main.py`
 
+if you are on windows
+
+1. Run the bot by clicking on the `run.cmd` file
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
 
 # Support
 
-If you have any questions or issues with the bot, feel free to join the [Discord server](https://discord.gg/3QXkZPK) and ask in the `#doggo-bot` channel.
+If you have any questions or issues with the bot, feel free to join the [Discord server](https://discord.gg/xxqtuubayy) and ask in the `#doggo-bot` channel.
 
 # Contributing
 
-If you would like to contribute to the project, feel free to fork the repository and submit a pull request. If you have any questions, feel free to join the [Discord server](https://discord.gg/3QXkZPK) and ask in the `#doggo-bot` channel.
-
-# Donation
-
-If you would like to support the project, feel free to donate to the following:
+If you would like to contribute to the project, feel free to fork the repository and submit a pull request. If you have any questions, feel free to join the [Discord server](https://discord.gg/xxqtuubayy) and ask in the `#doggo-bot` channel.
 
