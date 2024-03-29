@@ -1,5 +1,6 @@
 import random
 import aiohttp
+
 from modules.channel import ChannelCog
 from modules.cmd import CmdCog, Cmd
 from modules.games.common import GamesCog
@@ -12,6 +13,7 @@ from twitchio import ChannelFollowerEvent, Message
 from twitchio.channel import Channel
 from twitchio.ext import commands
 from twitchio.user import User
+from twitchio.ext import routines
 
 import os
 import aiosqlite
@@ -77,6 +79,7 @@ class Bot(commands.Bot):
         await self._ainit_env()
         await self._ainit_user_commands()
         await self._ainit_sfx_commands()
+        await self._ainit_routines()
 
     async def _ainit_database_conn(self, channel_cog: ChannelCog) -> None:
         """
@@ -220,6 +223,22 @@ class Bot(commands.Bot):
             self.add_command(commands.Command(sfx.name, self.sfx.template_sfx))
 
         self.logger.debug(f"SFX commands initialized. {len(sfxs)}")
+    
+    async def _ainit_routines(self) -> None:
+        """
+        Initializes the routines.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+        self.income_routine.start()
+        self.timeout_routine.start()
+        self.logger.info("Routines initialized.")
 
     async def _get_channel_members(self) -> None:
         """
@@ -916,3 +935,37 @@ class Bot(commands.Bot):
         except ValueError:
             await ctx.send("Usage: !add <user> <number>")
 
+    @routines.routine(seconds=600)
+    async def income_routine(self) -> None:
+        """
+        Income routine.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+        self.logger.info("Income routine called")
+
+        for user in self.channel_members:
+            income = self.channel.income
+            self.usr.update_user_income(user, income)
+
+    @routines.routine(seconds=5.0)
+    async def timeout_routine(self) -> None:
+        """
+        Timeout routine.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+        self.logger.info("Own advertising routine called")
+        # self.bot.channel.send_message("If you like the content, feel free to participate in the chat. It helps the channel grow. If you want to support the channel, you can follow the channel, subscribe, or donate. Thank you for being here.")
