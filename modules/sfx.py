@@ -53,7 +53,8 @@ class SFXCog(commands.Cog):
         # self.load_sfx()
 
         # init the sounds extension
-        self.player = sounds.AudioPlayer(callback=self.reset_player)
+        self.player = sounds.AudioPlayer(callback=self.create_reset_player(0))
+        self.testings = [sounds.AudioPlayer(callback=self.create_reset_player(i)) for i in range(20)]
 
     async def create_table(self):
         """
@@ -143,7 +144,17 @@ class SFXCog(commands.Cog):
             await ctx.send(f"Usage: !{sfx.name}")
             return
 
-        await self.play_sfx(sfx)
+        i = await self.get_available_player()
+        self.logger.debug(f"Player {i} is available")
+        await self.play_sfx(sfx, self.testings[i])
+
+
+    async def get_available_player(self):
+        for i, player in enumerate(self.testings):
+            if not player._playing:
+                return i
+        return 0
+
 
     """
 
@@ -572,15 +583,17 @@ class SFXCog(commands.Cog):
     
     """
 
-    async def play_sfx(self, sfx: SFXEvent):
+    async def play_sfx(self, sfx: SFXEvent, player: sounds.AudioPlayer):
         self.logger.debug(f'Playing SFX event "{sfx.name}"')
         filepath = "data/sfx/" + sfx.file
         sound = sounds.Sound(source=filepath)
         self.logger.debug(f"data/sfx/{sfx.file}")
-        self.player.volume = sfx.volume
-        self.player.play(sound)
+        player.volume = sfx.volume
+        player.play(sound)
 
-    async def reset_player(self):
-        self.player.volume = 100
-        self.player.stop()
-        self.logger.debug("SFX Player done")
+    def create_reset_player(self, i):
+        async def reset_player():
+            self.testings[i].volume = 100
+            self.testings[i].stop()
+            self.logger.debug("SFX Player done")
+        return reset_player
