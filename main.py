@@ -99,7 +99,6 @@ def check_database() -> bool:
     """
 
     if not os.path.exists("data/database"):
-        os.makedirs("data/database")
         return False
 
     if not os.path.exists("data/database/channel.sqlite"):
@@ -145,6 +144,9 @@ async def main() -> None:
     """
 
     load_dotenv()
+
+    os.makedirs("data/database")
+
 
     channel = await create_channel()
     bot = await create_bot(channel)

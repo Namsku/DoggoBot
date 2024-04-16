@@ -1,2 +1,2 @@
 @echo off
-start cmd /k "py main.py"
+start cmd /k "cd venv/Scripts/ & activate & cd ..\.. & py main.py"

@@ -47,5 +47,5 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-py -m pip install -U git+https://github.com/PythonistaGuild/twitchio.git@fix/routines --force-reinstall --user
+py -m pip install -U git+https://github.com/PythonistaGuild/twitchio.git@fix/routines --force-reinstall 
 echo All requirements installed successfully.
